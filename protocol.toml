@@ -1,0 +1,64 @@
+[meta]
+namespace = "WireMessage"
+
+
+[baseTypes]
+byte = 1
+bool = 1
+uint16 = 2
+int16 = 2
+uint32 = 4
+int32 = 4
+float = 4
+double = 8
+
+[complexTypes]
+typeList = [
+    "string",
+    "list"
+]
+
+
+[[structs]]
+_name = "Vec2"
+x = "float"
+y = "float"
+
+[[structs]]
+_name = "Vec3"
+x = "float"
+y = "float"
+z = "float"
+
+[[structs]]
+_name = "Color"
+r = "byte"
+g = "byte"
+b = "byte"
+
+[[structs]]
+_name = "ComplexData"
+identifier = "byte"
+label = "string"
+textColor = "Color"
+backgroundColor = "Color"
+
+
+[[messages]]
+_name = "TestingMessage"
+b = "byte"
+tf = "bool"
+i16 = "int16"
+ui16 = "uint16"
+i32 = "int32"
+ui32 = "uint32"
+f = "float"
+d = "double"
+s = "string"
+v2 = "Vec2"
+v3 = "Vec3"
+c = "Color"
+sl = "[string]"
+v2l = "[Vec2]"
+v3l = "[Vec3]"
+cl = "[Color]"

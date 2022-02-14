@@ -1,0 +1,17 @@
+/env
+/out/*
+
+*__pycache__
+
+/testing/data/*
+/testing/harnesses/*
+
+/testing/src/typescript/node_modules
+/testing/src/typescript/package-lock.json
+/testing/src/typescript/WireMessage.js
+/testing/src/typescript/WireMessage.ts
+/testing/src/typescript/harness.js
+
+/testing/src/go/src/WireMessage/WireMessage.go
+
+!/**/.gitkeep
