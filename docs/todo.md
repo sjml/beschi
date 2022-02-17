@@ -1,24 +1,28 @@
-- look at making output into an array instead of a str (perf?)
-
 * functionality
+    - defaults as part of protocol? 
+        - override objects for each struct/message
+        - part of protocol validation: defaults match type
     - have all the frombytes maybe return null?
         - frombytes resets offset if returning null?
     - bool passed to WriteBytes to tag the output?
-    - multiple messages
+    - multiple messages from single byte buffer
         - process raw bytes should return a list
+    - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
 
 * testing framework
+    - harness fixes
+        - new makefiles
+        - make clean; make {basic, broken, etc [test names]}
+    - protocol validation
+    - graceful handling of broken messages
+    - can specify to only test a single language or only run a single test?
     - set up github actions
-    - either make all asserts hard or all of them soft
     - network read/write in each language? yikes.
         - Golang <-> TypeScript
         - Python <-> C#
-    - matrix of read/writes -- every language writes, every language reads all the written messages
-        - not necessary since we also verify that all the generated files are identical
     - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
         - qemu or something?
         - how many yaks can be shaved in this project?
-    - check that > 255 messages fails properly
     - Japanese/Arabic lorem ipsum
 
 * more writers
@@ -31,8 +35,6 @@
     - ignoring messages? (regex match?)
     - indentation as a flag?
     - typescript namespacing?
-    - 64-bit (languages might need more explicit work in using messages; JavaScript in particular)
-        - https://caniuse.com/?search=bigint
 
 * generic example protocol (rename "WireMessage")
 
@@ -41,6 +43,7 @@
         - made efforts to follow best practices of target languages as much as possible
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
         - TS requires "experimentalDecorators" on
+        - TS 64-bit -> bigint (might need es2020, browser support, caniuse)
         - all numbers stored little-endian
         - to make new writer:
             - str and list lengths are uint32 (enough to store more than 4 GB of text in a string -- if that's more than you need, you probably outgrew this system long ago)
@@ -63,10 +66,12 @@
     - does not handle: 
         - more than 255 types of messages because it uses a byte as the message type flag and 0 is reserved
             - this could obviously be expanded if ever needed
-        - 64-or-greater-bit integers; hard to work consistently across languages
+        - checking for variable names that will cause compilation errors
+            - if you call a message member "int" you probably won't be happy; don't do that
         - error handling / verification of messages; it would not be too hard to create a checksum message type and do the verifications one level up
         - partial deserialization; for the use case that inspired this library, (a) most messages are very small and (b) I basically *always* want *all* the data. If either of those two things change, I'll re-evaluate the capabilities of this, but honestly, would probably just move to flatbuffers at that point.
         - actual network communication; you have to get the bytes from somewhere and send them somewhere yourself (basic example code is availabe in each language in the example directory)
         - versionining of messages; this is meant for situations where the client and server evolve in lockstep and messages only exist in-flight. if there's any chance these are going to be persisted and have to handle versioning, you're better off using flatbuffers or Cap'n Proto or something like that. 
     - the existing generators are not terribly clever; there's no AST or interesting data structures happening. it just iterates over the structures and writes out code to serialize/deserialize
     - NB: each generator produces valid code in each of the languages, but it may not be the most prettily formatted. If you have strong opinions on that sort of thing, you should run it through a code formatter after it generates. 
+    - who beschi?

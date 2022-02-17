@@ -1,0 +1,1543 @@
+[meta]
+namespace = "TooBigShouldFail"
+
+[[structs]]
+_name = "dummy"
+
+
+[[messages]]
+_name = "vec2_1"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_2"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_3"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_4"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_5"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_6"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_7"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_8"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_9"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_10"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_11"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_12"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_13"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_14"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_15"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_16"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_17"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_18"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_19"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_20"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_21"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_22"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_23"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_24"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_25"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_26"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_27"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_28"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_29"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_30"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_31"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_32"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_33"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_34"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_35"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_36"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_37"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_38"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_39"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_40"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_41"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_42"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_43"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_44"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_45"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_46"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_47"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_48"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_49"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_50"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_51"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_52"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_53"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_54"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_55"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_56"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_57"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_58"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_59"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_60"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_61"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_62"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_63"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_64"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_65"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_66"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_67"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_68"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_69"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_70"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_71"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_72"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_73"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_74"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_75"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_76"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_77"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_78"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_79"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_80"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_81"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_82"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_83"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_84"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_85"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_86"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_87"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_88"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_89"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_90"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_91"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_92"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_93"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_94"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_95"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_96"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_97"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_98"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_99"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_100"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_101"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_102"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_103"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_104"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_105"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_106"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_107"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_108"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_109"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_110"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_111"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_112"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_113"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_114"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_115"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_116"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_117"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_118"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_119"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_120"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_121"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_122"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_123"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_124"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_125"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_126"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_127"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_128"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_129"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_130"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_131"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_132"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_133"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_134"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_135"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_136"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_137"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_138"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_139"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_140"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_141"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_142"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_143"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_144"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_145"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_146"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_147"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_148"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_149"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_150"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_151"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_152"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_153"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_154"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_155"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_156"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_157"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_158"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_159"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_160"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_161"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_162"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_163"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_164"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_165"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_166"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_167"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_168"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_169"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_170"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_171"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_172"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_173"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_174"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_175"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_176"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_177"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_178"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_179"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_180"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_181"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_182"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_183"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_184"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_185"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_186"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_187"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_188"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_189"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_190"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_191"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_192"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_193"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_194"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_195"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_196"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_197"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_198"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_199"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_200"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_201"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_202"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_203"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_204"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_205"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_206"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_207"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_208"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_209"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_210"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_211"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_212"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_213"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_214"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_215"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_216"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_217"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_218"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_219"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_220"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_221"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_222"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_223"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_224"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_225"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_226"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_227"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_228"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_229"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_230"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_231"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_232"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_233"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_234"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_235"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_236"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_237"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_238"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_239"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_240"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_241"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_242"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_243"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_244"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_245"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_246"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_247"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_248"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_249"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_250"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_251"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_252"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_253"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_254"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_255"
+x = "float"
+y = "float"
+
+
+[[messages]]
+_name = "vec2_256"
+x = "float"
+y = "float"
+
+

@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"os"
+	"path/filepath"
 
 	"./src/WireMessage"
 )
 
 var ok bool
 
-func assert(condition bool, label string) {
+func softAssert(condition bool, label string) {
 	if !condition {
 		os.Stderr.WriteString("FAILED! " + label + "\n")
 		ok = false
@@ -24,6 +25,8 @@ func main() {
 	example.Ui16 = 65000
 	example.I32 = -2000000000
 	example.Ui32 = 4000000000
+	example.I64 = -9000000000000000000
+	example.Ui64 = 18000000000000000000
 	example.F = 3.1415927410125732421875
 	example.D = 2.718281828459045090795598298427648842334747314453125
 	example.S = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
@@ -86,13 +89,13 @@ func main() {
 	c3.B = 255
 	example.Cl = []WireMessage.Color{c1, c2, c3}
 
-	isReadingPtr := flag.Bool("read", false, "try to read from a stored buffer")
-	isGeneratingPtr := flag.Bool("generate", false, "try to generate a stored buffer")
+	readPathPtr := flag.String("read", "", "path to message file for verification")
+	generatePathPtr := flag.String("generate", "", "path to message file for generation")
 	flag.Parse()
 
-	if *isGeneratingPtr {
-		os.MkdirAll("../../out/data", os.ModePerm)
-		dat, err := os.Create("../../out/data/test.go.msg")
+	if len(*generatePathPtr) > 0 {
+		os.MkdirAll(filepath.Dir(*generatePathPtr), os.ModePerm)
+		dat, err := os.Create(*generatePathPtr)
 		if err != nil {
 			panic(err)
 		}
@@ -100,8 +103,8 @@ func main() {
 
 		example.WriteBytes(dat)
 
-	} else if *isReadingPtr {
-		dat, err := os.Open("../../out/data/test.go.msg")
+	} else if len(*readPathPtr) > 0 {
+		dat, err := os.Open(*readPathPtr)
 		if err != nil {
 			panic(err)
 		}
@@ -111,43 +114,45 @@ func main() {
 		WireMessage.TestingMessageFromBytes(dat, &input)
 
 		ok = true
-		assert(input.B == example.B, "byte")
-		assert(input.Tf == example.Tf, "bool")
-		assert(input.I16 == example.I16, "i16")
-		assert(input.Ui16 == example.Ui16, "ui16")
-		assert(input.I32 == example.I32, "i32")
-		assert(input.Ui32 == example.Ui32, "ui32")
-		assert(input.F == example.F, "float")
-		assert(input.D == example.D, "double")
-		assert(input.S == example.S, "string")
-		assert(input.V2.X == example.V2.X, "Vec2")
-		assert(input.V2.Y == example.V2.Y, "Vec2")
-		assert(input.V3.X == example.V3.X, "Vec3")
-		assert(input.V3.Y == example.V3.Y, "Vec3")
-		assert(input.V3.Z == example.V3.Z, "Vec3")
-		assert(input.C.R == example.C.R, "Color")
-		assert(input.C.G == example.C.G, "Color")
-		assert(input.C.B == example.C.B, "Color")
-		assert(len(input.Sl) == len(example.Sl), "[string].length")
+		softAssert(input.B == example.B, "byte")
+		softAssert(input.Tf == example.Tf, "bool")
+		softAssert(input.I16 == example.I16, "i16")
+		softAssert(input.Ui16 == example.Ui16, "ui16")
+		softAssert(input.I32 == example.I32, "i32")
+		softAssert(input.Ui32 == example.Ui32, "ui32")
+		softAssert(input.I64 == example.I64, "i64")
+		softAssert(input.Ui64 == example.Ui64, "ui64")
+		softAssert(input.F == example.F, "float")
+		softAssert(input.D == example.D, "double")
+		softAssert(input.S == example.S, "string")
+		softAssert(input.V2.X == example.V2.X, "Vec2")
+		softAssert(input.V2.Y == example.V2.Y, "Vec2")
+		softAssert(input.V3.X == example.V3.X, "Vec3")
+		softAssert(input.V3.Y == example.V3.Y, "Vec3")
+		softAssert(input.V3.Z == example.V3.Z, "Vec3")
+		softAssert(input.C.R == example.C.R, "Color")
+		softAssert(input.C.G == example.C.G, "Color")
+		softAssert(input.C.B == example.C.B, "Color")
+		softAssert(len(input.Sl) == len(example.Sl), "[string].length")
 		for i := 0; i < len(input.Sl); i++ {
-			assert(input.Sl[i] == example.Sl[i], "[string]")
+			softAssert(input.Sl[i] == example.Sl[i], "[string]")
 		}
-		assert(len(input.V2l) == len(example.V2l), "[Vec2].length")
+		softAssert(len(input.V2l) == len(example.V2l), "[Vec2].length")
 		for i := 0; i < len(input.V2l); i++ {
-			assert(input.V2l[i].X == example.V2l[i].X, "[Vec2].x")
-			assert(input.V2l[i].Y == example.V2l[i].Y, "[Vec2].y")
+			softAssert(input.V2l[i].X == example.V2l[i].X, "[Vec2].x")
+			softAssert(input.V2l[i].Y == example.V2l[i].Y, "[Vec2].y")
 		}
-		assert(len(input.V3l) == len(example.V3l), "[Vec3].length")
+		softAssert(len(input.V3l) == len(example.V3l), "[Vec3].length")
 		for i := 0; i < len(input.V3l); i++ {
-			assert(input.V3l[i].X == example.V3l[i].X, "[Vec3].x")
-			assert(input.V3l[i].Y == example.V3l[i].Y, "[Vec3].y")
-			assert(input.V3l[i].Z == example.V3l[i].Z, "[Vec3].z")
+			softAssert(input.V3l[i].X == example.V3l[i].X, "[Vec3].x")
+			softAssert(input.V3l[i].Y == example.V3l[i].Y, "[Vec3].y")
+			softAssert(input.V3l[i].Z == example.V3l[i].Z, "[Vec3].z")
 		}
-		assert(len(input.Cl) == len(example.Cl), "[Color].length")
+		softAssert(len(input.Cl) == len(example.Cl), "[Color].length")
 		for i := 0; i < len(input.Cl); i++ {
-			assert(input.Cl[i].R == example.Cl[i].R, "[Color].r")
-			assert(input.Cl[i].G == example.Cl[i].G, "[Color].g")
-			assert(input.Cl[i].B == example.Cl[i].B, "[Color].b")
+			softAssert(input.Cl[i].R == example.Cl[i].R, "[Color].r")
+			softAssert(input.Cl[i].G == example.Cl[i].G, "[Color].g")
+			softAssert(input.Cl[i].B == example.Cl[i].B, "[Color].b")
 		}
 
 		if !ok {

@@ -6,9 +6,12 @@ DEFAULT_INDENT = "    "
 
 
 class Writer:
+    language_name = "[Base]"
+    default_extension = ".beschi"
+
     def __init__(self, protocol: Protocol, tab: str = DEFAULT_INDENT):
         self.indent_level: int = 0
-        self.output: str = ""
+        self.output: list[str] = []
 
         self.protocol = protocol
         self.tab: str = tab
@@ -21,17 +24,9 @@ class Writer:
         for msg_type in self.protocol.messages:
             self.type_mapping[msg_type] = msg_type
 
-    # just put text right in output
-    def direct_write(self, text: str):
-        self.output += text
-
-    # put text in output, indented to current level
-    def write(self, text: str):
-        self.output += (self.tab * self.indent_level) + text
-
-    # write, then newline
+    # write line with current indentation level
     def write_line(self, text: str = ""):
-        self.output += (self.tab * self.indent_level) + text + "\n"
+        self.output.append(self.indent_string(text))
 
     # return text with current indentation level
     def indent_string(self, text: str) -> str:

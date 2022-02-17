@@ -9,7 +9,7 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'))
 setup(
     name=LIB_NAME,
     version=LIB_VERSION,
-    description='',
+    description='code generator for binary message passing between languages',
     long_description=DESC,
     url='https://github.com/sjml/beschi',
     author='Shane Liesegang',
@@ -25,9 +25,14 @@ setup(
     install_requires=[
         'toml',
     ],
+    extras_require={
+        'dev': [
+            'pytest'
+        ]
+    },
     entry_points={
         'console_scripts': [
-            'beschi = beschi:main'
+            'beschi = beschi.cli:main'
         ]
     }
 )
