@@ -9,29 +9,29 @@ import subprocess
 
 
 if __name__ == "__main__":
-    basePath = os.path.abspath(os.path.dirname(__file__))
-    os.chdir(basePath)
+    base_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "..")
+    os.chdir(base_path)
 
     languages = sys.argv[1:]
-    dataPath = os.path.join(basePath, "testing", "data")
-    messages = (glob.glob(os.path.join(dataPath, "*.msg")))
+    data_path = os.path.join(base_path, "out", "data")
+    messages = (glob.glob(os.path.join(data_path, "*.msg")))
 
     for m in messages:
         os.remove(m)
 
     for lang in languages:
-        os.chdir(os.path.join(basePath, "testing", "src", lang))
+        os.chdir(os.path.join(base_path, "test", lang))
         status = subprocess.run(["make", "generate"], capture_output=True)
         if not status.returncode == 0:
             sys.stderr.write(status.stderr.decode("utf-8"))
-        if not os.path.exists(os.path.join(dataPath, "test.%s.msg" % lang)):
+        if not os.path.exists(os.path.join(data_path, "test.%s.msg" % lang)):
             sys.stderr.write("❌  %s didn't generate any files!\n" % lang)
             sys.exit(1)
 
     print("✅  All implementations produce output!")
 
     filecmp.clear_cache()
-    messages = (glob.glob(os.path.join(dataPath, "*.msg")))
+    messages = (glob.glob(os.path.join(data_path, "*.msg")))
     for i in range(len(messages)):
         j = i + 1
         if j >= len(messages):
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     print("✅  Produced test files are all identical!")
 
     for lang in languages:
-        os.chdir(os.path.join(basePath, "testing", "src", lang))
+        os.chdir(os.path.join(base_path, "test", lang))
         status = subprocess.run(["make", "read"], capture_output=True)
         if not status.returncode == 0:
             sys.stderr.write(status.stderr.decode("utf-8"))

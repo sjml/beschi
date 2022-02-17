@@ -2,23 +2,6 @@
 namespace = "WireMessage"
 
 
-[baseTypes]
-byte = 1
-bool = 1
-uint16 = 2
-int16 = 2
-uint32 = 4
-int32 = 4
-float = 4
-double = 8
-
-[complexTypes]
-typeList = [
-    "string",
-    "list"
-]
-
-
 [[structs]]
 _name = "Vec2"
 x = "float"

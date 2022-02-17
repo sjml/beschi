@@ -91,23 +91,24 @@ func main() {
 	flag.Parse()
 
 	if *isGeneratingPtr {
-		dat, err := os.Create("../../data/test.go.msg")
+		os.MkdirAll("../../out/data", os.ModePerm)
+		dat, err := os.Create("../../out/data/test.go.msg")
 		if err != nil {
 			panic(err)
 		}
 		defer dat.Close()
 
-		example.Write(dat)
+		example.WriteBytes(dat)
 
 	} else if *isReadingPtr {
-		dat, err := os.Open("../../data/test.go.msg")
+		dat, err := os.Open("../../out/data/test.go.msg")
 		if err != nil {
 			panic(err)
 		}
 		defer dat.Close()
 
 		var input WireMessage.TestingMessage
-		WireMessage.ReadTestingMessage(dat, &input)
+		WireMessage.TestingMessageFromBytes(dat, &input)
 
 		ok = true
 		assert(input.B == example.B, "byte")

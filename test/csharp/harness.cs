@@ -93,13 +93,14 @@ class ProtocolHarness {
 
         if (Array.IndexOf(args, "--generate") >= 0)
         {
-            FileStream f = new FileStream("../../data/test.csharp.msg", FileMode.Create);
+            System.IO.Directory.CreateDirectory("../../out/data/");
+            FileStream f = new FileStream("../../out/data/test.csharp.msg", FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw);
         }
         else if (Array.IndexOf(args, "--read") >= 0)
         {
-            FileStream f = File.OpenRead("../../data/test.csharp.msg");
+            FileStream f = File.OpenRead("../../out/data/test.csharp.msg");
             BinaryReader br = new BinaryReader(f);
             WireMessage.TestingMessage input = WireMessage.TestingMessage.FromBytes(br);
 

@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 
-import { WireMessage } from './WireMessage';
+import * as WireMessage from '../../out/generated/typescript/WireMessage';
 
 const example = new WireMessage.TestingMessage();
 example.b = 250;
@@ -91,10 +91,14 @@ if (process.argv.includes('--generate')) {
     const data = new ArrayBuffer(1024);
     const dv = new DataView(data);
     const offset = example.WriteBytes(dv, 0);
-    fs.writeFileSync('../../data/test.typescript.msg', Buffer.from(data, 0, offset));
+
+    if (!fs.existsSync('../../out/data')) {
+        fs.mkdirSync('../../out/data');
+    }
+    fs.writeFileSync('../../out/data/test.typescript.msg', Buffer.from(data, 0, offset));
 }
 else if (process.argv.includes('--read')) {
-    fs.readFile('../../data/test.typescript.msg', (_, data) => {
+    fs.readFile('../../out/data/test.typescript.msg', (_, data) => {
         const dv = new DataView(data.buffer);
         const input = WireMessage.TestingMessage.FromBytes(dv, 0).val;
 

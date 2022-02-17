@@ -1,0 +1,5 @@
+# intentionally ignoring the package-lock file
+/package-lock.json
+/node_modules
+
+/harness.js
