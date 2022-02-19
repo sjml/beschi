@@ -32,7 +32,7 @@ class Protocol():
 
         protocol_data = toml.load(filename)
 
-        if "namespace" in protocol_data["meta"]:
+        if "meta" in protocol_data and "namespace" in protocol_data["meta"]:
             if _contains_whitespace(protocol_data["meta"]["namespace"]):
                 raise ValueError(f"Namespace cannot contain whitespace: '{protocol_data['meta']['namespace']}'")
             self.namespace = protocol_data["meta"]["namespace"]
@@ -69,11 +69,12 @@ class Protocol():
                         raise NotImplementedError("No type called %s (message: %s)" % (var_type, message_name))
                     self.messages[message_name].append((var_name, var_type))
 
-        if len(protocol_data["messages"]) > 255:
-            raise ValueError("Cannot, at present, have more than 255 types of messages. Sorry. :(")
+            if len(protocol_data["messages"]) > 255:
+                raise ValueError("Cannot, at present, have more than 255 types of messages. Sorry. :(")
 
     def __str__(self) -> str:
         return f"Protocol (namespace: {self.namespace}, {len(self.structs)} structs, {len(self.messages)} messages)"
+
 
     def verify_type_name(self, type_name) -> bool:
         if type_name[0] == "[" and type_name[-1] == "]":

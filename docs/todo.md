@@ -9,10 +9,10 @@
         - process raw bytes should return a list
     - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
 
+* misc
+    - move to f-strings all across the board
+
 * testing framework
-    - harness fixes
-        - new makefiles
-        - make clean; make {basic, broken, etc [test names]}
     - protocol validation
     - graceful handling of broken messages
     - can specify to only test a single language or only run a single test?
@@ -35,8 +35,6 @@
     - ignoring messages? (regex match?)
     - indentation as a flag?
     - typescript namespacing?
-
-* generic example protocol (rename "WireMessage")
 
 * redo readme
     - also setup.py

@@ -8,6 +8,9 @@ import test_util
 def test_good_protocol():
     p = Protocol("test/_protocols/example.toml")
 
+def test_empty_protocol():
+    p = Protocol("test/_protocols/empty.toml")
+
 def test_protocol_not_exist():
     with pytest.raises(FileNotFoundError):
         p = Protocol("test/_protocols/nope.toml")

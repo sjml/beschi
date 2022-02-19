@@ -15,7 +15,7 @@ def test_writing():
         if os.path.exists(out_file):
             os.unlink(out_file)
         subprocess.check_call([
-            os.path.join(test_util.HARNESS_BIN_DIR, f"harness_{w}"),
+            os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
             "--generate", out_file
         ])
         assert(os.path.exists(out_file))
@@ -36,6 +36,6 @@ def test_reading():
     for w in beschi.writers.all_writers:
         out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"test.{w}.msg")
         subprocess.check_call([
-            os.path.join(test_util.HARNESS_BIN_DIR, f"harness_{w}"),
+            os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
             "--read", out_file
         ])

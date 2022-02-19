@@ -1,5 +1,5 @@
 [meta]
-namespace = "WireMessage"
+namespace = "ComprehensiveMessage"
 
 
 [[structs]]
@@ -25,6 +25,7 @@ identifier = "byte"
 label = "string"
 textColor = "Color"
 backgroundColor = "Color"
+spectrum = "[Color]"
 
 
 [[messages]]
@@ -47,3 +48,4 @@ sl = "[string]"
 v2l = "[Vec2]"
 v3l = "[Vec3]"
 cl = "[Color]"
+complex = "ComplexData"
