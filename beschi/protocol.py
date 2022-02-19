@@ -1,3 +1,4 @@
+import string
 from collections import OrderedDict
 
 import toml
@@ -20,6 +21,9 @@ COLLECTION_TYPES: list[str] = [
     "string",
 ]
 
+def _contains_whitespace(s: str) -> bool:
+    return True in [c in s for c in string.whitespace]
+
 class Protocol():
     def __init__(self, filename: str):
         self.namespace: str = None
@@ -29,6 +33,8 @@ class Protocol():
         protocol_data = toml.load(filename)
 
         if "namespace" in protocol_data["meta"]:
+            if _contains_whitespace(protocol_data["meta"]["namespace"]):
+                raise ValueError(f"Namespace cannot contain whitespace: '{protocol_data['meta']['namespace']}'")
             self.namespace = protocol_data["meta"]["namespace"]
 
         if "structs" in protocol_data:

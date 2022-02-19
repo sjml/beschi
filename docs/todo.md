@@ -39,6 +39,7 @@
 * generic example protocol (rename "WireMessage")
 
 * redo readme
+    - also setup.py
     - note
         - made efforts to follow best practices of target languages as much as possible
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html

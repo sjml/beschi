@@ -26,7 +26,10 @@ class Writer:
 
     # write line with current indentation level
     def write_line(self, text: str = ""):
-        self.output.append(self.indent_string(text))
+        if len(text) == 0:
+            self.output.append("")
+        else:
+            self.output.append(self.indent_string(text))
 
     # return text with current indentation level
     def indent_string(self, text: str) -> str:

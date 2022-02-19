@@ -1,0 +1,19 @@
+# used for testing that we handle broken/truncated messages properly
+
+[meta]
+namespace = "BrokenMessages"
+
+[[messages]]
+_name = "FullMessage"
+x = "float"
+y = "float"
+z = "float"
+
+[[messages]]
+_name = "TruncatedMessage"
+x = "float"
+y = "float"
+
+[[messages]]
+_name = "ListMessage"
+ints = "[int16]"
