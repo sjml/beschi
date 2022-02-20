@@ -62,55 +62,55 @@ class TypeScriptWriter(Writer):
 
             if func != None:
                 return [
-                    "%s%s = dv.%s(offset, true);" % (pref, var_name, func),
-                    "offset += %d;" % off
+                    f"{pref}{var_name} = dv.{func}(offset, true);",
+                    f"offset += {off};"
                 ]
 
             if var_type == "byte":
                 return [
-                    "%s%s = dv.getUint8(offset);" % (pref, var_name),
+                    f"{pref}{var_name} = dv.getUint8(offset);",
                     "offset += 1;"
                 ]
             elif var_type == "bool":
                 return [
-                    "const %sByte = dv.getUint8(offset);" % (label),
-                    "%s%s = (%sByte > 0);" % (pref, var_name, label),
+                    f"const {label}Byte = dv.getUint8(offset);",
+                    f"{pref}{var_name} = ({label}Byte > 0);",
                     "offset += 1;"
                 ]
             if func == None:
-                raise NotImplementedError("Type %s not deserializable yet." % var_type)
+                raise NotImplementedError(f"Type {var_type} not deserializable yet.")
         elif var_type == "string":
             return [
-                "const %sLength = dv.getUint32(offset, true);" % (label),
+                f"const {label}Length = dv.getUint32(offset, true);",
                 "offset += 4;",
-                "const %sBuffer = new Uint8Array(dv.buffer, offset, %sLength);" % (label, label),
-                "offset += %sLength;" % (label),
-                "%s%s = textDec.decode(%sBuffer);" % (pref, var_name, label),
+                f"const {label}Buffer = new Uint8Array(dv.buffer, offset, {label}Length);",
+                f"offset += {label}Length;",
+                f"{pref}{var_name} = textDec.decode({label}Buffer);",
             ]
         elif var_type in self.protocol.structs:
             return [
-                "const %sRetVal = %s.FromBytes(dv, offset);" % (label, var_type),
-                "%s%s = %sRetVal.val;" % (pref, var_name, label),
-                "offset = %sRetVal.offset;" % (label)
+                f"const {label}RetVal = {var_type}.FromBytes(dv, offset);",
+                f"{pref}{var_name} = {label}RetVal.val;",
+                f"offset = {label}RetVal.offset;",
             ]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
-                "const %sLength = dv.getUint32(offset, true);" % (var_name),
+                f"const {var_name}Length = dv.getUint32(offset, true);",
                 "offset += 4;",
-                "%s%s = Array<%s>(%sLength);" % (pref, var_name, self.get_var(interior), var_name),
-                "for (let i = 0; i < %sLength; i++)" % (var_name),
+                f"{pref}{var_name} = Array<{self.get_var(interior)}>({var_name}Length);",
+                f"for (let i = 0; i < {var_name}Length; i++)",
                 "{"
             ]
             out += [
                 self.tab + deser for deser in self.deserializer(
-                    interior, "%s[i]" % (var_name), parent
+                    interior, f"{var_name}[i]", parent
                 )
             ]
             out += "}"
             return out
         else:
-            raise NotImplementedError("Type %s not deserializable yet." % var_type)
+            raise NotImplementedError(f"Type {var_type} not deserializable yet.")
 
 
     def serializer(self, var_type: str, var_name: str, parent: str = "this") -> list[str]:
@@ -148,45 +148,45 @@ class TypeScriptWriter(Writer):
 
             if func != None:
                 return [
-                    "dv.%s(offset, %s%s, true);" % (func, pref, var_name),
-                    "offset += %d;" % off
+                    f"dv.{func}(offset, {pref}{var_name}, true);",
+                    f"offset += {off};"
                 ]
             if var_type == "byte":
                 return [
-                    "dv.setUint8(offset, %s%s);" % (pref, var_name),
+                    f"dv.setUint8(offset, {pref}{var_name});",
                     "offset += 1;"
                 ]
             if var_type == "bool":
                 return [
-                    "dv.setUint8(offset, %s%s ? 1 : 0);" % (pref, var_name),
+                    f"dv.setUint8(offset, {pref}{var_name} ? 1 : 0);",
                     "offset += 1;"
                 ]
         elif var_type == "string":
             return [
-                "const %sBuffer = textEnc.encode(%s%s);" % (var_name, pref, var_name),
-                "const %sArr = new Uint8Array(dv.buffer);" % (var_name),
-                "dv.setUint32(offset, %sBuffer.byteLength, true);" % (var_name),
+                f"const {var_name}Buffer = textEnc.encode({pref}{var_name});",
+                f"const {var_name}Arr = new Uint8Array(dv.buffer);",
+                f"dv.setUint32(offset, {var_name}Buffer.byteLength, true);",
                 "offset += 4;",
-                "%sArr.set(%sBuffer, offset);" % (var_name, var_name),
-                "offset += %sBuffer.byteLength;" % (var_name)
+                f"{var_name}Arr.set({var_name}Buffer, offset);",
+                f"offset += {var_name}Buffer.byteLength;",
             ]
         elif var_type in self.protocol.structs:
             return [
-                "offset = %s%s.WriteBytes(dv, offset);" % (pref, var_name)
+                f"offset = {pref}{var_name}.WriteBytes(dv, offset);"
             ]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
-                "dv.setUint32(offset, %s%s.length, true);" % (pref, var_name),
+                f"dv.setUint32(offset, {pref}{var_name}.length, true);",
                 "offset += 4;",
-                "for (let i = 0; i < %s%s.length; i++) {" % (pref, var_name),
-                self.tab + "let el = %s%s[i];" % (pref, var_name)
+                f"for (let i = 0; i < {pref}{var_name}.length; i++) {{",
+                self.tab + f"let el = {pref}{var_name}[i];",
             ]
             out += [self.tab + ser for ser in self.serializer(interior, "el", None)]
             out += "}"
             return out
         else:
-            raise NotImplementedError("Type %s not serializable yet." % var_type)
+            raise NotImplementedError(f"Type {var_type} not serializable yet.")
 
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
@@ -195,14 +195,14 @@ class TypeScriptWriter(Writer):
             is_message = True
 
         if is_message:
-            self.write_line("export class %s implements Message {" % s[0])
+            self.write_line(f"export class {s[0]} implements Message {{")
         else:
-            self.write_line("export class %s {" % s[0])
+            self.write_line(f"export class {s[0]} {{")
         self.indent_level += 1
 
         for var_name, var_type in s[1]:
             if var_type[0] == "[" and var_type[-1] == "]":
-                self.write_line("%s: %s[] = [];" % (var_name, self.get_var(var_type[1:-1])))
+                self.write_line(f"{var_name}: {self.get_var(var_type[1:-1])}[] = [];")
             else:
                 var_type = self.get_var(var_type)
                 default_value = "0"
@@ -220,7 +220,7 @@ class TypeScriptWriter(Writer):
         if is_message:
             self.write_line("GetMessageType() : MessageType {")
             self.indent_level += 1
-            self.write_line("return MessageType.%s;" % s[0])
+            self.write_line(f"return MessageType.{s[0]};")
             self.indent_level -=1
             self.write_line("}")
             self.write_line()
@@ -234,15 +234,15 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("static FromBytes(dv: DataView, offset: number): {val: %s, offset: number} {" % s[0])
+        self.write_line(f"static FromBytes(dv: DataView, offset: number): {{val: {s[0]}, offset: number}} {{")
         self.indent_level += 1
         if is_message:
             self.write_line("try {")
             self.indent_level += 1
-        self.write_line("const n%s = new %s();" % (s[0], self.get_var(s[0])))
+        self.write_line(f"const n{s[0]} = new {self.get_var(s[0])}();")
         for var_name, var_type in s[1]:
-            [self.write_line(s) for s in self.deserializer(var_type, var_name, "n%s" % s[0])]
-        self.write_line("return {val: n%s, offset: offset};" % s[0])
+            [self.write_line(s) for s in self.deserializer(var_type, var_name, f"n{s[0]}")]
+        self.write_line(f"return {{val: n{s[0]}, offset: offset}};")
         if is_message:
             self.indent_level -= 1
             self.write_line("}")
@@ -297,7 +297,7 @@ class TypeScriptWriter(Writer):
 
         self.write_line("export enum MessageType {")
         self.indent_level += 1
-        [self.write_line(k + " = %d," % (i+1)) for i, k in enumerate(msg_types)]
+        [self.write_line(f"{k} = {i+1},") for i, k in enumerate(msg_types)]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -309,9 +309,9 @@ class TypeScriptWriter(Writer):
         self.write_line("switch (msgType) {")
         self.indent_level += 1
         for msg_type in msg_types:
-            self.write_line("case MessageType.%s:" % msg_type)
+            self.write_line(f"case MessageType.{msg_type}:")
             self.indent_level += 1
-            self.write_line("return %s.FromBytes(dv, offset);" % msg_type)
+            self.write_line(f"return {msg_type}.FromBytes(dv, offset);")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1

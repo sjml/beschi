@@ -6,12 +6,9 @@
     - multiple messages from single byte buffer
         - process raw bytes should return a list
     - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
-
-* misc
-    - move to f-strings all across the board
+        - look at how go is doing "simplicity"
 
 * testing framework
-    - can specify to only test a single language or only run a single test?
     - set up github actions
     - network read/write in each language? yikes.
         - Golang <-> TypeScript

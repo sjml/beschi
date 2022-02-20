@@ -54,7 +54,7 @@ class Protocol():
                     if _contains_whitespace(var_name):
                         raise ValueError(f"Member name cannot contain whitespace: '{var_name}'")
                     if not self.verify_type_name(var_type):
-                        raise NotImplementedError("No type called %s (definition: %s)" % (var_type, struct_name))
+                        raise NotImplementedError(f"No type called {var_type} (definition: {struct_name})")
                     self.structs[struct_name].append((var_name, var_type))
 
         if "messages" in protocol_data:
@@ -74,7 +74,7 @@ class Protocol():
                     if _contains_whitespace(var_name):
                         raise ValueError(f"Member name cannot contain whitespace: '{var_name}'")
                     if not self.verify_type_name(var_type):
-                        raise NotImplementedError("No type called %s (message: %s)" % (var_type, message_name))
+                        raise NotImplementedError(f"No type called {var_type} (message: {message_name})")
                     self.messages[message_name].append((var_name, var_type))
 
             if len(protocol_data["messages"]) > 255:

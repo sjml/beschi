@@ -37,5 +37,5 @@ class Writer:
 
     def get_var(self, var_type: str) -> str:
         if var_type not in self.type_mapping:
-            raise NotImplementedError("No type called %s implemented for <%s>." % (var_type, type(self)))
+            raise NotImplementedError(f"No type called {var_type} implemented for <{type(self)}>.")
         return self.type_mapping[var_type]

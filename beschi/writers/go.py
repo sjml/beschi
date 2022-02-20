@@ -72,7 +72,7 @@ class GoWriter(Writer):
                     return False
             return True
         else:
-            raise NotImplementedError("Can't determine simplicity of %s." % var_type)
+            raise NotImplementedError(f"Can't determine simplicity of {var_type}.")
 
     def deserializer(self, var_type: str, var_name: str, parent: str = None) -> list[str]:
         if parent == None:
@@ -80,9 +80,9 @@ class GoWriter(Writer):
             ptr = ""
             this = var_name
         else:
-            pref = "%s." % parent
+            pref = f"{parent}."
             ptr = "&"
-            this = pref + var_name
+            this = f"{pref}{var_name}"
         label = var_name
         if label.endswith("[i]"):
             label = "i"
@@ -95,7 +95,7 @@ class GoWriter(Writer):
 
         if self.simple(var_type):
             return [
-                "err = binary.Read(data, binary.LittleEndian, %s%s%s)" % (ptr, pref, var_name),
+                f"err = binary.Read(data, binary.LittleEndian, {ptr}{pref}{var_name})",
                 *err_panic
             ]
         elif var_type in self.protocol.structs or var_type in self.protocol.messages:
@@ -109,23 +109,23 @@ class GoWriter(Writer):
                 output += self.deserializer(vt, vn, this)
             return output
         elif var_type == "string":
-            return ["readString(data, %s%s%s)" % (ptr, pref, var_name)]
+            return [f"readString(data, {ptr}{pref}{var_name})"]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
-                "var %sLen uint32" % label,
-                "err = binary.Read(data, binary.LittleEndian, &%sLen)" % label,
+                f"var {label}Len uint32",
+                f"err = binary.Read(data, binary.LittleEndian, &{label}Len)",
                 *err_panic,
-                "%s%s = make([]%s, %sLen)" % (pref, var_name, interior, label),
-                "for i := (uint32)(0); i < %sLen; i++ {" % label
+                f"{pref}{var_name} = make([]{interior}, {label}Len)",
+                f"for i := (uint32)(0); i < {label}Len; i++ {{"
             ]
             out += [
-                self.tab + deser for deser in self.deserializer(interior, "%s[i]" % (var_name), parent)
+                self.tab + deser for deser in self.deserializer(interior, f"{var_name}[i]", parent)
             ]
             out += ["}"]
             return out
         else:
-            raise NotImplementedError("Type %s not deserializable yet." % var_type)
+            raise NotImplementedError(f"Type {var_type} not deserializable yet.")
 
 
     def serializer(self, var_type: str, var_name: str, parent: str = None) -> list[str]:
@@ -134,15 +134,15 @@ class GoWriter(Writer):
             ptr = ""
             this = "output"
         else:
-            pref = "%s." % parent
+            pref = f"{parent}."
             ptr = "&"
-            this = pref + var_name
+            this = f"{pref}{var_name}"
         label = var_name
         if label.endswith("[i]"):
             label = "i"
 
         if self.simple(var_type):
-            return ["binary.Write(data, binary.LittleEndian, %s%s%s)" % (ptr, pref, var_name)]
+            return [f"binary.Write(data, binary.LittleEndian, {ptr}{pref}{var_name})"]
         elif var_type in self.protocol.structs or var_type in self.protocol.messages:
             fields: list[tuple[str,str]] = None
             if var_type in self.protocol.structs:
@@ -154,21 +154,21 @@ class GoWriter(Writer):
                 output += self.serializer(vt, vn, this)
             return output
         elif var_type == "string":
-            return ["writeString(data, %s%s%s)" % (ptr, pref, var_name)]
+            return [f"writeString(data, {ptr}{pref}{var_name})"]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
-                "%sLen := (uint32)(len(%s%s))" % (label, pref, var_name),
-                "binary.Write(data, binary.LittleEndian, %sLen)" % label,
-                "for i := (uint32)(0); i < %sLen; i++ {" % label
+                f"{label}Len := (uint32)(len({pref}{var_name}))",
+                f"binary.Write(data, binary.LittleEndian, {label}Len)",
+                f"for i := (uint32)(0); i < {label}Len; i++ {{",
             ]
             out += [
-                self.tab + deser for deser in self.serializer(interior, "%s[i]" % (var_name), parent)
+                self.tab + deser for deser in self.serializer(interior, f"{var_name}[i]", parent)
             ]
             out += ["}"]
             return out
         else:
-            raise NotImplementedError("Type %s not serializable yet." % var_type)
+            raise NotImplementedError(f"Type {var_type} not serializable yet.")
 
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
@@ -177,20 +177,20 @@ class GoWriter(Writer):
             is_message = True
 
         self.write_line()
-        self.write_line("type %s struct {" % s[0])
+        self.write_line(f"type {s[0]} struct {{")
         self.indent_level += 1
 
         for var_name, var_type in s[1]:
             if var_type[0] == "[" and var_type[-1] == "]":
-                self.write_line("%s []%s" % (var_name, self.get_var(var_type[1:-1])))
+                self.write_line(f"{var_name} []{self.get_var(var_type[1:-1])}")
             else:
-                self.write_line("%s %s" % (var_name, self.get_var(var_type)))
+                self.write_line(f"{var_name} {self.get_var(var_type)}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
         if is_message:
-            self.write_line("func %sFromBytes (data io.Reader) (msg *%s) {" % (s[0], s[0]) )
+            self.write_line(f"func {s[0]}FromBytes (data io.Reader) (msg *{s[0]}) {{")
             self.indent_level += 1
             self.write_line("defer func() {")
             self.indent_level += 1
@@ -202,12 +202,12 @@ class GoWriter(Writer):
             self.indent_level -= 1
             self.write_line("}()")
             self.write_line("var err error")
-            self.write_line("ret := %s{}" % s[0])
+            self.write_line(f"ret := {s[0]}{{}}")
             [self.write_line(s) for s in self.deserializer(s[0], "ret")]
             self.write_line()
             self.write_line("return &ret")
         else:
-            self.write_line("func %sFromBytes (data io.Reader, input *%s) {" % (s[0], s[0]) )
+            self.write_line(f"func {s[0]}FromBytes (data io.Reader, input *{s[0]}) {{")
             self.indent_level += 1
             self.write_line("var err error")
             [self.write_line(s) for s in self.deserializer(s[0], "input")]
@@ -215,7 +215,7 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func (output %s) WriteBytes (data io.Writer) {" % (s[0]))
+        self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer) {{")
         self.indent_level += 1
         [self.write_line(s) for s in self.serializer(s[0], "output")]
         self.indent_level -= 1
@@ -227,9 +227,9 @@ class GoWriter(Writer):
     def gen_message(self, m: tuple[str, list[tuple[str,str]]]):
         self.gen_struct(m)
 
-        self.write_line("func (output %s) GetMessageType() MessageType {" % (m[0]))
+        self.write_line(f"func (output {m[0]}) GetMessageType() MessageType {{")
         self.indent_level += 1
-        self.write_line("return %sType" % m[0])
+        self.write_line(f"return {m[0]}Type")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -242,7 +242,7 @@ class GoWriter(Writer):
         self.write_line(f"// Do not edit directly.")
         self.write_line()
         if self.protocol.namespace:
-            self.write_line("package %s" % self.protocol.namespace)
+            self.write_line(f"package {self.protocol.namespace}")
         else:
             self.write_line("package main")
         self.write_line()
@@ -259,7 +259,7 @@ class GoWriter(Writer):
         self.write_line("type MessageType byte")
         self.write_line("const (")
         self.indent_level += 1
-        [self.write_line("%sType MessageType = %d" % (k, i+1)) for i, k in enumerate(msg_types)]
+        [self.write_line(f"{k}Type MessageType = {i+1}") for i, k in enumerate(msg_types)]
         self.indent_level -= 1
         self.write_line(")")
         self.write_line()
@@ -278,9 +278,9 @@ class GoWriter(Writer):
         self.write_line("binary.Read(data, binary.LittleEndian, &msgType)")
         self.write_line("switch msgType {")
         for msg_type in msg_types:
-            self.write_line("case %sType:" % msg_type)
+            self.write_line(f"case {msg_type}Type:")
             self.indent_level += 1
-            self.write_line("return %sFromBytes(data)" % msg_type)
+            self.write_line(f"return {msg_type}FromBytes(data)")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
