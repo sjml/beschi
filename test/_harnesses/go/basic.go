@@ -8,7 +8,7 @@ import (
 	"./src/ComprehensiveMessage"
 )
 
-var ok bool
+var ok bool = true
 
 func softAssert(condition bool, label string) {
 	if !condition {
@@ -44,6 +44,8 @@ func main() {
 		"Vivamus pellentesque turpis aliquet pretium tincidunt.",
 		"Nulla facilisi.",
 		"🐼❤️✝️",
+		"用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
+		"لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
 	}
 	var v21 ComprehensiveMessage.Vec2
 	v21.X = 10.0
@@ -115,10 +117,9 @@ func main() {
 		}
 		defer dat.Close()
 
-		var input ComprehensiveMessage.TestingMessage
-		ComprehensiveMessage.TestingMessageFromBytes(dat, &input)
+		input := ComprehensiveMessage.TestingMessageFromBytes(dat)
+		softAssert(input != nil, "parsing test message")
 
-		ok = true
 		softAssert(input.B == example.B, "byte")
 		softAssert(input.Tf == example.Tf, "bool")
 		softAssert(input.I16 == example.I16, "i16")
@@ -174,9 +175,10 @@ func main() {
 			softAssert(input.Complex.Spectrum[i].B == example.Complex.Spectrum[i].B, "ComplexData.spectrum.b")
 		}
 
-		if !ok {
-			os.Stderr.WriteString("Failed assertions.\n")
-			os.Exit(1)
-		}
+	}
+
+	if !ok {
+		os.Stderr.WriteString("Failed assertions.\n")
+		os.Exit(1)
 	}
 }

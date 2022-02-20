@@ -1,0 +1,20 @@
+[meta]
+namespace = "DuplicateStructName"
+
+[[structs]]
+_name = "StructA"
+x = "int"
+y = "int"
+z = "int"
+
+[[structs]]
+_name = "StructB"
+x = "int"
+y = "int"
+z = "int"
+
+[[structs]]
+_name = "StructA"
+x = "int"
+y = "int"
+z = "int"

@@ -1,9 +1,6 @@
 [meta]
 namespace = "TooBigShouldFail"
 
-[[structs]]
-_name = "dummy"
-
 
 [[messages]]
 _name = "vec2_1"

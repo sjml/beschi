@@ -6,7 +6,7 @@ using ComprehensiveMessage;
 
 class ProtocolHarness {
 
-    static bool OK;
+    static bool OK = true;
     static void softAssert(bool condition, string label)
     {
         if (!condition)
@@ -72,6 +72,8 @@ class ProtocolHarness {
             "Vivamus pellentesque turpis aliquet pretium tincidunt.",
             "Nulla facilisi.",
             "🐼❤️✝️",
+            "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
+            "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
         };
         ComprehensiveMessage.Vec2 v21 = new ComprehensiveMessage.Vec2();
         v21.x = 10.0f;
@@ -131,24 +133,24 @@ class ProtocolHarness {
             c3, c2, c1
         };
 
-        Dictionary<string, string> parsed = parseArguments(args);
+        Dictionary<string, string> parsedArgs = parseArguments(args);
 
-        if (parsed.ContainsKey("generate"))
+        if (parsedArgs.ContainsKey("generate"))
         {
-            string outPath = parsed["generate"];
+            string outPath = parsedArgs["generate"];
             string outDir = System.IO.Path.GetDirectoryName(outPath);
             System.IO.Directory.CreateDirectory(outDir);
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw);
         }
-        else if (parsed.ContainsKey("read"))
+        else if (parsedArgs.ContainsKey("read"))
         {
-            FileStream f = File.OpenRead(parsed["read"]);
+            FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
             ComprehensiveMessage.TestingMessage input = ComprehensiveMessage.TestingMessage.FromBytes(br);
+            softAssert(example != null, "parsing test message");
 
-            OK = true;
             softAssert(input.b == example.b, "byte");
             softAssert(input.tf == example.tf, "bool");
             softAssert(input.i16 == example.i16, "i16");

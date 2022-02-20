@@ -1,0 +1,6 @@
+[meta]
+namespace = "BadTypeOnStruct"
+
+[[structs]]
+_name = "BadBoy"
+what = "lint"

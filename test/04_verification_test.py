@@ -7,13 +7,19 @@ import beschi.writers
 
 import test_util
 
+
+def test_basic_harness_compilation():
+    for label in beschi.writers.all_writers:
+        test_util.build_for(label, "basic", "ComprehensiveMessage")
+
 def test_writing():
     if not os.path.exists(test_util.DATA_OUTPUT_DIR):
         os.makedirs(test_util.DATA_OUTPUT_DIR)
     for w in beschi.writers.all_writers:
-        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"test.{w}.msg")
+        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"basic.{w}.msg")
         if os.path.exists(out_file):
             os.unlink(out_file)
+        assert(not os.path.exists(out_file))
         subprocess.check_call([
             os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
             "--generate", out_file
@@ -34,7 +40,7 @@ def test_writing_comparison():
 #   we just need to have each one read it's own instead of doing a matrix
 def test_reading():
     for w in beschi.writers.all_writers:
-        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"test.{w}.msg")
+        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"basic.{w}.msg")
         subprocess.check_call([
             os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
             "--read", out_file

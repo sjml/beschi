@@ -1,0 +1,19 @@
+[meta]
+namespace = "MissingMessageName"
+
+[[messages]]
+x = "int"
+y = "int"
+z = "int"
+
+[[messages]]
+_name = "MessageB"
+x = "int"
+y = "int"
+z = "int"
+
+[[messages]]
+_name = "MessageA"
+x = "int"
+y = "int"
+z = "int"

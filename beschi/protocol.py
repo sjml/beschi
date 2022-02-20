@@ -43,12 +43,16 @@ class Protocol():
                     raise ValueError(f"Missing _name on {struct_data}")
                 if struct_data["_name"] in self.structs:
                     raise ValueError(f"Duplicate _name on {struct_data}")
+                if _contains_whitespace(struct_data["_name"]):
+                    raise ValueError(f"Struct _name cannot contain whitespace: '{struct_data['_name']}'")
                 self.structs[struct_data["_name"]] = []
             for struct in protocol_data["structs"]:
                 struct_name = struct["_name"]
                 for var_name, var_type in struct.items():
                     if (var_name[0] == "_"):
                         continue
+                    if _contains_whitespace(var_name):
+                        raise ValueError(f"Member name cannot contain whitespace: '{var_name}'")
                     if not self.verify_type_name(var_type):
                         raise NotImplementedError("No type called %s (definition: %s)" % (var_type, struct_name))
                     self.structs[struct_name].append((var_name, var_type))
@@ -59,12 +63,16 @@ class Protocol():
                     raise ValueError(f"Missing _name on {message_data}")
                 if message_data["_name"] in self.messages:
                     raise ValueError(f"Duplicate _name on {message_data}")
+                if _contains_whitespace(message_data["_name"]):
+                    raise ValueError(f"Struct _name cannot contain whitespace: '{message_data['_name']}'")
                 self.messages[message_data["_name"]] = []
             for message in protocol_data["messages"]:
                 message_name = message["_name"]
                 for var_name, var_type in message.items():
                     if (var_name[0] == "_"):
                         continue
+                    if _contains_whitespace(var_name):
+                        raise ValueError(f"Member name cannot contain whitespace: '{var_name}'")
                     if not self.verify_type_name(var_type):
                         raise NotImplementedError("No type called %s (message: %s)" % (var_type, message_name))
                     self.messages[message_name].append((var_name, var_type))

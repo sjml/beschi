@@ -1,0 +1,6 @@
+[meta]
+namespace = "BadTypeOnMessage"
+
+[[messages]]
+_name = "BadBoy"
+what = "lint"

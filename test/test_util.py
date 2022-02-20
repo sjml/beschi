@@ -26,3 +26,16 @@ def generate_for(protocol: str, output_name: str):
             "--output", out_file_path
         ])
         assert(os.path.exists(out_file_path))
+
+def build_for(language: str, srcfile: str, libfile: str):
+    writer_class = beschi.writers.all_writers[language]
+    if not os.path.exists(HARNESS_BIN_DIR):
+        os.makedirs(HARNESS_BIN_DIR)
+    harness_path = os.path.join(HARNESS_SRC_DIR, language)
+    invoke_build = [
+        "python", f"{harness_path}/builder.py",
+        "--srcfile", f"{srcfile}{writer_class.default_extension}",
+        "--libfile", f"{libfile}{writer_class.default_extension}",
+    ]
+    subprocess.check_call(invoke_build + ["--clean"])
+    subprocess.check_call(invoke_build)

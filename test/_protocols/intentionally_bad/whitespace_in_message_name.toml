@@ -1,0 +1,6 @@
+[meta]
+namespace = "WhitespaceInMessageName"
+
+[[messages]]
+_name = "Bad Boy"
+what = "int"

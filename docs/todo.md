@@ -2,8 +2,6 @@
     - defaults as part of protocol? 
         - override objects for each struct/message
         - part of protocol validation: defaults match type
-    - have all the frombytes maybe return null?
-        - frombytes resets offset if returning null?
     - bool passed to WriteBytes to tag the output?
     - multiple messages from single byte buffer
         - process raw bytes should return a list
@@ -13,8 +11,7 @@
     - move to f-strings all across the board
 
 * testing framework
-    - protocol validation
-    - graceful handling of broken messages
+    - typescript's softassert should set an ok
     - can specify to only test a single language or only run a single test?
     - set up github actions
     - network read/write in each language? yikes.
@@ -23,7 +20,6 @@
     - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
         - qemu or something?
         - how many yaks can be shaved in this project?
-    - Japanese/Arabic lorem ipsum
 
 * more writers
     * python
@@ -39,6 +35,7 @@
 * redo readme
     - also setup.py
     - note
+        - returns null if it couldn't parse (usually stream got truncated or something)
         - made efforts to follow best practices of target languages as much as possible
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
         - TS requires "experimentalDecorators" on

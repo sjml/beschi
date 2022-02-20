@@ -236,10 +236,22 @@ class TypeScriptWriter(Writer):
 
         self.write_line("static FromBytes(dv: DataView, offset: number): {val: %s, offset: number} {" % s[0])
         self.indent_level += 1
+        if is_message:
+            self.write_line("try {")
+            self.indent_level += 1
         self.write_line("const n%s = new %s();" % (s[0], self.get_var(s[0])))
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.deserializer(var_type, var_name, "n%s" % s[0])]
         self.write_line("return {val: n%s, offset: offset};" % s[0])
+        if is_message:
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line("catch (RangeError) {")
+            self.indent_level += 1
+            self.write_line("return {val: null, offset: offset};")
+            self.indent_level -= 1
+            self.write_line("}")
+
         self.indent_level -= 1
         self.write_line("}")
 

@@ -1,0 +1,6 @@
+[meta]
+namespace = "WhitespaceInStructName"
+
+[[structs]]
+_name = "Bad Boy"
+what = "int"

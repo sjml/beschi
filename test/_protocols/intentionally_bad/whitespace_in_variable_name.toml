@@ -1,0 +1,6 @@
+[meta]
+namespace = "WhitespaceInVariableName"
+
+[[messages]]
+_name = "BadBoy"
+"what is this" = "int"

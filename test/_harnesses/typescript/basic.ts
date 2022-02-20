@@ -32,7 +32,9 @@ example.sl = [
     "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
     "Vivamus pellentesque turpis aliquet pretium tincidunt.",
     "Nulla facilisi.",
-    "🐼❤️✝️"
+    "🐼❤️✝️",
+    "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
+    "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
 ];
 const v21 = new ComprehensiveMessage.Vec2();
 v21.x = 10.0;
@@ -108,6 +110,7 @@ if (args["generate"]) {
 else if (args["read"]) {
     const dv = getDataView(args["read"]);
     const input = ComprehensiveMessage.TestingMessage.FromBytes(dv, 0).val;
+    softAssert(example != null, "parsing test message");
 
     softAssert(input.b == example.b, "byte");
     softAssert(input.tf == example.tf, "bool");

@@ -78,7 +78,7 @@ class GoWriter(Writer):
         if parent == None:
             pref = ""
             ptr = ""
-            this = "input"
+            this = var_name
         else:
             pref = "%s." % parent
             ptr = "&"
@@ -87,8 +87,17 @@ class GoWriter(Writer):
         if label.endswith("[i]"):
             label = "i"
 
+        err_panic = [
+            "if err != nil {",
+            self.tab + "panic(err)",
+            "}",
+        ]
+
         if self.simple(var_type):
-            return ["binary.Read(data, binary.LittleEndian, %s%s%s)" % (ptr, pref, var_name)]
+            return [
+                "err = binary.Read(data, binary.LittleEndian, %s%s%s)" % (ptr, pref, var_name),
+                *err_panic
+            ]
         elif var_type in self.protocol.structs or var_type in self.protocol.messages:
             fields: list[tuple[str,str]] = None
             if var_type in self.protocol.structs:
@@ -105,7 +114,8 @@ class GoWriter(Writer):
             interior = var_type[1:-1]
             out = [
                 "var %sLen uint32" % label,
-                "binary.Read(data, binary.LittleEndian, &%sLen)" % label,
+                "err = binary.Read(data, binary.LittleEndian, &%sLen)" % label,
+                *err_panic,
                 "%s%s = make([]%s, %sLen)" % (pref, var_name, interior, label),
                 "for i := (uint32)(0); i < %sLen; i++ {" % label
             ]
@@ -162,6 +172,10 @@ class GoWriter(Writer):
 
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
+        is_message = False
+        if s[0] in self.protocol.messages:
+            is_message = True
+
         self.write_line()
         self.write_line("type %s struct {" % s[0])
         self.indent_level += 1
@@ -175,9 +189,28 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func %sFromBytes (data io.Reader, input *%s) {" % (s[0], s[0]) )
-        self.indent_level += 1
-        [self.write_line(s) for s in self.deserializer(s[0], "input")]
+        if is_message:
+            self.write_line("func %sFromBytes (data io.Reader) (msg *%s) {" % (s[0], s[0]) )
+            self.indent_level += 1
+            self.write_line("defer func() {")
+            self.indent_level += 1
+            self.write_line("if r := recover(); r != nil {")
+            self.indent_level += 1
+            self.write_line("msg = nil")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.indent_level -= 1
+            self.write_line("}()")
+            self.write_line("var err error")
+            self.write_line("ret := %s{}" % s[0])
+            [self.write_line(s) for s in self.deserializer(s[0], "ret")]
+            self.write_line()
+            self.write_line("return &ret")
+        else:
+            self.write_line("func %sFromBytes (data io.Reader, input *%s) {" % (s[0], s[0]) )
+            self.indent_level += 1
+            self.write_line("var err error")
+            [self.write_line(s) for s in self.deserializer(s[0], "input")]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -247,9 +280,7 @@ class GoWriter(Writer):
         for msg_type in msg_types:
             self.write_line("case %sType:" % msg_type)
             self.indent_level += 1
-            self.write_line("var msg %s" % msg_type)
-            self.write_line("%sFromBytes(data, &msg)" % msg_type)
-            self.write_line("return msg")
+            self.write_line("return %sFromBytes(data)" % msg_type)
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
@@ -265,7 +296,12 @@ class GoWriter(Writer):
         self.write_line("var len uint32")
         self.write_line("binary.Read(data, binary.LittleEndian, &len)")
         self.write_line("sbytes := make([]byte, len)")
-        self.write_line("binary.Read(data, binary.LittleEndian, &sbytes)")
+        self.write_line("err := binary.Read(data, binary.LittleEndian, &sbytes)")
+        self.write_line("if err != nil {")
+        self.indent_level += 1
+        self.write_line("panic(err)")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("*str = string(sbytes)")
         self.indent_level -= 1
         self.write_line("}")

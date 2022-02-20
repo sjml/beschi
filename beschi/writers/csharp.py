@@ -153,10 +153,23 @@ class CSharpWriter(Writer):
         self.write_line("public static %s FromBytes(BinaryReader br)" % s[0])
         self.write_line("{")
         self.indent_level += 1
+        if (s[0] in self.protocol.messages):
+            self.write_line("try")
+            self.write_line("{")
+            self.indent_level += 1
         self.write_line("%s n%s = new %s();" % (s[0], s[0], self.get_var(s[0])))
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.deserializer(var_type, var_name, "n%s" % s[0])]
         self.write_line("return n%s;" % s[0])
+        if (s[0] in self.protocol.messages):
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line("catch (System.IO.EndOfStreamException)")
+            self.write_line("{")
+            self.indent_level += 1
+            self.write_line("return null;")
+            self.indent_level -= 1
+            self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
 
