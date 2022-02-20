@@ -1,0 +1,22 @@
+[meta]
+namespace = "SmallMessages"
+
+[[messages]]
+_name = "EmptyMessage"
+
+[[messages]]
+_name = "ByteMessage"
+byteMember = "byte"
+
+[[messages]]
+_name = "FloatMessage"
+floatMember = "float"
+
+[[messages]]
+_name = "IntMessage"
+intMember = "int32"
+
+[[messages]]
+_name = "LongMessage"
+intMember = "int64"
+

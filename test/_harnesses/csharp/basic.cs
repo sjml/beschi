@@ -1,49 +1,12 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 
 using ComprehensiveMessage;
 
-class ProtocolHarness {
-
-    static bool OK = true;
-    static void softAssert(bool condition, string label)
-    {
-        if (!condition)
-        {
-            Console.Error.WriteLine("FAILED! CSharp: " + label);
-            OK = false;
-        }
-    }
-
-    // super basic, just turn it into dict please; don't want another dependency
-    static Dictionary<string, string> parseArguments(string[] args)
-    {
-        Dictionary<string, string> parsed = new Dictionary<string, string>();
-
-        string currentKeyword = null;
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (args[i].StartsWith("--"))
-            {
-                currentKeyword = args[i].Substring(2);
-                continue;
-            }
-            if (currentKeyword != null)
-            {
-                parsed[currentKeyword] = args[i];
-                currentKeyword = null;
-                continue;
-            }
-            // shouldn't get here in current usage
-            parsed[args[i]] = "";
-        }
-
-        return parsed;
-    }
+class BasicHarness: TestHarness {
 
     static void Main(string[] args) {
-        ComprehensiveMessage.TestingMessage example = new ComprehensiveMessage.TestingMessage();
+        var example = new ComprehensiveMessage.TestingMessage();
         example.b = 250;
         example.tf = true;
         example.i16 = -32000;
@@ -75,49 +38,49 @@ class ProtocolHarness {
             "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
             "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
         };
-        ComprehensiveMessage.Vec2 v21 = new ComprehensiveMessage.Vec2();
+        var v21 = new ComprehensiveMessage.Vec2();
         v21.x = 10.0f;
         v21.y = 15.0f;
-        ComprehensiveMessage.Vec2 v22 = new ComprehensiveMessage.Vec2();
+        var v22 = new ComprehensiveMessage.Vec2();
         v22.x = 20.0f;
         v22.y = 25.0f;
-        ComprehensiveMessage.Vec2 v23 = new ComprehensiveMessage.Vec2();
+        var v23 = new ComprehensiveMessage.Vec2();
         v23.x = 30.0f;
         v23.y = 35.0f;
-        ComprehensiveMessage.Vec2 v24 = new ComprehensiveMessage.Vec2();
+        var v24 = new ComprehensiveMessage.Vec2();
         v24.x = 40.0f;
         v24.y = 45.0f;
         example.v2l = new ComprehensiveMessage.Vec2[] {
             v21, v22, v23, v24
         };
-        ComprehensiveMessage.Vec3 v31 = new ComprehensiveMessage.Vec3();
+        var v31 = new ComprehensiveMessage.Vec3();
         v31.x = 10.0f;
         v31.y = 15.0f;
         v31.z = 17.5f;
-        ComprehensiveMessage.Vec3 v32 = new ComprehensiveMessage.Vec3();
+        var v32 = new ComprehensiveMessage.Vec3();
         v32.x = 20.0f;
         v32.y = 25.0f;
         v32.z = 27.5f;
-        ComprehensiveMessage.Vec3 v33 = new ComprehensiveMessage.Vec3();
+        var v33 = new ComprehensiveMessage.Vec3();
         v33.x = 30.0f;
         v33.y = 35.0f;
         v33.z = 37.5f;
-        ComprehensiveMessage.Vec3 v34 = new ComprehensiveMessage.Vec3();
+        var v34 = new ComprehensiveMessage.Vec3();
         v34.x = 40.0f;
         v34.y = 45.0f;
         v34.z = 47.5f;
         example.v3l = new ComprehensiveMessage.Vec3[] {
             v31, v32, v33, v34
         };
-        ComprehensiveMessage.Color c1 = new ComprehensiveMessage.Color();
+        var c1 = new ComprehensiveMessage.Color();
         c1.r = 255;
         c1.g = 0;
         c1.b = 0;
-        ComprehensiveMessage.Color c2 = new ComprehensiveMessage.Color();
+        var c2 = new ComprehensiveMessage.Color();
         c2.r = 0;
         c2.g = 255;
         c2.b = 0;
-        ComprehensiveMessage.Color c3 = new ComprehensiveMessage.Color();
+        var c3 = new ComprehensiveMessage.Color();
         c3.r = 0;
         c3.g = 0;
         c3.b = 255;
@@ -133,7 +96,7 @@ class ProtocolHarness {
             c3, c2, c1
         };
 
-        Dictionary<string, string> parsedArgs = parseArguments(args);
+        var parsedArgs = parseArguments(args);
 
         if (parsedArgs.ContainsKey("generate"))
         {
@@ -210,12 +173,9 @@ class ProtocolHarness {
                 softAssert(input.complex.spectrum[i].g == example.complex.spectrum[i].g, "ComplexData.spectrum.g");
                 softAssert(input.complex.spectrum[i].b == example.complex.spectrum[i].b, "ComplexData.spectrum.b");
             }
-
-            if (!OK)
-            {
-                Console.Error.WriteLine("Failed assertions.");
-                Environment.Exit(1);
-            }
         }
+
+
+        check();
     }
 }

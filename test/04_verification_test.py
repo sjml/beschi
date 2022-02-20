@@ -12,36 +12,18 @@ def test_basic_harness_compilation():
     for label in beschi.writers.all_writers:
         test_util.build_for(label, "basic", "ComprehensiveMessage")
 
-def test_writing():
-    if not os.path.exists(test_util.DATA_OUTPUT_DIR):
-        os.makedirs(test_util.DATA_OUTPUT_DIR)
+def test_writing_and_reading():
     for w in beschi.writers.all_writers:
-        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"basic.{w}.msg")
-        if os.path.exists(out_file):
-            os.unlink(out_file)
-        assert(not os.path.exists(out_file))
-        subprocess.check_call([
-            os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
-            "--generate", out_file
-        ])
-        assert(os.path.exists(out_file))
+        test_util.run_for(w, "basic")
 
 # checks that all generated messages from each language are byte-identical
+## (because of this, we don't need to test a full matrix and can just have
+##  each language read its own output)
 def test_writing_comparison():
     filecmp.clear_cache()
-    messages = (glob.glob(os.path.join(test_util.DATA_OUTPUT_DIR, "*.msg")))
+    messages = (glob.glob(os.path.join(test_util.DATA_OUTPUT_DIR, "basic.*.msg")))
     for i in range(len(messages)):
         j = i + 1
         if j >= len(messages):
             j -= len(messages)
         assert(filecmp.cmp(messages[i], messages[j], False))
-
-# since we've already shown that all the generated messages are identical,
-#   we just need to have each one read it's own instead of doing a matrix
-def test_reading():
-    for w in beschi.writers.all_writers:
-        out_file = os.path.join(test_util.DATA_OUTPUT_DIR, f"basic.{w}.msg")
-        subprocess.check_call([
-            os.path.join(test_util.HARNESS_BIN_DIR, f"basic_{w}"),
-            "--read", out_file
-        ])

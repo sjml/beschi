@@ -39,3 +39,22 @@ def build_for(language: str, srcfile: str, libfile: str):
     ]
     subprocess.check_call(invoke_build + ["--clean"])
     subprocess.check_call(invoke_build)
+
+def run_for(language: str, srcfile: str):
+    if not os.path.exists(DATA_OUTPUT_DIR):
+        os.makedirs(DATA_OUTPUT_DIR)
+
+    out_file = os.path.join(DATA_OUTPUT_DIR, f"{srcfile}.{language}.msg")
+    if os.path.exists(out_file):
+        os.unlink(out_file)
+    assert(not os.path.exists(out_file))
+    subprocess.check_call([
+        os.path.join(HARNESS_BIN_DIR, f"{srcfile}_{language}"),
+        "--generate", out_file
+    ])
+    assert(os.path.exists(out_file))
+
+    subprocess.check_call([
+        os.path.join(HARNESS_BIN_DIR, f"{srcfile}_{language}"),
+        "--read", out_file
+    ])

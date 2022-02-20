@@ -4,30 +4,36 @@ using System.Collections.Generic;
 
 using BrokenMessages;
 
-class BrokenHarness: TestHarness {
+class TruncatedHarness: TestHarness {
 
     static void Main(string[] args) {
         Dictionary<string, string> parsedArgs = parseArguments(args);
 
-        var broken = new BrokenMessages.TruncatedMessage();
-        broken.x = 1.0f;
-        broken.y = 2.0f;
+        var lmsg = new BrokenMessages.ListMessage();
+        lmsg.ints = new short[]{1, 2, 32767, 4, 5};
 
         if (parsedArgs.ContainsKey("generate"))
         {
+            byte[] buffer = new byte[14];
+            MemoryStream m = new MemoryStream(buffer);
+            BinaryWriter bw = new BinaryWriter(m);
+            lmsg.WriteBytes(bw, false);
+
+            // tweak the buffer so the message looks longer
+            buffer[0] = 0xFF;
+
             string outPath = parsedArgs["generate"];
             string outDir = System.IO.Path.GetDirectoryName(outPath);
             System.IO.Directory.CreateDirectory(outDir);
-            FileStream f = new FileStream(outPath, FileMode.Create);
-            BinaryWriter bw = new BinaryWriter(f);
-            broken.WriteBytes(bw, false);
+
+            File.WriteAllBytes(outPath, buffer);
         }
         else if (parsedArgs.ContainsKey("read"))
         {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
-            BrokenMessages.FullMessage input = BrokenMessages.FullMessage.FromBytes(br);
-            softAssert(input == null, "reading broken message");
+            BrokenMessages.ListMessage input = BrokenMessages.ListMessage.FromBytes(br);
+            softAssert(input == null, "reading truncated message");
         }
 
 

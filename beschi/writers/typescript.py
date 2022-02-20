@@ -34,6 +34,8 @@ class TypeScriptWriter(Writer):
             label = "i"
         if var_type in BASE_TYPE_SIZES:
             func = None
+            pre_wrap = ""
+            post_wrap = ""
             off = 0
             if var_type == "uint16":
                 func = "getUint16"
@@ -55,6 +57,8 @@ class TypeScriptWriter(Writer):
                 off = 8
             elif var_type == "float":
                 func = "getFloat32"
+                pre_wrap = "Math.fround("
+                post_wrap = ")"
                 off = 4
             elif var_type == "double":
                 func = "getFloat64"
@@ -62,7 +66,7 @@ class TypeScriptWriter(Writer):
 
             if func != None:
                 return [
-                    f"{pref}{var_name} = dv.{func}(offset, true);",
+                    f"{pref}{var_name} = {pre_wrap}dv.{func}(offset, true){post_wrap};",
                     f"offset += {off};"
                 ]
 
@@ -220,16 +224,16 @@ class TypeScriptWriter(Writer):
         if is_message:
             self.write_line("GetMessageType() : MessageType {")
             self.indent_level += 1
-            self.write_line(f"return MessageType.{s[0]};")
+            self.write_line(f"return MessageType.{s[0]}Type;")
             self.indent_level -=1
             self.write_line("}")
             self.write_line()
 
-            self.write_line("WriteBytes(dv: DataView, offset: number, flag: boolean) : number {")
+            self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number {")
             self.indent_level += 1
-            self.write_line("if (flag) {")
+            self.write_line("if (tag) {")
             self.indent_level += 1
-            self.write_line(f"dv.setUint8(offset, MessageType.{s[0]});")
+            self.write_line(f"dv.setUint8(offset, MessageType.{s[0]}Type);")
             self.write_line("offset += 1;")
             self.indent_level -= 1
             self.write_line("}")
@@ -287,7 +291,7 @@ class TypeScriptWriter(Writer):
         self.write_line("export interface Message {")
         self.indent_level += 1
         self.write_line("GetMessageType() : MessageType;")
-        self.write_line("WriteBytes(dv: DataView, offset: number, flag: boolean) : number;")
+        self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("export interface MessageStatic {")
@@ -307,28 +311,43 @@ class TypeScriptWriter(Writer):
 
         self.write_line("export enum MessageType {")
         self.indent_level += 1
-        [self.write_line(f"{k} = {i+1},") for i, k in enumerate(msg_types)]
+        [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(msg_types)]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-        self.write_line("export function ProcessRawBytes(dv: DataView, offset: number): {val: Message | null, offset: number} {")
+        self.write_line("export function ProcessRawBytes(dv: DataView, offset: number): {vals: Message[], offset: number} {")
+        self.indent_level += 1
+        self.write_line("const msgList: Message[] = [];")
+        self.write_line("while (offset < dv.byteLength) {")
         self.indent_level += 1
         self.write_line("const msgType: number = dv.getUint8(offset);")
         self.write_line("offset += 1;")
+        self.write_line("let msgRet: any = null;")
         self.write_line("switch (msgType) {")
         self.indent_level += 1
         for msg_type in msg_types:
-            self.write_line(f"case MessageType.{msg_type}:")
+            self.write_line(f"case MessageType.{msg_type}Type:")
             self.indent_level += 1
-            self.write_line(f"return {msg_type}.FromBytes(dv, offset);")
+            self.write_line(f"msgRet = {msg_type}.FromBytes(dv, offset);")
+            self.write_line("offset = msgRet.offset;")
+            self.write_line("msgList.push(msgRet.val);")
+            self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("return {val: null, offset: offset};")
+        self.write_line("throw new Error(`Can't deserialize unknown message type: ${msgType}; processed ${msgList.length} messages`);")
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line("if (msgList[msgList.length-1] == null) {")
+        self.indent_level += 1
+        self.write_line("break;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("return {vals: msgList, offset: offset};")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

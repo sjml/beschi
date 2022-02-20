@@ -15,4 +15,5 @@ def test_generation():
     test_util.generate_for("./test/_protocols/empty.toml", "Empty")
     test_util.generate_for("./test/_protocols/example.toml", "ComprehensiveMessage")
     test_util.generate_for("./test/_protocols/broken_messages.toml", "BrokenMessages")
+    test_util.generate_for("./test/_protocols/small_messages.toml", "SmallMessages")
 

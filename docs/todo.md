@@ -2,19 +2,26 @@
     - defaults as part of protocol? 
         - override objects for each struct/message
         - part of protocol validation: defaults match type
-    - multiple messages from single byte buffer
-        - process raw bytes should return a list
     - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
         - look at how go is doing "simplicity"
+    - processrawbytes needs to crap out if it appends a null value
+        - test it
+    - question: should processrawbytes actuall panic/throw, or just do a "null add + bailout" on bad message type?
+
+* unification
+    - have everyone take/return offset like typescript does? (could be useful for broken streams; returning end of last known good)
 
 * testing framework
-    - set up github actions
-    - network read/write in each language? yikes.
-        - Golang <-> TypeScript
-        - Python <-> C#
+    - redo broken; make it actually *broken*
+        - invalid UTF-8 or something?
+    - set up github action
+    - comparison (size/perf) to flatbuffers/capnproto/etc?
     - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
         - qemu or something?
         - how many yaks can be shaved in this project?
+
+* misc
+    - figure out the go module situation
 
 * more writers
     * python
@@ -22,14 +29,10 @@
     * swift?
     * rust? ugh
 
-* command-line flags
-    - ignoring messages? (regex match?)
-    - indentation as a flag?
-    - typescript namespacing?
-
 * redo readme
     - also setup.py
     - note
+        - go's access to the enum doesn't have .MessageType. in it
         - returns null if it couldn't parse (usually stream got truncated or something)
         - made efforts to follow best practices of target languages as much as possible
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html

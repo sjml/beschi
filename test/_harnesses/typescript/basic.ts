@@ -1,6 +1,4 @@
-import * as minimist from "minimist";
-
-import { getDataView, writeBuffer } from "./fileUtil";
+import { getDataView, writeBuffer, runTest } from "./util";
 
 import * as ComprehensiveMessage from '../../../out/generated/typescript/ComprehensiveMessage';
 
@@ -92,25 +90,16 @@ example.complex.backgroundColor = c1;
 example.complex.textColor = c2;
 example.complex.spectrum = [c3, c2, c1];
 
-let ok: boolean = true;
-function softAssert(condition: boolean, label: string) {
-    if (!condition) {
-        console.error("FAILED! TypeScript: " + label);
-        ok = false;
-    }
-}
-
-const args = minimist(process.argv.slice(2));
-
-if (args["generate"]) {
+function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const data = new ArrayBuffer(1024);
     const dv = new DataView(data);
     const offset = example.WriteBytes(dv, 0, false);
 
-    writeBuffer(Buffer.from(data, 0, offset), args["generate"]);
+    writeBuffer(Buffer.from(data, 0, offset), filePath);
 }
-else if (args["read"]) {
-    const dv = getDataView(args["read"]);
+
+function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
+    const dv = getDataView(filePath);
     const input = ComprehensiveMessage.TestingMessage.FromBytes(dv, 0).val;
     softAssert(example != null, "parsing test message");
 
@@ -122,17 +111,17 @@ else if (args["read"]) {
     softAssert(input.ui32 == example.ui32, "ui32");
     softAssert(input.i64 == example.i64, "i64");
     softAssert(input.ui64 == example.ui64, "ui64");
-    softAssert(Math.fround(input.f) == Math.fround(example.f), "float");
+    softAssert(input.f == Math.fround(example.f), "float");
     softAssert(input.d == example.d, "double");
     softAssert(input.s == example.s, "string");
-    softAssert(Math.fround(input.v2.x) == Math.fround(example.v2.x), "Vec2.x");
-    softAssert(Math.fround(input.v2.y) == Math.fround(example.v2.y), "Vec2.y");
-    softAssert(Math.fround(input.v3.x) == Math.fround(example.v3.x), "Vec3.x");
-    softAssert(Math.fround(input.v3.y) == Math.fround(example.v3.y), "Vec3.y");
-    softAssert(Math.fround(input.v3.z) == Math.fround(example.v3.z), "Vec3.z");
-    softAssert(Math.fround(input.c.r) == Math.fround(example.c.r), "Color.r");
-    softAssert(Math.fround(input.c.g) == Math.fround(example.c.g), "Color.g");
-    softAssert(Math.fround(input.c.b) == Math.fround(example.c.b), "Color.b");
+    softAssert(input.v2.x == Math.fround(example.v2.x), "Vec2.x");
+    softAssert(input.v2.y == Math.fround(example.v2.y), "Vec2.y");
+    softAssert(input.v3.x == Math.fround(example.v3.x), "Vec3.x");
+    softAssert(input.v3.y == Math.fround(example.v3.y), "Vec3.y");
+    softAssert(input.v3.z == Math.fround(example.v3.z), "Vec3.z");
+    softAssert(input.c.r == Math.fround(example.c.r), "Color.r");
+    softAssert(input.c.g == Math.fround(example.c.g), "Color.g");
+    softAssert(input.c.b == Math.fround(example.c.b), "Color.b");
     softAssert(input.sl.length == example.sl.length, "[string].length");
     for (let i = 0; i < input.sl.length; i++)
     {
@@ -160,24 +149,21 @@ else if (args["read"]) {
     }
     softAssert(input.complex.identifier == example.complex.identifier, "ComplexData.identifier");
     softAssert(input.complex.label == example.complex.label, "ComplexData.label");
-    softAssert(Math.fround(input.complex.backgroundColor.r) == Math.fround(example.complex.backgroundColor.r), "ComplexData.backgroundColor.r");
-    softAssert(Math.fround(input.complex.backgroundColor.g) == Math.fround(example.complex.backgroundColor.g), "ComplexData.backgroundColor.g");
-    softAssert(Math.fround(input.complex.backgroundColor.b) == Math.fround(example.complex.backgroundColor.b), "ComplexData.backgroundColor.b");
-    softAssert(Math.fround(input.complex.textColor.r) == Math.fround(example.complex.textColor.r), "ComplexData.textColor.r");
-    softAssert(Math.fround(input.complex.textColor.g) == Math.fround(example.complex.textColor.g), "ComplexData.textColor.g");
-    softAssert(Math.fround(input.complex.textColor.b) == Math.fround(example.complex.textColor.b), "ComplexData.textColor.b");
+    softAssert(input.complex.backgroundColor.r == Math.fround(example.complex.backgroundColor.r), "ComplexData.backgroundColor.r");
+    softAssert(input.complex.backgroundColor.g == Math.fround(example.complex.backgroundColor.g), "ComplexData.backgroundColor.g");
+    softAssert(input.complex.backgroundColor.b == Math.fround(example.complex.backgroundColor.b), "ComplexData.backgroundColor.b");
+    softAssert(input.complex.textColor.r == Math.fround(example.complex.textColor.r), "ComplexData.textColor.r");
+    softAssert(input.complex.textColor.g == Math.fround(example.complex.textColor.g), "ComplexData.textColor.g");
+    softAssert(input.complex.textColor.b == Math.fround(example.complex.textColor.b), "ComplexData.textColor.b");
     softAssert(input.complex.spectrum.length == example.complex.spectrum.length, "ComplexData.spectrum.length");
     for (let i = 0; i < input.complex.spectrum.length; i++)
     {
-        softAssert(input.complex.spectrum[i].r == example.complex.spectrum[i].r, "ComplexData.spectrum.r");
-        softAssert(input.complex.spectrum[i].g == example.complex.spectrum[i].g, "ComplexData.spectrum.g");
-        softAssert(input.complex.spectrum[i].b == example.complex.spectrum[i].b, "ComplexData.spectrum.b");
-    }
-
-    if (!ok) {
-        console.error("Failed assertions");
-        process.exit(1);
+        softAssert(input.complex.spectrum[i].r == Math.fround(example.complex.spectrum[i].r), "ComplexData.spectrum.r");
+        softAssert(input.complex.spectrum[i].g == Math.fround(example.complex.spectrum[i].g), "ComplexData.spectrum.g");
+        softAssert(input.complex.spectrum[i].b == Math.fround(example.complex.spectrum[i].b), "ComplexData.spectrum.b");
     }
 }
+
+runTest(generate, read);
 
 

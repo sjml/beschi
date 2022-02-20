@@ -138,22 +138,22 @@ class CSharpWriter(Writer):
 
         if is_message:
             self.write_line()
-            self.write_line(f"public override MessageType GetMessageType() {{ return MessageType.{s[0]}; }}")
+            self.write_line(f"public override MessageType GetMessageType() {{ return MessageType.{s[0]}Type; }}")
 
         self.write_line()
         override = ""
-        flag = ""
+        tag = ""
         if is_message:
             override = "override "
-            flag = ", bool flag"
-        self.write_line(f"public {override}void WriteBytes(BinaryWriter bw{flag})")
+            tag = ", bool tag"
+        self.write_line(f"public {override}void WriteBytes(BinaryWriter bw{tag})")
         self.write_line("{")
         self.indent_level += 1
         if is_message:
-            self.write_line("if (flag)")
+            self.write_line("if (tag)")
             self.write_line("{")
             self.indent_level += 1
-            self.write_line(f"bw.Write((byte)MessageType.{s[0]});")
+            self.write_line(f"bw.Write((byte)MessageType.{s[0]}Type);")
             self.indent_level -= 1
             self.write_line("}")
         for var_name, var_type in s[1]:
@@ -201,6 +201,7 @@ class CSharpWriter(Writer):
         self.write_line("using System;")
         self.write_line("using System.IO;")
         self.write_line("using System.Text;")
+        self.write_line("using System.Collections.Generic;")
         self.write_line()
 
         if self.protocol.namespace:
@@ -213,7 +214,7 @@ class CSharpWriter(Writer):
         self.write_line("public enum MessageType")
         self.write_line("{")
         self.indent_level += 1
-        [self.write_line(k + f" = {i+1},") for i, k in enumerate(msg_types)]
+        [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(msg_types)]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -221,9 +222,13 @@ class CSharpWriter(Writer):
         self.write_line("public abstract class Message {")
         self.indent_level += 1
         self.write_line("abstract public MessageType GetMessageType();")
-        self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool flag);")
+        self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool tag);")
         self.write_line()
-        self.write_line("public static Message ProcessRawBytes(BinaryReader br)")
+        self.write_line("public static Message[] ProcessRawBytes(BinaryReader br)")
+        self.write_line("{")
+        self.indent_level += 1
+        self.write_line("List<Message> msgList = new List<Message>();")
+        self.write_line("while (br.BaseStream.Position < br.BaseStream.Length)")
         self.write_line("{")
         self.indent_level += 1
         self.write_line("byte msgType = br.ReadByte();")
@@ -231,9 +236,10 @@ class CSharpWriter(Writer):
         self.write_line("{")
         self.indent_level += 1
         for msg_type in msg_types:
-            self.write_line(f"case (byte)MessageType.{msg_type}:")
+            self.write_line(f"case (byte)MessageType.{msg_type}Type:")
             self.indent_level += 1
-            self.write_line(f"return {msg_type}.FromBytes(br);")
+            self.write_line(f"msgList.Add({msg_type}.FromBytes(br));")
+            self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
@@ -241,6 +247,14 @@ class CSharpWriter(Writer):
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line("if (msgList[msgList.Count-1] == null) {")
+        self.indent_level += 1
+        self.write_line("break;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("return msgList.ToArray();")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1

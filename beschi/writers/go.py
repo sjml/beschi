@@ -77,11 +77,9 @@ class GoWriter(Writer):
     def deserializer(self, var_type: str, var_name: str, parent: str = None) -> list[str]:
         if parent == None:
             pref = ""
-            ptr = ""
             this = var_name
         else:
             pref = f"{parent}."
-            ptr = "&"
             this = f"{pref}{var_name}"
         label = var_name
         if label.endswith("[i]"):
@@ -95,7 +93,7 @@ class GoWriter(Writer):
 
         if self.simple(var_type):
             return [
-                f"err = binary.Read(data, binary.LittleEndian, {ptr}{pref}{var_name})",
+                f"err = binary.Read(data, binary.LittleEndian, &{pref}{var_name})",
                 *err_panic
             ]
         elif var_type in self.protocol.structs or var_type in self.protocol.messages:
@@ -109,7 +107,7 @@ class GoWriter(Writer):
                 output += self.deserializer(vt, vn, this)
             return output
         elif var_type == "string":
-            return [f"readString(data, {ptr}{pref}{var_name})"]
+            return [f"readString(data, &{pref}{var_name})"]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
@@ -216,9 +214,9 @@ class GoWriter(Writer):
         self.write_line()
 
         if is_message:
-            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer, flag bool) {{")
+            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer, tag bool) {{")
             self.indent_level += 1
-            self.write_line("if flag {")
+            self.write_line("if tag {")
             self.indent_level += 1
             self.write_line(f"binary.Write(data, binary.LittleEndian, {s[0]}Type)")
             self.indent_level -= 1
@@ -258,6 +256,7 @@ class GoWriter(Writer):
         self.write_line("import (")
         self.indent_level += 1
         self.write_line("\"encoding/binary\"")
+        self.write_line("\"fmt\"")
         self.write_line("\"io\"")
         self.indent_level -= 1
         self.write_line(")")
@@ -276,26 +275,43 @@ class GoWriter(Writer):
         self.write_line("type Message interface {")
         self.indent_level += 1
         self.write_line("GetMessageType() MessageType")
-        self.write_line("WriteBytes(data io.Writer, flag bool)")
+        self.write_line("WriteBytes(data io.Writer, tag bool)")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func ProcessRawBytes (data io.Reader) Message {")
+        self.write_line("func ProcessRawBytes (data io.Reader) []Message {")
+        self.indent_level += 1
+        self.write_line("var msgList []Message")
+        self.write_line("var err error")
+        self.write_line("for err != io.EOF {")
         self.indent_level += 1
         self.write_line("var msgType MessageType")
-        self.write_line("binary.Read(data, binary.LittleEndian, &msgType)")
+        self.write_line("err = binary.Read(data, binary.LittleEndian, &msgType)")
+        self.write_line("if err == io.EOF {")
+        self.indent_level += 1
+        self.write_line("break")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("switch msgType {")
         for msg_type in msg_types:
             self.write_line(f"case {msg_type}Type:")
             self.indent_level += 1
-            self.write_line(f"return {msg_type}FromBytes(data)")
+            self.write_line(f"msgList = append(msgList, {msg_type}FromBytes(data))")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("return nil")
+        self.write_line("panic(fmt.Sprintf(\"Can't deserialize unknown message type: %d; processed %d messages\", msgType, len(msgList)))")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line("if msgList[len(msgList)-1] == nil {")
+        self.indent_level += 1
+        self.write_line("break")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("return msgList")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
