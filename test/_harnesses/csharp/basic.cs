@@ -142,7 +142,7 @@ class ProtocolHarness {
             System.IO.Directory.CreateDirectory(outDir);
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
-            example.WriteBytes(bw);
+            example.WriteBytes(bw, false);
         }
         else if (parsedArgs.ContainsKey("read"))
         {

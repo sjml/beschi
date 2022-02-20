@@ -225,8 +225,18 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
             self.write_line()
 
-        self.write_line("WriteBytes(dv: DataView, offset: number) : number {")
-        self.indent_level += 1
+            self.write_line("WriteBytes(dv: DataView, offset: number, flag: boolean) : number {")
+            self.indent_level += 1
+            self.write_line("if (flag) {")
+            self.indent_level += 1
+            self.write_line(f"dv.setUint8(offset, MessageType.{s[0]});")
+            self.write_line("offset += 1;")
+            self.indent_level -= 1
+            self.write_line("}")
+        else:
+            self.write_line("WriteBytes(dv: DataView, offset: number) : number {")
+            self.indent_level += 1
+
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.serializer(var_type, var_name)]
         self.write_line("return offset;")
@@ -277,7 +287,7 @@ class TypeScriptWriter(Writer):
         self.write_line("export interface Message {")
         self.indent_level += 1
         self.write_line("GetMessageType() : MessageType;")
-        self.write_line("WriteBytes(dv: DataView, offset: number) : number;")
+        self.write_line("WriteBytes(dv: DataView, offset: number, flag: boolean) : number;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("export interface MessageStatic {")

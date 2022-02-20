@@ -105,7 +105,7 @@ const args = minimist(process.argv.slice(2));
 if (args["generate"]) {
     const data = new ArrayBuffer(1024);
     const dv = new DataView(data);
-    const offset = example.WriteBytes(dv, 0);
+    const offset = example.WriteBytes(dv, 0, false);
 
     writeBuffer(Buffer.from(data, 0, offset), args["generate"]);
 }

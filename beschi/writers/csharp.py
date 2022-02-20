@@ -120,7 +120,10 @@ class CSharpWriter(Writer):
 
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
+        is_message = False
         if (s[0] in self.protocol.messages):
+            is_message = True
+        if is_message:
             self.write_line(f"public class {s[0]} : Message")
         else:
             self.write_line(f"public class {s[0]}")
@@ -133,17 +136,26 @@ class CSharpWriter(Writer):
             else:
                 self.write_line(f"public {self.get_var(var_type)} {var_name};")
 
-        if (s[0] in self.protocol.messages):
+        if is_message:
             self.write_line()
             self.write_line(f"public override MessageType GetMessageType() {{ return MessageType.{s[0]}; }}")
 
         self.write_line()
         override = ""
-        if (s[0] in self.protocol.messages):
+        flag = ""
+        if is_message:
             override = "override "
-        self.write_line(f"public {override}void WriteBytes(BinaryWriter bw)")
+            flag = ", bool flag"
+        self.write_line(f"public {override}void WriteBytes(BinaryWriter bw{flag})")
         self.write_line("{")
         self.indent_level += 1
+        if is_message:
+            self.write_line("if (flag)")
+            self.write_line("{")
+            self.indent_level += 1
+            self.write_line(f"bw.Write((byte)MessageType.{s[0]});")
+            self.indent_level -= 1
+            self.write_line("}")
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.serializer(var_type, var_name)]
         self.indent_level -= 1
@@ -153,7 +165,7 @@ class CSharpWriter(Writer):
         self.write_line(f"public static {s[0]} FromBytes(BinaryReader br)")
         self.write_line("{")
         self.indent_level += 1
-        if (s[0] in self.protocol.messages):
+        if is_message:
             self.write_line("try")
             self.write_line("{")
             self.indent_level += 1
@@ -161,7 +173,7 @@ class CSharpWriter(Writer):
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.deserializer(var_type, var_name, f"n{s[0]}")]
         self.write_line(f"return n{s[0]};")
-        if (s[0] in self.protocol.messages):
+        if is_message:
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("catch (System.IO.EndOfStreamException)")
@@ -209,7 +221,7 @@ class CSharpWriter(Writer):
         self.write_line("public abstract class Message {")
         self.indent_level += 1
         self.write_line("abstract public MessageType GetMessageType();")
-        self.write_line("abstract public void WriteBytes(BinaryWriter bw);")
+        self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool flag);")
         self.write_line()
         self.write_line("public static Message ProcessRawBytes(BinaryReader br)")
         self.write_line("{")

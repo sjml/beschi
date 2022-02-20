@@ -215,8 +215,17 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer) {{")
-        self.indent_level += 1
+        if is_message:
+            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer, flag bool) {{")
+            self.indent_level += 1
+            self.write_line("if flag {")
+            self.indent_level += 1
+            self.write_line(f"binary.Write(data, binary.LittleEndian, {s[0]}Type)")
+            self.indent_level -= 1
+            self.write_line("}")
+        else:
+            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer) {{")
+            self.indent_level += 1
         [self.write_line(s) for s in self.serializer(s[0], "output")]
         self.indent_level -= 1
         self.write_line("}")
@@ -267,7 +276,7 @@ class GoWriter(Writer):
         self.write_line("type Message interface {")
         self.indent_level += 1
         self.write_line("GetMessageType() MessageType")
-        self.write_line("WriteBytes(data io.Writer)")
+        self.write_line("WriteBytes(data io.Writer, flag bool)")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

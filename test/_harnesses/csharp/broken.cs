@@ -59,7 +59,7 @@ class ProtocolHarness {
             System.IO.Directory.CreateDirectory(outDir);
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
-            trunc.WriteBytes(bw);
+            trunc.WriteBytes(bw, false);
         }
         else if (parsedArgs.ContainsKey("readBroken"))
         {
@@ -74,7 +74,7 @@ class ProtocolHarness {
             byte[] buffer = new byte[16];
             MemoryStream m = new MemoryStream(buffer);
             BinaryWriter bw = new BinaryWriter(m);
-            lmsg.WriteBytes(bw);
+            lmsg.WriteBytes(bw, false);
 
             // tweak the buffer so the message looks longer
             buffer[0] = 0xFF;

@@ -108,7 +108,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		example.WriteBytes(dat)
+		example.WriteBytes(dat, false)
 
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)

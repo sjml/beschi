@@ -24,7 +24,7 @@ const args = minimist(process.argv.slice(2));
 if (args["generateBroken"]) {
     const data = new ArrayBuffer(1024);
     const dv = new DataView(data);
-    const offset = trunc.WriteBytes(dv, 0);
+    const offset = trunc.WriteBytes(dv, 0, false);
 
     writeBuffer(Buffer.from(data, 0, offset), args["generateBroken"]);
 }
@@ -38,7 +38,7 @@ else if (args["readBroken"]) {
 else if (args["generateTruncated"]) {
     const data = new ArrayBuffer(16);
     const dv = new DataView(data);
-    const offset = lmsg.WriteBytes(dv, 0);
+    const offset = lmsg.WriteBytes(dv, 0, false);
 
     // tweak the buffer so the message looks longer
     dv.setUint8(0, 0xFF);

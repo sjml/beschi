@@ -2,7 +2,6 @@
     - defaults as part of protocol? 
         - override objects for each struct/message
         - part of protocol validation: defaults match type
-    - bool passed to WriteBytes to tag the output?
     - multiple messages from single byte buffer
         - process raw bytes should return a list
     - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)

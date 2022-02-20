@@ -40,7 +40,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		trunc.WriteBytes(dat)
+		trunc.WriteBytes(dat, false)
 	} else if len(*readBrokenPathPtr) > 0 {
 		dat, err := os.Open(*readBrokenPathPtr)
 		if err != nil {
@@ -56,7 +56,7 @@ func main() {
 		blank := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 		mem.Write(blank)
 		mem.Reset()
-		lmsg.WriteBytes(&mem)
+		lmsg.WriteBytes(&mem, false)
 
 		// tweak the buffer so the message looks longer
 		buffer := mem.Bytes()
