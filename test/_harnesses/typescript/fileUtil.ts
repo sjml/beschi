@@ -1,3 +1,7 @@
+// separated this out in the hopes that I could have this
+//   work with Deno, but that proved more complex than just
+//   isolating the node library calls.
+
 import * as fs from 'fs';
 import * as path from 'path';
 

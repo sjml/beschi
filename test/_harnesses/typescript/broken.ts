@@ -4,9 +4,11 @@ import { getDataView, writeBuffer } from "./fileUtil";
 
 import * as BrokenMessages from '../../../out/generated/typescript/BrokenMessages';
 
+let ok: boolean = true;
 function softAssert(condition: boolean, label: string) {
     if (!condition) {
         console.error("FAILED! TypeScript: " + label);
+        ok = false;
     }
 }
 
@@ -50,4 +52,7 @@ else if (args["readTruncated"]) {
     softAssert(input == null, "reading truncated message");
 }
 
-
+if (!ok) {
+    console.error("Failed assertions");
+    process.exit(1);
+}

@@ -11,7 +11,6 @@
     - move to f-strings all across the board
 
 * testing framework
-    - typescript's softassert should set an ok
     - can specify to only test a single language or only run a single test?
     - set up github actions
     - network read/write in each language? yikes.

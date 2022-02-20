@@ -92,9 +92,11 @@ example.complex.backgroundColor = c1;
 example.complex.textColor = c2;
 example.complex.spectrum = [c3, c2, c1];
 
+let ok: boolean = true;
 function softAssert(condition: boolean, label: string) {
     if (!condition) {
         console.error("FAILED! TypeScript: " + label);
+        ok = false;
     }
 }
 
@@ -170,6 +172,11 @@ else if (args["read"]) {
         softAssert(input.complex.spectrum[i].r == example.complex.spectrum[i].r, "ComplexData.spectrum.r");
         softAssert(input.complex.spectrum[i].g == example.complex.spectrum[i].g, "ComplexData.spectrum.g");
         softAssert(input.complex.spectrum[i].b == example.complex.spectrum[i].b, "ComplexData.spectrum.b");
+    }
+
+    if (!ok) {
+        console.error("Failed assertions");
+        process.exit(1);
     }
 }
 
