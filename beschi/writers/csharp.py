@@ -243,7 +243,8 @@ class CSharpWriter(Writer):
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("throw new NotImplementedException(\"Can't deserialize unknown message type: \" + msgType.ToString());")
+        self.write_line("msgList.Add(null);")
+        self.write_line("break;")
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")

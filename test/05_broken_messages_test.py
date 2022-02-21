@@ -1,6 +1,3 @@
-import os
-import subprocess
-
 import beschi.writers
 
 import test_util

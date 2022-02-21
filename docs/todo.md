@@ -4,9 +4,7 @@
         - part of protocol validation: defaults match type
     - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
         - look at how go is doing "simplicity"
-    - processrawbytes needs to crap out if it appends a null value
-        - test it
-    - question: should processrawbytes actuall panic/throw, or just do a "null add + bailout" on bad message type?
+    - pie in the sky: instead of using int32 for list/string sizes, do an abitrary sizing with 7-bit integers in a byte with a continuation bit? (most lists/strings are small)
 
 * unification
     - have everyone take/return offset like typescript does? (could be useful for broken streams; returning end of last known good)
@@ -38,6 +36,7 @@
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
         - TS requires "experimentalDecorators" on
         - TS 64-bit -> bigint (might need es2020, browser support, caniuse)
+        - golang uses binary write/read which packs and unpacks appropriately -- should be some small performance benefit (at least reduces the number of error checks) but might be problematic in some circumstances? 
         - all numbers stored little-endian
         - to make new writer:
             - str and list lengths are uint32 (enough to store more than 4 GB of text in a string -- if that's more than you need, you probably outgrew this system long ago)

@@ -2,9 +2,6 @@ import pytest
 
 from beschi.protocol import Protocol
 
-import test_util
-
-# should not raise an exception
 def test_good_protocol():
     p = Protocol("test/_protocols/example.toml")
 

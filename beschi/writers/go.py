@@ -256,7 +256,6 @@ class GoWriter(Writer):
         self.write_line("import (")
         self.indent_level += 1
         self.write_line("\"encoding/binary\"")
-        self.write_line("\"fmt\"")
         self.write_line("\"io\"")
         self.indent_level -= 1
         self.write_line(")")
@@ -301,7 +300,7 @@ class GoWriter(Writer):
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("panic(fmt.Sprintf(\"Can't deserialize unknown message type: %d; processed %d messages\", msgType, len(msgList)))")
+        self.write_line("msgList = append(msgList, nil)")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("if msgList[len(msgList)-1] == nil {")

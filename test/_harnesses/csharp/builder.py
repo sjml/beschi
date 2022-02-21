@@ -1,6 +1,6 @@
 import os
 import subprocess
-import shutil
+import stat
 
 # i hate this
 import sys
@@ -29,11 +29,12 @@ class CSharpBuilder(builder_util.Builder):
 
 
         if builder_util.needs_build(self.exepath, [self.intermediate_path]):
-            subprocess.check_call([
-                "mkbundle", "--simple",
-                self.intermediate_path,
-                "-o", self.exepath
-            ])
+            shim = open("./exe_template").read()
+            shim = shim.replace("{# EXE_NAME #}", self.exename)
+            with open(self.exepath, "w") as shim_file:
+                shim_file.write(shim)
+            os.chmod(self.exepath, os.stat(self.exepath).st_mode | stat.S_IEXEC)
+
 
     def clean(self):
         super().clean()

@@ -330,17 +330,18 @@ class TypeScriptWriter(Writer):
             self.write_line(f"case MessageType.{msg_type}Type:")
             self.indent_level += 1
             self.write_line(f"msgRet = {msg_type}.FromBytes(dv, offset);")
-            self.write_line("offset = msgRet.offset;")
-            self.write_line("msgList.push(msgRet.val);")
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("throw new Error(`Can't deserialize unknown message type: ${msgType}; processed ${msgList.length} messages`);")
+        self.write_line("msgRet = {val: null, offset: offset};")
+        self.write_line("break;")
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line("if (msgList[msgList.length-1] == null) {")
+        self.write_line("offset = msgRet.offset;")
+        self.write_line("msgList.push(msgRet.val);")
+        self.write_line("if (msgRet.val == null) {")
         self.indent_level += 1
         self.write_line("break;")
         self.indent_level -= 1
