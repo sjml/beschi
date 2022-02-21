@@ -17,3 +17,7 @@ y = "float"
 [[messages]]
 _name = "ListMessage"
 ints = "[int16]"
+
+[[messages]]
+_name = "StringMessage"
+stringMember = "string"

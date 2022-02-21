@@ -1,0 +1,28 @@
+name: Basic Read/Write Tests
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.10
+    - name: Setup Node
+      uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+    - name: Setup Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '^1.17.6'
+    - name: Setup Mono
+      uses: maxim-lobanov/setup-xamarin@v1
+      with:
+        mono-version: 6.12
+    - name: Run Test
+      run: make test

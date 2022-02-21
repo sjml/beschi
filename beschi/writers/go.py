@@ -86,7 +86,12 @@ class GoWriter(Writer):
                 output += self.deserializer(vt, vn, this)
             return output
         elif var_type == "string":
-            return [f"readString(data, &{pref}{var_name})"]
+            return [
+                f"err = readString(data, &{pref}{var_name})",
+                "if err != nil {",
+                f"{self.tab}panic(err)",
+                "}",
+            ]
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
@@ -349,7 +354,7 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func readString(data io.Reader, str *string) {")
+        self.write_line("func readString(data io.Reader, str *string) error {")
         self.indent_level += 1
         self.write_line("var len uint32")
         self.write_line("binary.Read(data, binary.LittleEndian, &len)")
@@ -361,6 +366,7 @@ class GoWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("*str = string(sbytes)")
+        self.write_line("return err")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

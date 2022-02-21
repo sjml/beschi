@@ -1,15 +1,7 @@
 * functionality
-    - defaults as part of protocol? 
-        - override objects for each struct/message
-        - part of protocol validation: defaults match type
     - pie in the sky: instead of using int32 for list/string sizes, do an abitrary sizing with 7-bit integers in a byte with a continuation bit? (most lists/strings are small)
 
-* unification
-    - have everyone take/return offset like typescript does? (could be useful for broken streams; returning end of last known good)
-
 * testing framework
-    - redo broken; make it actually *broken*
-        - invalid UTF-8 or something?
     - set up github action
     - comparison (size/perf) to flatbuffers/capnproto/etc?
     - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
@@ -17,7 +9,7 @@
         - how many yaks can be shaved in this project?
 
 * misc
-    - figure out the go module situation
+    - figure out the go module situation in tests
 
 * more writers
     * python
@@ -30,6 +22,7 @@
     - note
         - probably some pathological cases that break if you make a bunch of nested lists with the same name. so don't do that? ¯\\\_(ツ)_/¯ 
         - go's access to the enum doesn't have .MessageType. in it
+        - no non-zero defaults; do it code-side
         - returns null if it couldn't parse (usually stream got truncated or something)
         - made efforts to follow best practices of target languages as much as possible
         - TS doesn't use namespace by default https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html
