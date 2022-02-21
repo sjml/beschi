@@ -2,7 +2,6 @@
     - pie in the sky: instead of using int32 for list/string sizes, do an abitrary sizing with 7-bit integers in a byte with a continuation bit? (most lists/strings are small)
 
 * testing framework
-    - set up github action
     - comparison (size/perf) to flatbuffers/capnproto/etc?
     - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
         - qemu or something?
