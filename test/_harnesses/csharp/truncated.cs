@@ -19,6 +19,8 @@ class TruncatedHarness: TestHarness {
             BinaryWriter bw = new BinaryWriter(m);
             lmsg.WriteBytes(bw, false);
 
+            softAssert(lmsg.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
+
             // tweak the buffer so the message looks longer
             buffer[0] = 0xFF;
 

@@ -2,8 +2,6 @@
     - defaults as part of protocol? 
         - override objects for each struct/message
         - part of protocol validation: defaults match type
-    - typescript needs (and probably all of them should have) a way of measuring size in bytes of message object (for allocating buffer, etc.)
-        - look at how go is doing "simplicity"
     - pie in the sky: instead of using int32 for list/string sizes, do an abitrary sizing with 7-bit integers in a byte with a continuation bit? (most lists/strings are small)
 
 * unification
@@ -30,6 +28,7 @@
 * redo readme
     - also setup.py
     - note
+        - probably some pathological cases that break if you make a bunch of nested lists with the same name. so don't do that? ¯\\\_(ツ)_/¯ 
         - go's access to the enum doesn't have .MessageType. in it
         - returns null if it couldn't parse (usually stream got truncated or something)
         - made efforts to follow best practices of target languages as much as possible

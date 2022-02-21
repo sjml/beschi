@@ -16,7 +16,16 @@ longMsg.intMember = 2147483647n + 10n; // (2^31 - 1) + 10
 
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(1024);
+    let size = 0;
+    size += byteMsg.GetSizeInBytes();
+    size += intMsgA.GetSizeInBytes() * 3;
+    size += intMsgB.GetSizeInBytes() * 4;
+    size += emptyMsg.GetSizeInBytes() * 2;
+    size += longMsg.GetSizeInBytes();
+    size += floatMsg.GetSizeInBytes();
+    size += 12;
+
+    const data = new ArrayBuffer(size);
     const dv = new DataView(data);
     let offset = 0;
 
@@ -34,6 +43,8 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     offset = emptyMsg.WriteBytes(dv, offset, true);  // 11
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
+
+    softAssert(size == offset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {

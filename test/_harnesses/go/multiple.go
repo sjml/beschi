@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -54,6 +55,18 @@ func main() {
 		intMsgB.WriteBytes(dat, true)  //  9
 		intMsgA.WriteBytes(dat, true)  // 10
 		emptyMsg.WriteBytes(dat, true) // 11
+
+		size := 0
+		size += byteMsg.GetSizeInBytes()
+		size += intMsgA.GetSizeInBytes() * 3
+		size += intMsgB.GetSizeInBytes() * 4
+		size += emptyMsg.GetSizeInBytes() * 2
+		size += longMsg.GetSizeInBytes()
+		size += floatMsg.GetSizeInBytes()
+		size += 12
+
+		seek, _ := dat.Seek(0, io.SeekCurrent)
+		softAssert(size == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)
 		if err != nil {

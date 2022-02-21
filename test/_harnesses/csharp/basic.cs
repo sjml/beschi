@@ -87,14 +87,27 @@ class BasicHarness: TestHarness {
         example.cl = new ComprehensiveMessage.Color[] {
             c1, c2, c3
         };
-        example.complex = new ComprehensiveMessage.ComplexData();
-        example.complex.identifier = 127;
-        example.complex.label = "ComplexDataObject";
-        example.complex.backgroundColor = c1;
-        example.complex.textColor = c2;
-        example.complex.spectrum = new ComprehensiveMessage.Color[] {
+        example.cx = new ComprehensiveMessage.ComplexData();
+        example.cx.identifier = 127;
+        example.cx.label = "ComplexDataObject";
+        example.cx.backgroundColor = c1;
+        example.cx.textColor = c2;
+        example.cx.spectrum = new ComprehensiveMessage.Color[] {
             c3, c2, c1
         };
+        var cx1 = new ComprehensiveMessage.ComplexData();
+        cx1.identifier = 255;
+        cx1.label = "Complex1";
+        cx1.backgroundColor = c3;
+        cx1.textColor = c1;
+        cx1.spectrum = new ComprehensiveMessage.Color[] {c3, c2, c1, c2, c3};
+        var cx2 = new ComprehensiveMessage.ComplexData();
+        cx2.identifier = 63;
+        cx2.label = "Complex2";
+        cx2.backgroundColor = c1;
+        cx2.textColor = c3;
+        cx2.spectrum = new ComprehensiveMessage.Color[] {c1, c2, c3, c2, c1};
+        example.cxl = new ComprehensiveMessage.ComplexData[] {cx1, cx2};
 
         var parsedArgs = parseArguments(args);
 
@@ -106,6 +119,9 @@ class BasicHarness: TestHarness {
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw, false);
+
+            softAssert(example.GetSizeInBytes() == 899, "size calculation check");
+            softAssert(example.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
         {
@@ -158,20 +174,20 @@ class BasicHarness: TestHarness {
                 softAssert(input.cl[i].g == example.cl[i].g, "[Color].g");
                 softAssert(input.cl[i].b == example.cl[i].b, "[Color].b");
             }
-            softAssert(input.complex.identifier == example.complex.identifier, "ComplexData.identifier");
-            softAssert(input.complex.label == example.complex.label, "ComplexData.label");
-            softAssert(input.complex.backgroundColor.r == example.complex.backgroundColor.r, "ComplexData.backgroundColor.r");
-            softAssert(input.complex.backgroundColor.g == example.complex.backgroundColor.g, "ComplexData.backgroundColor.g");
-            softAssert(input.complex.backgroundColor.b == example.complex.backgroundColor.b, "ComplexData.backgroundColor.b");
-            softAssert(input.complex.textColor.r == example.complex.textColor.r, "ComplexData.textColor.r");
-            softAssert(input.complex.textColor.g == example.complex.textColor.g, "ComplexData.textColor.g");
-            softAssert(input.complex.textColor.b == example.complex.textColor.b, "ComplexData.textColor.b");
-            softAssert(input.complex.spectrum.Length == example.complex.spectrum.Length, "ComplexData.spectrum.length");
-            for (int i = 0; i < input.complex.spectrum.Length; i++)
+            softAssert(input.cx.identifier == example.cx.identifier, "ComplexData.identifier");
+            softAssert(input.cx.label == example.cx.label, "ComplexData.label");
+            softAssert(input.cx.backgroundColor.r == example.cx.backgroundColor.r, "ComplexData.backgroundColor.r");
+            softAssert(input.cx.backgroundColor.g == example.cx.backgroundColor.g, "ComplexData.backgroundColor.g");
+            softAssert(input.cx.backgroundColor.b == example.cx.backgroundColor.b, "ComplexData.backgroundColor.b");
+            softAssert(input.cx.textColor.r == example.cx.textColor.r, "ComplexData.textColor.r");
+            softAssert(input.cx.textColor.g == example.cx.textColor.g, "ComplexData.textColor.g");
+            softAssert(input.cx.textColor.b == example.cx.textColor.b, "ComplexData.textColor.b");
+            softAssert(input.cx.spectrum.Length == example.cx.spectrum.Length, "ComplexData.spectrum.length");
+            for (int i = 0; i < input.cx.spectrum.Length; i++)
             {
-                softAssert(input.complex.spectrum[i].r == example.complex.spectrum[i].r, "ComplexData.spectrum.r");
-                softAssert(input.complex.spectrum[i].g == example.complex.spectrum[i].g, "ComplexData.spectrum.g");
-                softAssert(input.complex.spectrum[i].b == example.complex.spectrum[i].b, "ComplexData.spectrum.b");
+                softAssert(input.cx.spectrum[i].r == example.cx.spectrum[i].r, "ComplexData.spectrum.r");
+                softAssert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g");
+                softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b");
             }
         }
 

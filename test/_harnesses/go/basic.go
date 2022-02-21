@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -90,11 +91,24 @@ func main() {
 	c3.G = 0
 	c3.B = 255
 	example.Cl = []ComprehensiveMessage.Color{c1, c2, c3}
-	example.Complex.Identifier = 127
-	example.Complex.Label = "ComplexDataObject"
-	example.Complex.BackgroundColor = c1
-	example.Complex.TextColor = c2
-	example.Complex.Spectrum = []ComprehensiveMessage.Color{c3, c2, c1}
+	example.Cx.Identifier = 127
+	example.Cx.Label = "ComplexDataObject"
+	example.Cx.BackgroundColor = c1
+	example.Cx.TextColor = c2
+	example.Cx.Spectrum = []ComprehensiveMessage.Color{c3, c2, c1}
+	var cx1 ComprehensiveMessage.ComplexData
+	cx1.Identifier = 255
+	cx1.Label = "Complex1"
+	cx1.BackgroundColor = c3
+	cx1.TextColor = c1
+	cx1.Spectrum = []ComprehensiveMessage.Color{c3, c2, c1, c2, c3}
+	var cx2 ComprehensiveMessage.ComplexData
+	cx2.Identifier = 63
+	cx2.Label = "Complex2"
+	cx2.BackgroundColor = c1
+	cx2.TextColor = c3
+	cx2.Spectrum = []ComprehensiveMessage.Color{c1, c2, c3, c2, c1}
+	example.Cxl = []ComprehensiveMessage.ComplexData{cx1, cx2}
 
 	readPathPtr := flag.String("read", "", "path to message file for verification")
 	generatePathPtr := flag.String("generate", "", "path to message file for generation")
@@ -110,6 +124,9 @@ func main() {
 
 		example.WriteBytes(dat, false)
 
+		softAssert(example.GetSizeInBytes() == 899, "size calculation check")
+		seek, _ := dat.Seek(0, io.SeekCurrent)
+		softAssert(example.GetSizeInBytes() == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)
 		if err != nil {
@@ -160,19 +177,19 @@ func main() {
 			softAssert(input.Cl[i].G == example.Cl[i].G, "[Color].g")
 			softAssert(input.Cl[i].B == example.Cl[i].B, "[Color].b")
 		}
-		softAssert(input.Complex.Identifier == example.Complex.Identifier, "ComplexData.identifier")
-		softAssert(input.Complex.Label == example.Complex.Label, "ComplexData.label")
-		softAssert(input.Complex.BackgroundColor.R == example.Complex.BackgroundColor.R, "ComplexData.BackgroundColor.r")
-		softAssert(input.Complex.BackgroundColor.G == example.Complex.BackgroundColor.G, "ComplexData.BackgroundColor.g")
-		softAssert(input.Complex.BackgroundColor.B == example.Complex.BackgroundColor.B, "ComplexData.BackgroundColor.b")
-		softAssert(input.Complex.TextColor.R == example.Complex.TextColor.R, "ComplexData.TextColor.r")
-		softAssert(input.Complex.TextColor.G == example.Complex.TextColor.G, "ComplexData.TextColor.g")
-		softAssert(input.Complex.TextColor.B == example.Complex.TextColor.B, "ComplexData.TextColor.b")
-		softAssert(len(input.Complex.Spectrum) == len(example.Complex.Spectrum), "ComplexData.spectrum.length")
-		for i := 0; i < len(input.Complex.Spectrum); i++ {
-			softAssert(input.Complex.Spectrum[i].R == example.Complex.Spectrum[i].R, "ComplexData.spectrum.r")
-			softAssert(input.Complex.Spectrum[i].G == example.Complex.Spectrum[i].G, "ComplexData.spectrum.g")
-			softAssert(input.Complex.Spectrum[i].B == example.Complex.Spectrum[i].B, "ComplexData.spectrum.b")
+		softAssert(input.Cx.Identifier == example.Cx.Identifier, "ComplexData.identifier")
+		softAssert(input.Cx.Label == example.Cx.Label, "ComplexData.label")
+		softAssert(input.Cx.BackgroundColor.R == example.Cx.BackgroundColor.R, "ComplexData.BackgroundColor.r")
+		softAssert(input.Cx.BackgroundColor.G == example.Cx.BackgroundColor.G, "ComplexData.BackgroundColor.g")
+		softAssert(input.Cx.BackgroundColor.B == example.Cx.BackgroundColor.B, "ComplexData.BackgroundColor.b")
+		softAssert(input.Cx.TextColor.R == example.Cx.TextColor.R, "ComplexData.TextColor.r")
+		softAssert(input.Cx.TextColor.G == example.Cx.TextColor.G, "ComplexData.TextColor.g")
+		softAssert(input.Cx.TextColor.B == example.Cx.TextColor.B, "ComplexData.TextColor.b")
+		softAssert(len(input.Cx.Spectrum) == len(example.Cx.Spectrum), "ComplexData.spectrum.length")
+		for i := 0; i < len(input.Cx.Spectrum); i++ {
+			softAssert(input.Cx.Spectrum[i].R == example.Cx.Spectrum[i].R, "ComplexData.spectrum.r")
+			softAssert(input.Cx.Spectrum[i].G == example.Cx.Spectrum[i].G, "ComplexData.spectrum.g")
+			softAssert(input.Cx.Spectrum[i].B == example.Cx.Spectrum[i].B, "ComplexData.spectrum.b")
 		}
 
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -51,6 +52,14 @@ func main() {
 		full.WriteBytes(dat, true)
 		full.WriteBytes(dat, true)
 		full.WriteBytes(dat, true)
+
+		size := 6 * full.GetSizeInBytes()
+		size += 6 // markers, one byte each
+		size += trunc.GetSizeInBytes()
+		size += 1 // trunc marker
+
+		seek, _ := dat.Seek(0, io.SeekCurrent)
+		softAssert(size == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)
 		if err != nil {

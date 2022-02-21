@@ -95,3 +95,39 @@ class Protocol():
         if type_name in self.structs:
             return True
         return False
+
+    def is_simple(self, var_type: str) -> bool:
+        if var_type in BASE_TYPE_SIZES:
+            return True
+        elif var_type in COLLECTION_TYPES:
+            return False
+        elif var_type[0] == "[" and var_type[-1] == "]":
+            return False
+        elif var_type in self.structs or var_type in self.messages:
+            datums: list[tuple[str,str]] = None
+            if var_type in self.structs:
+                datums = self.structs[var_type]
+            else:
+                datums = self.messages[var_type]
+            for _, vt in datums:
+                if not self.is_simple(vt):
+                    return False
+            return True
+        else:
+            raise NotImplementedError(f"Can't determine simplicity of {var_type}.")
+
+    def calculate_size(self, var_type: str) -> int:
+        if self.is_simple(var_type):
+            if var_type in BASE_TYPE_SIZES:
+                return BASE_TYPE_SIZES[var_type]
+            else:
+                size = 0
+                if var_type in self.structs:
+                    datums = self.structs[var_type]
+                else:
+                    datums = self.messages[var_type]
+                for _, vt in datums:
+                    size += self.calculate_size(vt)
+                return size
+        else:
+            return -1

@@ -14,7 +14,12 @@ full.z = 3.0;
 
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(1024);
+    let size = 6 * full.GetSizeInBytes();
+    size += 6; // markers, one byte each
+    size += trunc.GetSizeInBytes();
+    size += 1; // trunc marker
+
+    const data = new ArrayBuffer(size);
     const dv = new DataView(data);
     let offset = 0;
 
@@ -33,6 +38,8 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     offset = full.WriteBytes(dv, offset, true);
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
+
+    softAssert(size == offset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {

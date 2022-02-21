@@ -36,6 +36,13 @@ class MultipleBrokenHarness: TestHarness {
             full.WriteBytes(bw, true);
             full.WriteBytes(bw, true);
             full.WriteBytes(bw, true);
+
+            int size = 6 * full.GetSizeInBytes();
+            size += 6 * sizeof(byte); // markers
+            size += trunc.GetSizeInBytes();
+            size += 1 * sizeof(byte); // trunc marker
+
+            softAssert(size == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
         {

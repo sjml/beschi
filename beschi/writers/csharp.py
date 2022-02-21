@@ -32,8 +32,8 @@ class CSharpWriter(Writer):
         else:
             pref = ""
         label = var_name
-        if label.endswith("[i]"):
-            label = "i"
+        if label.endswith("_i]"):
+            label = "i_"
         if var_type in BASE_TYPE_SIZES:
             func = None
             if var_type == "byte":
@@ -63,7 +63,7 @@ class CSharpWriter(Writer):
             return [
                 f"uint {label}Length = br.ReadUInt32();",
                 f"byte[] {label}Buffer = br.ReadBytes((int){label}Length);",
-                f"{pref}{var_name} = System.Text.Encoding.UTF8.GetString({label}Buffer);"
+                f"{pref}{var_name} = System.Text.Encoding.UTF8.GetString({label}Buffer);",
             ]
         elif var_type in self.protocol.structs:
             return [
@@ -72,17 +72,17 @@ class CSharpWriter(Writer):
         elif var_type[0] == "[" and var_type[-1] == "]":
             interior = var_type[1:-1]
             out = [
-                f"uint {var_name}Length = br.ReadUInt32();"
-                f"{pref}{var_name} = new {self.get_var(interior)}[{var_name}Length];"
-                f"for (int i = 0; i < {var_name}Length; i++)"
-                "{"
+                f"uint {var_name}Length = br.ReadUInt32();",
+                f"{pref}{var_name} = new {self.get_var(interior)}[{var_name}Length];",
+                f"for (int {var_name}_i = 0; {var_name}_i < {var_name}Length; {var_name}_i++)",
+                "{",
             ]
             out += [
                 self.tab + deser for deser in self.deserializer(
-                    interior, f"{var_name}[i]", parent
+                    interior, f"{var_name}[{var_name}_i]", parent
                 )
             ]
-            out += "}"
+            out += ["}"]
             return out
         else:
             raise NotImplementedError(f"Type {var_type} not deserializable yet.")
@@ -119,6 +119,52 @@ class CSharpWriter(Writer):
             raise NotImplementedError(f"Type {var_type} not serializable yet.")
 
 
+    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+        lines: list[str] = []
+
+        accum = 0
+        if self.protocol.is_simple(s[0]):
+            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+        else:
+            size_init = "int size = 0;"
+            lines.append(size_init)
+
+            for var_name, var_type in s[1]:
+                if self.protocol.is_simple(var_type):
+                    accum += self.protocol.calculate_size(var_type)
+                else:
+                    if var_type == "string":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"size += System.Text.Encoding.UTF8.GetBytes({accessor_prefix}{var_name}).Length;")
+                    elif var_type == "[string]":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"foreach (var s in {accessor_prefix}{var_name})")
+                        lines.append("{")
+                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + System.Text.Encoding.UTF8.GetBytes(s).Length;")
+                        lines.append("}")
+                    elif var_type[0] == "[" and var_type[-1] == "]":
+                        listed_var_type = var_type[1:-1]
+                        if self.protocol.is_simple(listed_var_type):
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"size += {accessor_prefix}{var_name}.Length * {self.protocol.calculate_size(listed_var_type)};")
+                        else:
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"foreach (var s in {accessor_prefix}{var_name})")
+                            lines.append("{")
+                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"s.")
+                            if clines[0] == size_init:
+                                clines = clines[1:]
+                            clines.append(f"size += {caccum};")
+                            lines += [f"{self.tab}{l}" for l in clines]
+                            lines.append("}")
+                    else:
+                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        lines += clines
+                        accum += caccum
+        return lines, accum
+
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
         is_message = False
         if (s[0] in self.protocol.messages):
@@ -139,6 +185,18 @@ class CSharpWriter(Writer):
         if is_message:
             self.write_line()
             self.write_line(f"public override MessageType GetMessageType() {{ return MessageType.{s[0]}Type; }}")
+            self.write_line()
+            self.write_line("public override int GetSizeInBytes()")
+            self.write_line("{")
+            self.indent_level +=1
+            measure_lines, accumulator = self.gen_measurement(s, "this.")
+            [self.write_line(s) for s in measure_lines]
+            if accumulator > 0:
+                self.write_line(f"size += {accumulator};")
+            if len(measure_lines) > 1:
+                self.write_line(f"return size;")
+            self.indent_level -=1
+            self.write_line("}")
 
         self.write_line()
         override = ""
@@ -223,6 +281,7 @@ class CSharpWriter(Writer):
         self.indent_level += 1
         self.write_line("abstract public MessageType GetMessageType();")
         self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool tag);")
+        self.write_line("abstract public int GetSizeInBytes();")
         self.write_line()
         self.write_line("public static Message[] ProcessRawBytes(BinaryReader br)")
         self.write_line("{")

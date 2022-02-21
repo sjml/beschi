@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -35,6 +36,9 @@ func main() {
 		defer dat.Close()
 
 		broken.WriteBytes(dat, false)
+
+		seek, _ := dat.Seek(0, io.SeekCurrent)
+		softAssert(broken.GetSizeInBytes() == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)
 		if err != nil {

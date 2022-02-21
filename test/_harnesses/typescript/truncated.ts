@@ -10,6 +10,8 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     const dv = new DataView(data);
     const offset = lmsg.WriteBytes(dv, 0, false);
 
+    softAssert(lmsg.GetSizeInBytes() == offset, "written bytes check");
+
     // tweak the buffer so the message looks longer
     dv.setUint8(0, 0xFF);
 

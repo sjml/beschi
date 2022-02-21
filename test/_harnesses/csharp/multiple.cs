@@ -40,6 +40,17 @@ class MultipleHarness: TestHarness {
             intMsgB.WriteBytes(bw, true);   //  9
             intMsgA.WriteBytes(bw, true);   // 10
             emptyMsg.WriteBytes(bw, true);  // 11
+
+            int size = 0;
+            size += byteMsg.GetSizeInBytes();
+            size += intMsgA.GetSizeInBytes() * 3;
+            size += intMsgB.GetSizeInBytes() * 4;
+            size += emptyMsg.GetSizeInBytes() * 2;
+            size += longMsg.GetSizeInBytes();
+            size += floatMsg.GetSizeInBytes();
+            size += sizeof(byte) * 12;
+
+            softAssert(size == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
         {

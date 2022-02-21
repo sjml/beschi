@@ -21,6 +21,8 @@ class BrokenHarness: TestHarness {
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
             broken.WriteBytes(bw, false);
+
+            softAssert(broken.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
         {

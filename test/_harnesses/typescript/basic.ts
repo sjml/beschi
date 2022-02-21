@@ -83,19 +83,35 @@ c3.b = 255;
 example.cl = [
     c1, c2, c3
 ];
-example.complex = new ComprehensiveMessage.ComplexData();
-example.complex.identifier = 127;
-example.complex.label = "ComplexDataObject";
-example.complex.backgroundColor = c1;
-example.complex.textColor = c2;
-example.complex.spectrum = [c3, c2, c1];
+example.cx = new ComprehensiveMessage.ComplexData();
+example.cx.identifier = 127;
+example.cx.label = "ComplexDataObject";
+example.cx.backgroundColor = c1;
+example.cx.textColor = c2;
+example.cx.spectrum = [c3, c2, c1];
+const cx1 = new ComprehensiveMessage.ComplexData();
+cx1.identifier = 255;
+cx1.label = "Complex1";
+cx1.backgroundColor = c3;
+cx1.textColor = c1;
+cx1.spectrum = [c3, c2, c1, c2, c3];
+const cx2 = new ComprehensiveMessage.ComplexData();
+cx2.identifier = 63;
+cx2.label = "Complex2";
+cx2.backgroundColor = c1;
+cx2.textColor = c3;
+cx2.spectrum = [c1, c2, c3, c2, c1];
+example.cxl = [cx1, cx2];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(1024);
+    const data = new ArrayBuffer(example.GetSizeInBytes());
     const dv = new DataView(data);
     const offset = example.WriteBytes(dv, 0, false);
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
+
+    softAssert(example.GetSizeInBytes() == 899, "size calculation check");
+    softAssert(example.GetSizeInBytes() == offset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
@@ -147,20 +163,20 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         softAssert(input.cl[i].g == example.cl[i].g, "[Color].g");
         softAssert(input.cl[i].b == example.cl[i].b, "[Color].b");
     }
-    softAssert(input.complex.identifier == example.complex.identifier, "ComplexData.identifier");
-    softAssert(input.complex.label == example.complex.label, "ComplexData.label");
-    softAssert(input.complex.backgroundColor.r == Math.fround(example.complex.backgroundColor.r), "ComplexData.backgroundColor.r");
-    softAssert(input.complex.backgroundColor.g == Math.fround(example.complex.backgroundColor.g), "ComplexData.backgroundColor.g");
-    softAssert(input.complex.backgroundColor.b == Math.fround(example.complex.backgroundColor.b), "ComplexData.backgroundColor.b");
-    softAssert(input.complex.textColor.r == Math.fround(example.complex.textColor.r), "ComplexData.textColor.r");
-    softAssert(input.complex.textColor.g == Math.fround(example.complex.textColor.g), "ComplexData.textColor.g");
-    softAssert(input.complex.textColor.b == Math.fround(example.complex.textColor.b), "ComplexData.textColor.b");
-    softAssert(input.complex.spectrum.length == example.complex.spectrum.length, "ComplexData.spectrum.length");
-    for (let i = 0; i < input.complex.spectrum.length; i++)
+    softAssert(input.cx.identifier == example.cx.identifier, "ComplexData.identifier");
+    softAssert(input.cx.label == example.cx.label, "ComplexData.label");
+    softAssert(input.cx.backgroundColor.r == Math.fround(example.cx.backgroundColor.r), "ComplexData.backgroundColor.r");
+    softAssert(input.cx.backgroundColor.g == Math.fround(example.cx.backgroundColor.g), "ComplexData.backgroundColor.g");
+    softAssert(input.cx.backgroundColor.b == Math.fround(example.cx.backgroundColor.b), "ComplexData.backgroundColor.b");
+    softAssert(input.cx.textColor.r == Math.fround(example.cx.textColor.r), "ComplexData.textColor.r");
+    softAssert(input.cx.textColor.g == Math.fround(example.cx.textColor.g), "ComplexData.textColor.g");
+    softAssert(input.cx.textColor.b == Math.fround(example.cx.textColor.b), "ComplexData.textColor.b");
+    softAssert(input.cx.spectrum.length == example.cx.spectrum.length, "ComplexData.spectrum.length");
+    for (let i = 0; i < input.cx.spectrum.length; i++)
     {
-        softAssert(input.complex.spectrum[i].r == Math.fround(example.complex.spectrum[i].r), "ComplexData.spectrum.r");
-        softAssert(input.complex.spectrum[i].g == Math.fround(example.complex.spectrum[i].g), "ComplexData.spectrum.g");
-        softAssert(input.complex.spectrum[i].b == Math.fround(example.complex.spectrum[i].b), "ComplexData.spectrum.b");
+        softAssert(input.cx.spectrum[i].r == Math.fround(example.cx.spectrum[i].r), "ComplexData.spectrum.r");
+        softAssert(input.cx.spectrum[i].g == Math.fround(example.cx.spectrum[i].g), "ComplexData.spectrum.g");
+        softAssert(input.cx.spectrum[i].b == Math.fround(example.cx.spectrum[i].b), "ComplexData.spectrum.b");
     }
 }
 

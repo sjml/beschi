@@ -30,8 +30,8 @@ class TypeScriptWriter(Writer):
         else:
             pref = ""
         label = var_name
-        if label.endswith("[i]"):
-            label = "i"
+        if label.endswith("_i]"):
+            label = "i_"
         if var_type in BASE_TYPE_SIZES:
             func = None
             pre_wrap = ""
@@ -103,12 +103,12 @@ class TypeScriptWriter(Writer):
                 f"const {var_name}Length = dv.getUint32(offset, true);",
                 "offset += 4;",
                 f"{pref}{var_name} = Array<{self.get_var(interior)}>({var_name}Length);",
-                f"for (let i = 0; i < {var_name}Length; i++)",
+                f"for (let {var_name}_i = 0; {var_name}_i < {var_name}Length; {var_name}_i++)",
                 "{"
             ]
             out += [
                 self.tab + deser for deser in self.deserializer(
-                    interior, f"{var_name}[i]", parent
+                    interior, f"{var_name}[{var_name}_i]", parent
                 )
             ]
             out += "}"
@@ -183,8 +183,8 @@ class TypeScriptWriter(Writer):
             out = [
                 f"dv.setUint32(offset, {pref}{var_name}.length, true);",
                 "offset += 4;",
-                f"for (let i = 0; i < {pref}{var_name}.length; i++) {{",
-                self.tab + f"let el = {pref}{var_name}[i];",
+                f"for (let {var_name}_i = 0; {var_name}_i < {pref}{var_name}.length; {var_name}_i++) {{",
+                self.tab + f"let el = {pref}{var_name}[{var_name}_i];",
             ]
             out += [self.tab + ser for ser in self.serializer(interior, "el", None)]
             out += "}"
@@ -192,6 +192,49 @@ class TypeScriptWriter(Writer):
         else:
             raise NotImplementedError(f"Type {var_type} not serializable yet.")
 
+    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+        lines: list[str] = []
+
+        accum = 0
+        if self.protocol.is_simple(s[0]):
+            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+        else:
+            size_init = "let size: number = 0;"
+            lines.append(size_init)
+
+            for var_name, var_type in s[1]:
+                if self.protocol.is_simple(var_type):
+                    accum += self.protocol.calculate_size(var_type)
+                else:
+                    if var_type == "string":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"size += textEnc.encode({accessor_prefix}{var_name}).byteLength;")
+                    elif var_type == "[string]":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
+                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + textEnc.encode({accessor_prefix}{var_name}[{var_name}_i]).byteLength;")
+                        lines.append("}")
+                    elif var_type[0] == "[" and var_type[-1] == "]":
+                        listed_var_type = var_type[1:-1]
+                        if self.protocol.is_simple(listed_var_type):
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"size += {accessor_prefix}{var_name}.length * {self.protocol.calculate_size(listed_var_type)};")
+                        else:
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
+                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"{accessor_prefix}{var_name}[{var_name}_i].")
+                            if clines[0] == size_init:
+                                clines = clines[1:]
+                            clines.append(f"size += {caccum};")
+                            lines += [f"{self.tab}{l}" for l in clines]
+                            lines.append("}")
+                    else:
+                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        lines += clines
+                        accum += caccum
+        return lines, accum
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
         is_message = False
@@ -222,13 +265,19 @@ class TypeScriptWriter(Writer):
         self.write_line()
 
         if is_message:
-            self.write_line("GetMessageType() : MessageType {")
+            self.write_line(f"GetMessageType() : MessageType {{ return MessageType.{s[0]}Type; }}")
+            self.write_line()
+            self.write_line("GetSizeInBytes(): number {")
             self.indent_level += 1
-            self.write_line(f"return MessageType.{s[0]}Type;")
-            self.indent_level -=1
+            measure_lines, accumulator = self.gen_measurement(s, "this.")
+            [self.write_line(s) for s in measure_lines]
+            if accumulator > 0:
+                self.write_line(f"size += {accumulator};")
+            if len(measure_lines) > 1:
+                self.write_line(f"return size;")
+            self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-
             self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number {")
             self.indent_level += 1
             self.write_line("if (tag) {")
@@ -292,6 +341,7 @@ class TypeScriptWriter(Writer):
         self.indent_level += 1
         self.write_line("GetMessageType() : MessageType;")
         self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number;")
+        self.write_line("GetSizeInBytes() : number;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("export interface MessageStatic {")

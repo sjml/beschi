@@ -28,10 +28,12 @@ func main() {
 
 	if len(*generatePathPtr) > 0 {
 		var mem bytes.Buffer
-		blank := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		blank := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 		mem.Write(blank)
 		mem.Reset()
 		lmsg.WriteBytes(&mem, false)
+
+		softAssert(lmsg.GetSizeInBytes() == len(blank), "written bytes check")
 
 		// tweak the buffer so the message looks longer
 		buffer := mem.Bytes()
