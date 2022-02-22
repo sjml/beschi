@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 from beschi import LIB_VERSION, LIB_NAME
 
@@ -7,10 +7,11 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'))
     DESC = f.read()
 
 setup(
-    name=LIB_NAME,
+    name=LIB_NAME.lower(),
     version=LIB_VERSION,
-    description='code generator for binary message passing between languages',
+    description='bit-packing and unpacking code generator for C#, Go, and TypeScript',
     long_description=DESC,
+    long_description_content_type='text/markdown',
     url='https://github.com/sjml/beschi',
     author='Shane Liesegang',
     license='MIT',
@@ -23,13 +24,18 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Code Generators',
     ],
-    packages=['beschi'],
+    packages=find_packages(
+        include=['beschi', 'beschi.writers'],
+        exclude=['test'], # seems to include test no matter what. ¯\_(ツ)_/¯
+    ),
     install_requires=[
         'toml',
     ],
     extras_require={
         'dev': [
-            'pytest'
+            'pytest',
+            'build',
+            'twine'
         ]
     },
     entry_points={
