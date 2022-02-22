@@ -13,10 +13,10 @@ I'll be honest, too: it **was** kind of fun to write a code generator. 😝
 
 ## How to use
 
-Eventually I might put this in [PyPI](https://pypi.org/), but for now, install with pip or your favorite Python packaging system. 
+You can install from [PyPI](https://pypi.org/project/beschi/): 
 
 ```
-pip install git+https://github.com/sjml/beschi.git
+pip install beschi
 ```
 
 It installs an executable that you can run directly, so long as however you invoked `pip` put it on your path. (This will work in an activated virtual environment, for instance.)

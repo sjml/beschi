@@ -3,15 +3,28 @@ import argparse
 
 from .protocol import Protocol
 from .writers import all_writers
+from . import LIB_NAME, LIB_VERSION
 
 
 def main():
     argparser = argparse.ArgumentParser(description="Generate the code for reading/writing messages from a given protocol.")
-    argparser.add_argument("--lang", "-l", type=str, required=True, help="language to generate")
+    argparser.add_argument("--version", "-v", action="store_const", const=True, default=False, help="print the version and exit")
+    argparser.add_argument("--lang", "-l", type=str, help="language to generate")
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
-    argparser.add_argument("--protocol", "-p", type=str, required=True, help="path to the protocol TOML file")
+    argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
 
     args = argparser.parse_args()
+
+    if args.version:
+        print(f"{LIB_NAME} v{LIB_VERSION}")
+        sys.exit(0)
+
+    if args.protocol == None:
+        sys.stderr.write("ERROR: Missing protocol. Specify a file with '--protocol FILENAME'.")
+        sys.exit(1)
+    if args.lang == None:
+        sys.stderr.write(f"ERROR: Missing language. Specify a language for output with '--lang {{{'|'.join(writers)}}}'.")
+        sys.exit(1)
 
     try:
         protocol = Protocol(args.protocol)
