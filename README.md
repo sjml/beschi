@@ -36,10 +36,10 @@ From the protocol file (detailed below), you get a code file that you can integr
 The protocol files are built in [TOML](https://toml.io). There's [a fuller example in the test suite](test/_protocols/example.toml), but here's an annotated sample.
 
 ```toml
-# the "meta" section only has the namespace 
+# the "meta" section only has the namespace
 #  for now, but may have more later if needed
 #
-# the namespace is optional; not all languages 
+# the namespace is optional; not all languages
 #  do something useful with it, but it's handy
 #  to have to help avoid clashes
 [meta]
@@ -48,7 +48,7 @@ namespace = "AppMessages"
 # messages are defined by a name and their data
 #  members. this will become a class or struct in
 #  the target languages with these pieces of data
-#  as accessible members. 
+#  as accessible members.
 [[messages]]
 _name = "Vector3Message"
 x = "float"
@@ -79,7 +79,7 @@ alpha = "float"
 # structs can contain other structs, and even lists of them
 [[structs]]
 _name = "Spectrum"
-default = "Color"
+defaultColor = "Color"
 colors = "[Color]"
 
 # structs can then be used in messages
@@ -94,18 +94,18 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Data Type | C#     | TypeScript | Go      |
-|--------------------|--------|------------|---------|
-| byte               | byte   | number     | byte    |
-| bool               | bool   | boolean    | bool    |
-| int16              | short  | number     | int16   |
-| uint16             | ushort | number     | uint16  |
-| int32              | int    | number     | int32   |
-| uint32             | uint   | number     | uint32  |
-| int64              | long   | bigint     | int64   |
-| uint64             | ulong  | bigint     | uint64  |
-| float              | float  | number     | float32 |
-| double             | double | number     | float64 |
+| Protocol Data Type | C#      | TypeScript | Go      |
+|--------------------|---------|-----------|-----------|
+| `byte`             | `byte`  | `number`  | `byte`    |
+| `bool`             | `bool`  | `boolean` | `bool`    |
+| `int16`            | `short` | `number`  | `int16`   |
+| `uint16`           | `ushort`| `number`  | `uint16`  |
+| `int32`            | `int`   | `number`  | `int32`   |
+| `uint32`           | `uint`  | `number`  | `uint32`  |
+| `int64`            | `long`  | `bigint`  | `int64`   |
+| `uint64`           | `ulong` | `bigint`  | `uint64`  |
+| `float`            | `float` | `number`  | `float32` |
+| `double`           | `double`| `number`  | `float64` |
 
 
 All the numbers are stored little-endian in the bytestream, if that matters for you. 
@@ -130,11 +130,11 @@ msg.WriteBytes(bw, false);
 And read it back in TypeScript:
 
 ```typescript
-const data = fs.ReadFileSync("./vec3.msg");
+const data = fs.readFileSync("./vec3.msg");
 const dv = new DataView(new Uint8Array(data).buffer);
 const msg = AppMessages.Vector3Message.FromBytes(dv, 0).val;
 if (msg.y == Math.fround(4096.1234)) {
-    print("Ready to go!")
+    console.log("Ready to go!");
 }
 ```
 
@@ -145,7 +145,7 @@ dat, _ := os.Open("./vec3.msg")
 defer dat.Close()
 msg := AppMessages.Vector3MessageFromBytes(dat)
 if msg.X == 1.0 && msg.Y == 4096.1234 && msg.Z < 0.0 {
-    print("Ready to go!")
+	print("Ready to go!\n")
 }
 ```
 
