@@ -1,6 +1,6 @@
 # Beschi
 
-![continuous integration](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)
+[![Verification Tests](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
 This is a custom bit-packing and unpacking code generator for C#, Go, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
 
