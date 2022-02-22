@@ -151,6 +151,8 @@ if msg.X == 1.0 && msg.Y == 4096.1234 && msg.Z < 0.0 {
 
 For the most part Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference outlined in detail below. Notice that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. Or how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to have working across languages feel as seamless as possible, but differences are outlined in the specific language sections below. 
 
+There are more extensive examples in [the test harnesses](test/_harnesses).
+
 ## Message objects
 
 (In the function signature pseudocode below, [...] indicates that specific languages may need additional parameters; these are the bases that indicate broad functionality.)
