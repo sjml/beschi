@@ -14,5 +14,6 @@ for entry in os.listdir(_writer_dir):
 
     writer_module = importlib.import_module(f"beschi.writers.{os.path.splitext(entry)[0]}")
     writer_class = getattr(writer_module, f"{writer_module.LANGUAGE_NAME}Writer")
-    all_writers[writer_module.LANGUAGE_NAME.lower()] = writer_class
+    if not writer_class.in_progress:
+        all_writers[writer_module.LANGUAGE_NAME.lower()] = writer_class
 

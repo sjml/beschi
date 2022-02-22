@@ -51,7 +51,11 @@ def main():
     writer_class = all_writers[args.lang]
 
     writer = writer_class(protocol)
-    output = writer.generate()
+    try:
+        output = writer.generate()
+    except NotImplementedError as nie:
+        sys.stderr.write(f"{nie}\n")
+        sys.exit(1)
 
     if args.output == None:
         print(output)

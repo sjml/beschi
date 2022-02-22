@@ -6,6 +6,9 @@ DEFAULT_INDENT = "    "
 class Writer:
     language_name = "[Base]"
     default_extension = ".beschi"
+    in_progress = False # if set to True, writer will not be added to
+                        #  the writers.all_writers object, so will be
+                        #  shielded from the test suite
 
     def __init__(self, protocol: Protocol, tab: str = DEFAULT_INDENT):
         self.indent_level: int = 0
@@ -21,6 +24,10 @@ class Writer:
             self.type_mapping[struct_type] = struct_type
         for msg_type in self.protocol.messages:
             self.type_mapping[msg_type] = msg_type
+
+    # actually generate the code
+    def generate(self) -> str:
+        raise NotImplementedError(f"ERROR: 'generate' function needs to be implemented on {self.__class__.__name__}")
 
     # write line with current indentation level
     def write_line(self, text: str = ""):
