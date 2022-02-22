@@ -1,7 +1,3 @@
-import os
-import filecmp
-import glob
-
 import beschi.writers
 
 import test_util
@@ -19,10 +15,4 @@ def test_writing_and_reading():
 ## (because of this, we don't need to test a full matrix and can just have
 ##  each language read its own output)
 def test_writing_comparison():
-    filecmp.clear_cache()
-    messages = (glob.glob(os.path.join(test_util.DATA_OUTPUT_DIR, "basic.*.msg")))
-    for i in range(len(messages)):
-        j = i + 1
-        if j >= len(messages):
-            j -= len(messages)
-        assert(filecmp.cmp(messages[i], messages[j], False))
+    test_util.check_files_identical("basic.*.msg")

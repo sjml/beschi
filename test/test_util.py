@@ -1,5 +1,7 @@
 import os
 import subprocess
+import filecmp
+import glob
 
 import beschi.writers
 
@@ -58,3 +60,12 @@ def run_for(language: str, srcfile: str):
         os.path.join(HARNESS_BIN_DIR, f"{srcfile}_{language}"),
         "--read", out_file
     ])
+
+def check_files_identical(data_glob):
+    filecmp.clear_cache()
+    messages = (glob.glob(os.path.join(DATA_OUTPUT_DIR, data_glob)))
+    for i in range(len(messages)):
+        j = i + 1
+        if j >= len(messages):
+            j -= len(messages)
+        assert(filecmp.cmp(messages[i], messages[j], False))

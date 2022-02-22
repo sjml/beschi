@@ -26,7 +26,7 @@ Example:
 beschi --lang csharp --protocol ./messages.toml
 ```
 
-By default, it prints to standard output, but you can also go write to a file with an output flag like `--output ./Messages.cs`.
+By default, it prints to standard output, but you can also write to a file with an output flag like `--output ./Messages.cs`.
 
 From the input protocol file (detailed below), you get a code file that you can integrate to a project allowing you encode messages as compact and portable binary buffers. For example, I used it in a project where Unity, a Go server, and a web client were all passing data back and forth to each other. When the message format needed to change, it was just a matter of tweaking the protocol file and regenerating the language files, instead of having to the painstaking and error-prone manual bit-packing and unpacking across three languages. 
 
