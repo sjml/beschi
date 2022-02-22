@@ -29,18 +29,18 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     const dv = new DataView(data);
     let offset = 0;
 
-    offset = byteMsg.WriteBytes(dv, offset, true);   //  0
-    offset = intMsgA.WriteBytes(dv, offset, true);   //  1
-    offset = intMsgB.WriteBytes(dv, offset, true);   //  2
-    offset = emptyMsg.WriteBytes(dv, offset, true);  //  3
-    offset = longMsg.WriteBytes(dv, offset, true);   //  4
-    offset = floatMsg.WriteBytes(dv, offset, true);  //  5
-    offset = intMsgA.WriteBytes(dv, offset, true);   //  6
-    offset = intMsgB.WriteBytes(dv, offset, true);   //  7
-    offset = intMsgB.WriteBytes(dv, offset, true);   //  8
-    offset = intMsgB.WriteBytes(dv, offset, true);   //  9
-    offset = intMsgA.WriteBytes(dv, offset, true);   // 10
-    offset = emptyMsg.WriteBytes(dv, offset, true);  // 11
+    offset = byteMsg.WriteBytes(dv, true, offset);   //  0
+    offset = intMsgA.WriteBytes(dv, true, offset);   //  1
+    offset = intMsgB.WriteBytes(dv, true, offset);   //  2
+    offset = emptyMsg.WriteBytes(dv, true, offset);  //  3
+    offset = longMsg.WriteBytes(dv, true, offset);   //  4
+    offset = floatMsg.WriteBytes(dv, true, offset);  //  5
+    offset = intMsgA.WriteBytes(dv, true, offset);   //  6
+    offset = intMsgB.WriteBytes(dv, true, offset);   //  7
+    offset = intMsgB.WriteBytes(dv, true, offset);   //  8
+    offset = intMsgB.WriteBytes(dv, true, offset);   //  9
+    offset = intMsgA.WriteBytes(dv, true, offset);   // 10
+    offset = emptyMsg.WriteBytes(dv, true, offset);  // 11
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
 

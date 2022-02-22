@@ -106,7 +106,7 @@ example.cxl = [cx1, cx2];
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const data = new ArrayBuffer(example.GetSizeInBytes());
     const dv = new DataView(data);
-    const offset = example.WriteBytes(dv, 0, false);
+    const offset = example.WriteBytes(dv, false, 0);
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
 

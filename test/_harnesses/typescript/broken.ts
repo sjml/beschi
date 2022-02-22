@@ -9,7 +9,7 @@ broken.y = 2.0;
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const data = new ArrayBuffer(broken.GetSizeInBytes());
     const dv = new DataView(data);
-    const offset = broken.WriteBytes(dv, 0, false);
+    const offset = broken.WriteBytes(dv, false, 0);
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
 

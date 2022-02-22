@@ -278,7 +278,7 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-            self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number {")
+            self.write_line("WriteBytes(dv: DataView, tag: boolean, offset: number) : number {")
             self.indent_level += 1
             self.write_line("if (tag) {")
             self.indent_level += 1
@@ -340,7 +340,7 @@ class TypeScriptWriter(Writer):
         self.write_line("export interface Message {")
         self.indent_level += 1
         self.write_line("GetMessageType() : MessageType;")
-        self.write_line("WriteBytes(dv: DataView, offset: number, tag: boolean) : number;")
+        self.write_line("WriteBytes(dv: DataView, tag: boolean, offset: number) : number;")
         self.write_line("GetSizeInBytes() : number;")
         self.indent_level -= 1
         self.write_line("}")

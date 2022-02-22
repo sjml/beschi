@@ -1,4 +1,4 @@
-name: Basic Read/Write Tests
+name: Verification Tests
 
 on: push
 

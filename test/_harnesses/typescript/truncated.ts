@@ -8,7 +8,7 @@ lmsg.ints = [1, 2, 32767, 4, 5];
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const data = new ArrayBuffer(16);
     const dv = new DataView(data);
-    const offset = lmsg.WriteBytes(dv, 0, false);
+    const offset = lmsg.WriteBytes(dv, false, 0);
 
     softAssert(lmsg.GetSizeInBytes() == offset, "written bytes check");
 

@@ -24,18 +24,18 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     let offset = 0;
 
 
-    offset = full.WriteBytes(dv, offset, true);
-    offset = full.WriteBytes(dv, offset, true);
-    offset = full.WriteBytes(dv, offset, true);
+    offset = full.WriteBytes(dv, true, offset);
+    offset = full.WriteBytes(dv, true, offset);
+    offset = full.WriteBytes(dv, true, offset);
 
     // write a truncated message tagged as a full one
     dv.setUint8(offset, BrokenMessages.MessageType.FullMessageType);
     offset += 1;
-    offset = trunc.WriteBytes(dv, offset, false);
+    offset = trunc.WriteBytes(dv, false, offset);
 
-    offset = full.WriteBytes(dv, offset, true);
-    offset = full.WriteBytes(dv, offset, true);
-    offset = full.WriteBytes(dv, offset, true);
+    offset = full.WriteBytes(dv, true, offset);
+    offset = full.WriteBytes(dv, true, offset);
+    offset = full.WriteBytes(dv, true, offset);
 
     writeBuffer(Buffer.from(data, 0, offset), filePath);
 
