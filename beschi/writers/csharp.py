@@ -1,5 +1,3 @@
-import sys
-
 from ..protocol import Protocol, BASE_TYPE_SIZES
 from ..writer import Writer
 from .. import LIB_NAME, LIB_VERSION

@@ -1,5 +1,3 @@
-from collections import defaultdict
-
 from .protocol import Protocol, COLLECTION_TYPES
 
 DEFAULT_INDENT = "    "

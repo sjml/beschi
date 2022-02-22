@@ -1,7 +1,5 @@
-import os
 import sys
 import argparse
-import importlib
 
 from .protocol import Protocol
 from .writers import all_writers
