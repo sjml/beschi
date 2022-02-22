@@ -15,7 +15,7 @@ setup(
     url='https://github.com/sjml/beschi',
     author='Shane Liesegang',
     license='MIT',
-    classifier=[
+    classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
