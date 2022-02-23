@@ -2,7 +2,7 @@ import sys
 import argparse
 
 from .protocol import Protocol
-from .writers import all_writers
+from .writers import all_writers, experimental_writers
 from . import LIB_NAME, LIB_VERSION
 
 
@@ -40,7 +40,8 @@ def main():
         sys.exit(1)
 
     writers = [w.lower() for w in all_writers.keys()]
-    if args.lang not in writers:
+    exp_writers = [w.lower() for w in experimental_writers.keys()]
+    if args.lang not in writers and args.lang not in exp_writers:
         sys.stderr.write("\n".join([
             "ERROR: invalid language. Valid writers are:",
             "\t" + ", ".join(writers),
@@ -48,7 +49,10 @@ def main():
         ]))
         sys.exit(1)
 
-    writer_class = all_writers[args.lang]
+    try:
+        writer_class = all_writers[args.lang]
+    except KeyError:
+        writer_class = experimental_writers[args.lang]
 
     writer = writer_class(protocol)
     try:

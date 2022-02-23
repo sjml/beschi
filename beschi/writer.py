@@ -1,3 +1,5 @@
+import os
+
 from .protocol import Protocol, COLLECTION_TYPES
 
 DEFAULT_INDENT = "    "
@@ -24,6 +26,11 @@ class Writer:
             self.type_mapping[struct_type] = struct_type
         for msg_type in self.protocol.messages:
             self.type_mapping[msg_type] = msg_type
+
+    def add_boilerplate(self):
+        boilerplate_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "writers", "boilerplate", f"{self.language_name}{self.default_extension}")
+        if os.path.exists(boilerplate_path):
+            self.output += open(boilerplate_path, "r").read().splitlines()
 
     # actually generate the code
     def generate(self) -> str:

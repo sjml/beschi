@@ -117,7 +117,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
     const input = ComprehensiveMessage.TestingMessage.FromBytes(dv, 0).val;
-    softAssert(example != null, "parsing test message");
+    softAssert(input != null, "parsing test message");
 
     softAssert(input.b == example.b, "byte");
     softAssert(input.tf == example.tf, "bool");

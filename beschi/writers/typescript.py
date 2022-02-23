@@ -185,7 +185,7 @@ class TypeScriptWriter(Writer):
                 self.tab + f"let el = {pref}{var_name}[{var_name}_i];",
             ]
             out += [self.tab + ser for ser in self.serializer(interior, "el", None)]
-            out += "}"
+            out += ["}"]
             return out
         else:
             raise NotImplementedError(f"Type {var_type} not serializable yet.")
@@ -235,10 +235,7 @@ class TypeScriptWriter(Writer):
         return lines, accum
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
-        is_message = False
-        if s[0] in self.protocol.messages:
-            is_message = True
-
+        is_message = s[0] in self.protocol.messages
         if is_message:
             self.write_line(f"export class {s[0]} implements Message {{")
         else:

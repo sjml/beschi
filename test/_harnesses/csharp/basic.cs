@@ -128,7 +128,7 @@ class BasicHarness: TestHarness {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
             ComprehensiveMessage.TestingMessage input = ComprehensiveMessage.TestingMessage.FromBytes(br);
-            softAssert(example != null, "parsing test message");
+            softAssert(input != null, "parsing test message");
 
             softAssert(input.b == example.b, "byte");
             softAssert(input.tf == example.tf, "bool");
