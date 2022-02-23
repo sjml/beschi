@@ -1,13 +1,18 @@
 class DataReader {
     enum DataReaderError: Error {
         case EOF
-        case InvalidStringData
+        case InvalidData
     }
 
     let data: Data
     var currentOffset: Int = 0
     init(fromData data: Data) {
         self.data = data
+    }
+
+
+    func IsFinished() -> Bool {
+        return self.currentOffset >= self.data.count
     }
 
     func GetUInt8() throws -> UInt8 {
@@ -140,7 +145,7 @@ class DataReader {
         guard
             let ret = String(data: stringData, encoding: String.Encoding.utf8)
         else {
-            throw DataReaderError.InvalidStringData
+            throw DataReaderError.InvalidData
         }
         self.currentOffset += stringLength
         return ret

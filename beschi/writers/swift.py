@@ -210,12 +210,18 @@ class SwiftWriter(Writer):
         self.write_line()
 
         if is_message:
-            self.write_line(f"public static func FromBytes(_ data: Data) -> {s[0]}? {{")
+            self.write_line(f"public static func FromBytes(_ fromData: Data) -> {s[0]}? {{")
+            self.indent_level += 1
+            self.write_line("let dr = DataReader(fromData: fromData)")
+            self.write_line("return FromBytes(dataReader: dr)")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+            self.write_line(f"static func FromBytes(dataReader: DataReader) -> {s[0]}? {{")
             self.indent_level += 1
             if len(s[1]) > 0:
                 self.write_line("do {")
                 self.indent_level += 1
-                self.write_line("let dataReader = DataReader(fromData: data)")
         else:
             self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {s[0]} {{")
             self.indent_level += 1
@@ -287,42 +293,61 @@ class SwiftWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        # self.write_line("export function ProcessRawBytes(dv: DataView, offset: number): {vals: Message[], offset: number} {")
-        # self.indent_level += 1
-        # self.write_line("const msgList: Message[] = [];")
-        # self.write_line("while (offset < dv.byteLength) {")
-        # self.indent_level += 1
-        # self.write_line("const msgType: number = dv.getUint8(offset);")
-        # self.write_line("offset += 1;")
-        # self.write_line("let msgRet: any = null;")
-        # self.write_line("switch (msgType) {")
-        # self.indent_level += 1
-        # for msg_type in msg_types:
-        #     self.write_line(f"case MessageType.{msg_type}Type:")
-        #     self.indent_level += 1
-        #     self.write_line(f"msgRet = {msg_type}.FromBytes(dv, offset);")
-        #     self.write_line("break;")
-        #     self.indent_level -= 1
-        # self.write_line("default:")
-        # self.indent_level += 1
-        # self.write_line("msgRet = {val: null, offset: offset};")
-        # self.write_line("break;")
-        # self.indent_level -= 1
-        # self.indent_level -= 1
-        # self.write_line("}")
-        # self.write_line("offset = msgRet.offset;")
-        # self.write_line("msgList.push(msgRet.val);")
-        # self.write_line("if (msgRet.val == null) {")
-        # self.indent_level += 1
-        # self.write_line("break;")
-        # self.indent_level -= 1
-        # self.write_line("}")
-        # self.indent_level -= 1
-        # self.write_line("}")
-        # self.write_line("return {vals: msgList, offset: offset};")
-        # self.indent_level -= 1
-        # self.write_line("}")
-        # self.write_line()
+        if self.protocol.namespace != None:
+            self.write_line(f"public static func ProcessRawBytes(_ data: Data) -> [{self.protocol.namespace}_Message?] {{")
+            self.indent_level += 1
+            self.write_line(f"var msgList: [{self.protocol.namespace}_Message?] = []")
+        else:
+            self.write_line(f"public func ProcessRawBytes(_ data: Data) -> [Message?] {{")
+            self.indent_level += 1
+            self.write_line("var msgList: [Message?] = []")
+        self.write_line("let dr = DataReader(fromData: data)")
+        self.write_line("while !dr.IsFinished() {")
+        self.indent_level += 1
+        self.write_line("do {")
+        self.indent_level += 1
+        pref = ""
+        if self.protocol.namespace != None:
+            pref = f"{self.protocol.namespace}."
+        self.write_line(f"let msgTypeByte = try dr.GetUInt8()")
+        self.write_line(f"guard let msgType = {pref}MessageType(rawValue: msgTypeByte)")
+        self.write_line("else {")
+        self.indent_level += 1
+        self.write_line("throw DataReader.DataReaderError.InvalidData")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("switch msgType {")
+        self.indent_level += 1
+        for msg_type in msg_types:
+            self.write_line(f"case {pref}MessageType.{msg_type}Type:")
+            self.indent_level += 1
+            self.write_line(f"msgList.append({msg_type}.FromBytes(dataReader: dr))")
+            self.indent_level -= 1
+        if len(msg_types) == 0:
+            self.write_line(f"case {pref}MessageType.__NullMessage:")
+            self.indent_level += 1
+            self.write_line(f"break")
+            self.indent_level -= 1
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("catch {")
+        self.indent_level += 1
+        self.write_line("msgList.append(nil)")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("if msgList.last! == nil {")
+        self.indent_level += 1
+        self.write_line("break")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("return msgList")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
         for s in self.protocol.structs.items():
             self.gen_struct(s)
