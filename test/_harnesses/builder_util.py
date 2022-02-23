@@ -45,7 +45,7 @@ class Builder:
         self.libfile = args.libfile
         self.libname = os.path.splitext(self.libfile)[0]
         self.srcfile = args.srcfile
-        self.srcname = os.path.splitext(self.srcfile)[0]
+        self.srcname = os.path.splitext(os.path.basename(self.srcfile))[0]
         self.exename = args.exename
         if self.exename == None:
             self.exename = f"{os.path.splitext(args.srcfile)[0].lower()}_{self.language_name}"

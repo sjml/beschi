@@ -3,6 +3,7 @@ import subprocess
 import filecmp
 import glob
 
+from beschi.writer import Writer
 import beschi.writers
 
 CODE_OUTPUT_DIR = "out/generated"
@@ -11,7 +12,9 @@ HARNESS_SRC_DIR = "test/_harnesses"
 HARNESS_BIN_DIR = "out/executables"
 
 def generate_for(protocol: str, output_name: str):
-    for label, writer_class in beschi.writers.all_writers.items():
+    writers: dict[str, Writer] = beschi.writers.all_writers | beschi.writers.experimental_writers
+
+    for label, writer_class in writers.items():
         out_file_dir =  os.path.join(CODE_OUTPUT_DIR, label)
         out_file_path = os.path.join(out_file_dir, f"{output_name}{writer_class.default_extension}")
 
@@ -30,7 +33,10 @@ def generate_for(protocol: str, output_name: str):
         assert(os.path.exists(out_file_path))
 
 def build_for(language: str, srcfile: str, libfile: str):
-    writer_class = beschi.writers.all_writers[language]
+    try:
+        writer_class = beschi.writers.all_writers[language]
+    except KeyError:
+        writer_class = beschi.writers.experimental_writers[language]
     if not os.path.exists(HARNESS_BIN_DIR):
         os.makedirs(HARNESS_BIN_DIR)
     harness_path = os.path.join(HARNESS_SRC_DIR, language)

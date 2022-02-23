@@ -142,14 +142,14 @@ class SwiftWriter(Writer):
         is_message = s[0] in self.protocol.messages
 
         if is_message:
-            self.write_line(f"public struct {s[0]}: Message {{")
+            self.write_line(f"public struct {s[0]} : Message {{")
         else:
             self.write_line(f"public struct {s[0]} {{")
         self.indent_level += 1
 
         for var_name, var_type in s[1]:
             if var_type[0] == "[" and var_type[-1] == "]":
-                self.write_line(f"var {var_name}: [{self.get_var(var_type[1:-1])}] = []")
+                self.write_line(f"public var {var_name}: [{self.get_var(var_type[1:-1])}] = []")
             else:
                 var_type = self.get_var(var_type)
                 default_value = "0"
@@ -161,7 +161,10 @@ class SwiftWriter(Writer):
                     default_value = "\"\""
                 elif var_type in self.protocol.structs:
                     default_value = f"{var_type}()"
-                self.write_line(f"var {var_name}: {var_type}{f' = {default_value}' if default_value else ''}")
+                self.write_line(f"public var {var_name}: {var_type}{f' = {default_value}' if default_value else ''}")
+        self.write_line()
+
+        self.write_line("public init() {}")
         self.write_line()
 
         if is_message:
@@ -196,14 +199,15 @@ class SwiftWriter(Writer):
 
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.serializer(var_type, var_name)]
-        self.write_line()
-        self.write_line("data = dataWriter.data")
+        if is_message:
+            self.write_line()
+            self.write_line("data = dataWriter.data")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
         if is_message:
-            self.write_line(f"static func FromBytes(_ data: Data) -> {s[0]}? {{")
+            self.write_line(f"public static func FromBytes(_ data: Data) -> {s[0]}? {{")
             self.indent_level += 1
             self.write_line("do {")
             self.indent_level += 1

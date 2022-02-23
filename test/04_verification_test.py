@@ -2,13 +2,14 @@ import beschi.writers
 
 import test_util
 
+writers = list(beschi.writers.all_writers.keys()) + ["swift"]
 
 def test_basic_harness_compilation():
-    for label in beschi.writers.all_writers:
+    for label in writers:
         test_util.build_for(label, "basic", "ComprehensiveMessage")
 
 def test_writing_and_reading():
-    for w in beschi.writers.all_writers:
+    for w in writers:
         test_util.run_for(w, "basic")
 
 # checks that all generated messages from each language are byte-identical

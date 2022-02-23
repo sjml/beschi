@@ -7,6 +7,9 @@
     - swift:
         - writer does not guarantee little-endianness right now :(
         - label.endswith (check on these across the generators)
+        - caveats: 
+            - might do a lot of memory copying? it's not always clear when that's happening
+            - some different ergonomics
 
 * testing framework
     - protocol should not allow struct/message names that shadow base types
