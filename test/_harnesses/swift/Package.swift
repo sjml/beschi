@@ -8,15 +8,14 @@ let package = Package(
     products: [
         .library(name: "GeneratedMessages", type: .static, targets: ["GeneratedMessages"]),
         .executable(name: "basic", targets: ["basic"]),
+        .executable(name: "broken", targets: ["broken"]),
+        .executable(name: "truncated", targets: ["truncated"]),
     ],
     dependencies: [],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(name: "GeneratedMessages"),
-        .executableTarget(
-            name: "basic",
-            dependencies: ["GeneratedMessages"]
-        ),
+        .executableTarget(name: "basic", dependencies: ["GeneratedMessages"]),
+        .executableTarget(name: "broken", dependencies: ["GeneratedMessages"]),
+        .executableTarget(name: "truncated", dependencies: ["GeneratedMessages"]),
     ]
 )

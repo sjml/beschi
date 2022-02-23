@@ -199,3 +199,8 @@ else if parsed["read"] != nil {
         softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b")
     }
 }
+
+if (!OK) {
+    "Failed assertions.\n".data(using: .utf8).map(FileHandle.standardError.write)
+    exit(1)
+}
