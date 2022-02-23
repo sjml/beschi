@@ -45,6 +45,8 @@ class Protocol():
                     raise ValueError(f"Duplicate _name on {struct_data}")
                 if _contains_whitespace(struct_data["_name"]):
                     raise ValueError(f"Struct _name cannot contain whitespace: '{struct_data['_name']}'")
+                if struct_data['_name'] in BASE_TYPE_SIZES.keys() or struct_data['_name'] in COLLECTION_TYPES:
+                    raise ValueError(f"Struct _name is reserved word: '{struct_data['_name']}'")
                 self.structs[struct_data["_name"]] = []
             for struct in protocol_data["structs"]:
                 struct_name = struct["_name"]
@@ -64,7 +66,11 @@ class Protocol():
                 if message_data["_name"] in self.messages:
                     raise ValueError(f"Duplicate _name on {message_data}")
                 if _contains_whitespace(message_data["_name"]):
-                    raise ValueError(f"Struct _name cannot contain whitespace: '{message_data['_name']}'")
+                    raise ValueError(f"Message _name cannot contain whitespace: '{message_data['_name']}'")
+                if message_data['_name'] in BASE_TYPE_SIZES.keys() or message_data['_name'] in COLLECTION_TYPES:
+                    raise ValueError(f"Message _name is reserved word: '{message_data['_name']}'")
+                if message_data['_name'] in self.structs.keys():
+                    raise ValueError(f"Message name cannot shadow struct: '{message_data['_name']}'")
                 self.messages[message_data["_name"]] = []
             for message in protocol_data["messages"]:
                 message_name = message["_name"]

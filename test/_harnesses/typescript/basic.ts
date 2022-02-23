@@ -178,6 +178,25 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         softAssert(input.cx.spectrum[i].g == Math.fround(example.cx.spectrum[i].g), "ComplexData.spectrum.g");
         softAssert(input.cx.spectrum[i].b == Math.fround(example.cx.spectrum[i].b), "ComplexData.spectrum.b");
     }
+    softAssert(input.cxl.length == example.cxl.length, "[ComplexData].length");
+    for (let i=0; i < input.cxl.length; i++)
+    {
+        softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
+        softAssert(input.cxl[i].label == example.cxl[i].label, "[ComplexData].label");
+        softAssert(input.cxl[i].backgroundColor.r == example.cxl[i].backgroundColor.r, "[ComplexData].backgroundColor.r");
+        softAssert(input.cxl[i].backgroundColor.g == example.cxl[i].backgroundColor.g, "[ComplexData].backgroundColor.g");
+        softAssert(input.cxl[i].backgroundColor.b == example.cxl[i].backgroundColor.b, "[ComplexData].backgroundColor.b");
+        softAssert(input.cxl[i].textColor.r == example.cxl[i].textColor.r, "[ComplexData].textColor.r");
+        softAssert(input.cxl[i].textColor.g == example.cxl[i].textColor.g, "[ComplexData].textColor.g");
+        softAssert(input.cxl[i].textColor.b == example.cxl[i].textColor.b, "[ComplexData].textColor.b");
+        softAssert(input.cxl[i].spectrum.length == example.cxl[i].spectrum.length, "[ComplexData].spectrum.length");
+        for (let j = 0; j < input.cxl[i].spectrum.length; j++)
+        {
+            softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
+            softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
+            softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+        }
+    }
 }
 
 runTest(generate, read);

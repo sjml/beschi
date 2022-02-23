@@ -9,7 +9,7 @@ with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'))
 setup(
     name=LIB_NAME.lower(),
     version=LIB_VERSION,
-    description='bit-packing and unpacking code generator for C#, Go, and TypeScript',
+    description='bit-packing and unpacking code generator for C#, Go, Swift, and TypeScript',
     long_description=DESC,
     long_description_content_type='text/markdown',
     url='https://github.com/sjml/beschi',

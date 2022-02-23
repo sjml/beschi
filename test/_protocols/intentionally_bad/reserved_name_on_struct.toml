@@ -1,0 +1,6 @@
+[meta]
+namespace = "ReservedNameOnStruct"
+
+[[structs]]
+_name = "int16"
+int16Member = "int16"

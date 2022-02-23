@@ -191,6 +191,23 @@ func main() {
 			softAssert(input.Cx.Spectrum[i].G == example.Cx.Spectrum[i].G, "ComplexData.spectrum.g")
 			softAssert(input.Cx.Spectrum[i].B == example.Cx.Spectrum[i].B, "ComplexData.spectrum.b")
 		}
+		softAssert(len(input.Cxl) == len(example.Cxl), "[ComplexData].length")
+		for i := 0; i < len(input.Cxl); i++ {
+			softAssert(input.Cxl[i].Identifier == example.Cxl[i].Identifier, "[ComplexData].identifier")
+			softAssert(input.Cxl[i].Label == example.Cxl[i].Label, "[ComplexData].label")
+			softAssert(input.Cxl[i].BackgroundColor.R == example.Cxl[i].BackgroundColor.R, "[ComplexData].backgroundColor.r")
+			softAssert(input.Cxl[i].BackgroundColor.G == example.Cxl[i].BackgroundColor.G, "[ComplexData].backgroundColor.g")
+			softAssert(input.Cxl[i].BackgroundColor.B == example.Cxl[i].BackgroundColor.B, "[ComplexData].backgroundColor.b")
+			softAssert(input.Cxl[i].TextColor.R == example.Cxl[i].TextColor.R, "[ComplexData].textColor.r")
+			softAssert(input.Cxl[i].TextColor.G == example.Cxl[i].TextColor.G, "[ComplexData].textColor.g")
+			softAssert(input.Cxl[i].TextColor.B == example.Cxl[i].TextColor.B, "[ComplexData].textColor.b")
+			softAssert(len(input.Cxl[i].Spectrum) == len(example.Cxl[i].Spectrum), "[ComplexData].spectrum.length")
+			for j := 0; j < len(input.Cxl[i].Spectrum); j++ {
+				softAssert(input.Cxl[i].Spectrum[j].R == example.Cxl[i].Spectrum[j].R, "[ComplexData].spectrum.r")
+				softAssert(input.Cxl[i].Spectrum[j].G == example.Cxl[i].Spectrum[j].G, "[ComplexData].spectrum.g")
+				softAssert(input.Cxl[i].Spectrum[j].B == example.Cxl[i].Spectrum[j].B, "[ComplexData].spectrum.b")
+			}
+		}
 
 	}
 

@@ -55,3 +55,15 @@ def test_protocol_missing_message_name():
 def test_protocol_missing_struct_name():
     with pytest.raises(ValueError):
         p = Protocol("test/_protocols/intentionally_bad/missing_struct_name.toml")
+
+def test_protocol_reserved_struct_name():
+    with pytest.raises(ValueError):
+        p = Protocol("test/_protocols/intentionally_bad/reserved_name_on_struct.toml")
+
+def test_protocol_reserved_message_name():
+    with pytest.raises(ValueError):
+        p = Protocol("test/_protocols/intentionally_bad/reserved_name_on_message.toml")
+
+def test_protocol_message_duplicating_struct():
+    with pytest.raises(ValueError):
+        p = Protocol("test/_protocols/intentionally_bad/message_duplicating_struct_name.toml")

@@ -200,6 +200,23 @@ else if parsed["read"] != nil {
         softAssert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g")
         softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b")
     }
+    softAssert(input.cxl.count == example.cxl.count, "[ComplexData].length");
+    for i in 0..<input.cxl.count {
+        softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
+        softAssert(input.cxl[i].label == example.cxl[i].label, "[ComplexData].label");
+        softAssert(input.cxl[i].backgroundColor.r == example.cxl[i].backgroundColor.r, "[ComplexData].backgroundColor.r");
+        softAssert(input.cxl[i].backgroundColor.g == example.cxl[i].backgroundColor.g, "[ComplexData].backgroundColor.g");
+        softAssert(input.cxl[i].backgroundColor.b == example.cxl[i].backgroundColor.b, "[ComplexData].backgroundColor.b");
+        softAssert(input.cxl[i].textColor.r == example.cxl[i].textColor.r, "[ComplexData].textColor.r");
+        softAssert(input.cxl[i].textColor.g == example.cxl[i].textColor.g, "[ComplexData].textColor.g");
+        softAssert(input.cxl[i].textColor.b == example.cxl[i].textColor.b, "[ComplexData].textColor.b");
+        softAssert(input.cxl[i].spectrum.count == example.cxl[i].spectrum.count, "[ComplexData].spectrum.length");
+        for j in 0..<input.cxl[i].spectrum.count {
+            softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
+            softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
+            softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+        }
+    }
 }
 
 if (!OK) {

@@ -1,0 +1,6 @@
+[meta]
+namespace = "ReservedNameOnMessage"
+
+[[messages]]
+_name = "int16"
+int16Member = "int16"
