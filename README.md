@@ -242,7 +242,7 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 
 ### Swift
 * Swift support is kind of experimental. It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
-* Unlike the other generators, Swift code does not guarantee that values are little-endian when put into the buffer. So far as I can see, every platform where Swift usually runs is natively little-endian, so in a practical sense it's not a problem, but it's bothersome. Will hopefully fix it up soon. 
+* Unlike the other generators, Swift code does not guarantee that floating-point values are little-endian when put into the buffer. So far as I can see, every platform where Swift usually runs is natively little-endian, so in a practical sense it's not a problem, but it's bothersome. Will hopefully fix it up soon. 
 * Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
 * There might be some unecessary memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, so maybe it's ok? Anyway, something to keep awareness of. 
 

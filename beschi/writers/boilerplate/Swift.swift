@@ -10,7 +10,6 @@ class DataReader {
         self.data = data
     }
 
-
     func IsFinished() -> Bool {
         return self.currentOffset >= self.data.count
     }
@@ -170,32 +169,32 @@ class DataWriter {
     }
 
     func WriteInt16(_ i16: Int16) {
-        var _i16 = i16
+        var _i16 = Int16(littleEndian: i16)
         self.data.append(withUnsafeBytes(of: &_i16, {Data($0)}))
     }
 
     func WriteUInt16(_ ui16: UInt16) {
-        var _ui16 = ui16
+        var _ui16 = UInt16(littleEndian: ui16)
         self.data.append(withUnsafeBytes(of: &_ui16, {Data($0)}))
     }
 
     func WriteInt32(_ i32: Int32) {
-        var _i32 = i32
+        var _i32 = Int32(littleEndian: i32)
         self.data.append(withUnsafeBytes(of: &_i32, {Data($0)}))
     }
 
     func WriteUInt32(_ ui32: UInt32) {
-        var _ui32 = ui32
+        var _ui32 = UInt32(littleEndian: ui32)
         self.data.append(withUnsafeBytes(of: &_ui32, {Data($0)}))
     }
 
     func WriteInt64(_ i64: Int64) {
-        var _i64 = i64
+        var _i64 = Int64(littleEndian: i64)
         self.data.append(withUnsafeBytes(of: &_i64, {Data($0)}))
     }
 
     func WriteUInt64(_ ui64: UInt64) {
-        var _ui64 = ui64
+        var _ui64 = UInt64(littleEndian: ui64)
         self.data.append(withUnsafeBytes(of: &_ui64, {Data($0)}))
     }
 
