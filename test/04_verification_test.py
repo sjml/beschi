@@ -2,7 +2,7 @@ import beschi.writers
 
 import test_util
 
-writers = list(beschi.writers.all_writers.keys()) + ["swift"]
+writers = list(beschi.writers.all_writers.keys())
 
 def test_basic_harness_compilation():
     for label in writers:

@@ -59,6 +59,17 @@ if parsed["generate"] != nil {
     emptyMsg.WriteBytes(data: &data, tag: true)  // 11
 
     try data.write(to: outPath)
+
+    var size: UInt32 = 0
+    size += byteMsg.GetSizeInBytes()
+    size += intMsgA.GetSizeInBytes() * 3
+    size += intMsgB.GetSizeInBytes() * 4
+    size += emptyMsg.GetSizeInBytes() * 2
+    size += longMsg.GetSizeInBytes()
+    size += floatMsg.GetSizeInBytes()
+    size += 12
+
+    softAssert(size == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))

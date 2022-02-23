@@ -2,7 +2,7 @@
 
 [![Verification Tests](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
-This is a custom bit-packing and unpacking code generator for C#, Go, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
+This is a custom bit-packing and unpacking code generator for C#, Go, Swift, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
 
 The original project started off using [FlatBuffers](https://google.github.io/flatbuffers/), which are actually pretty great for a lot of use cases and I definitely recommend you look at them if you want something with more functionality and polish. However, for what I was doing I needed the actual produced buffers to be as tiny as possible — with FlatBuffers, the resulting data is a little bulky because of the vtables and support for changing schema while still being able to use old data. Since my messages only exist in flight and are never persisted, client and server can stay in lockstep, so the buffers can be more compact. The code for creating and reading messages with Beschi is also a bit smoother... at least, it's a bit more to my personal tastes in code.
 
@@ -28,7 +28,7 @@ beschi --lang csharp --protocol ./messages.toml
 
 By default, it prints to standard output, but you can also write to a file with an output flag like `--output ./Messages.cs`.
 
-From the input protocol file (detailed below), you get a code file that you can integrate to a project allowing you encode messages as compact and portable binary buffers. For example, I used it in a project where Unity, a Go server, and a web client were all passing data back and forth to each other. When the message format needed to change, it was just a matter of tweaking the protocol file and regenerating the language files, instead of having to the painstaking and error-prone manual bit-packing and unpacking across three languages. 
+From the input protocol file (detailed below), you get a code file that you can integrate to a project allowing you encode messages as compact and portable binary buffers. For example, I used it in a project where Unity, a Go server, and a web client were all passing data back and forth to each other. When the message format needed to change, it was just a matter of tweaking the protocol file and regenerating the language files, instead of having to do the painstaking and error-prone manual bit-packing and unpacking across multiple languages. 
 
 
 ## Protocols
@@ -94,18 +94,19 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Data Type | C#      | TypeScript | Go        |
-|--------------------|---------|------------|-----------|
-| `byte`             | `byte`  | `number`   | `byte`    |
-| `bool`             | `bool`  | `boolean`  | `bool`    |
-| `int16`            | `short` | `number`   | `int16`   |
-| `uint16`           | `ushort`| `number`   | `uint16`  |
-| `int32`            | `int`   | `number`   | `int32`   |
-| `uint32`           | `uint`  | `number`   | `uint32`  |
-| `int64`            | `long`  | `bigint`   | `int64`   |
-| `uint64`           | `ulong` | `bigint`   | `uint64`  |
-| `float`            | `float` | `number`   | `float32` |
-| `double`           | `double`| `number`   | `float64` |
+| Protocol Data Type | C#       | TypeScript | Go        | Swift     |
+|--------------------|----------|------------|-----------|-----------|
+| `byte`             | `byte`   | `number`   | `byte`    | `UInt8`   |
+| `bool`             | `bool`   | `boolean`  | `bool`    | `Bool`    |
+| `int16`            | `short`  | `number`   | `int16`   | `Int16`   |
+| `uint16`           | `ushort` | `number`   | `uint16`  | `UInt16`  |
+| `int32`            | `int`    | `number`   | `int32`   | `Int32`   |
+| `uint32`           | `uint`   | `number`   | `uint32`  | `UInt32`  |
+| `int64`            | `long`   | `bigint`   | `int64`   | `Int64`   |
+| `uint64`           | `ulong`  | `bigint`   | `uint64`  | `UInt64`  |
+| `float`            | `float`  | `number`   | `float32` | `Float32` |
+| `double`           | `double` | `number`   | `float64` | `Float64` |
+| `string`           | `string` | `string`   | `string`  | `String`  |
 
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. 
@@ -181,6 +182,14 @@ vec3.y = 2.0;
 vec3.z = 3.0;
 ```
 
+Swift:
+```swift
+var example = AppMessages.Vector3Message()
+vec3.x = 1.0
+vec3.y = 2.0
+vec3.z = 3.0
+```
+
 Note that all data members are initialized to zero values (or empty strings/lists). There's no way, at present, to specify other defaults in a protocol, so that needs to be handled in client code. 
 
 (In the function signature pseudocodes below, [...] indicates that specific languages may need additional parameters; these are the bases that indicate broad functionality.)
@@ -213,7 +222,6 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * There is no partial deserialization, like with FlatBuffers, where you can just snag a specific piece of data out of the buffer. I mostly work with small messages that I always want to fully decode, so this was just added overhead; if that's something you need, consider other options. 
 * There is no functionality for versioning messages, so if you update your protocol, messages generated from the older code will not be able to be readable by new code. Beschi messages are not intended to persist beyond the time it takes to shuttle them across a network or memory pipe. Versioning can be accomplished on the client side, but will require manual decoding steps and probably retaining the old generated code.
 
-
 ### Go
 * Usually the identifying enum is accessed by `{namespace}.MessageType.{specific_message_name}Type`, but Go doesn't do enums the way the other languages do, so it's missing the `.MessageType.` in the middle. 
 * The generated Go code uses the standard binary readers and writers, which allow for dealing with whole structures in one go. They seem to pack and unpack identically to the more detailed systems that the other languages need, but there might be some edge cases where packing becomes an issue. 
@@ -231,6 +239,12 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 
 ### C#
 * No particular caveats, actually! Perhaps a side effect of C# being the first generator that was made for this system is that its semantics match up pretty well. 
+
+### Swift
+* Swift support is kind of experimental. It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
+* Unlike the other generators, Swift code does not guarantee that values are little-endian when put into the buffer. So far as I can see, every platform where Swift usually runs is natively little-endian, so in a practical sense it's not a problem, but it's bothersome. Will hopefully fix it up soon. 
+* Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
+* There might be some unecessary memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, so maybe it's ok? Anyway, something to keep awareness of. 
 
 
 ## Future

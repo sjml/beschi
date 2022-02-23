@@ -6,11 +6,11 @@
         - c# and go may also benefit from boilerplate
     - swift:
         - writer does not guarantee little-endianness right now :(
-        - label.endswith (check on these across the generators)
-        - caveats: 
-            - enum/namespace shenanigans
-            - might do a lot of memory copying? it's not always clear when that's happening
-            - some different ergonomics
+
+* generator cleanup
+    - some leftover code from way back when
+        - label.endswith is used kind of awkwardly
+        - "list" type not used at all
 
 * testing framework
     - protocol should not allow struct/message names that shadow base types
@@ -27,5 +27,6 @@
 * more writers
     * python
     * C
-    * swift?
+        - without resizable arrays this is a real pain. :( 
+        - could integrate [stb_ds.h](http://nothings.org/stb_ds/), but don't like bringing in a whole set of functionality like that for generated code
     * rust?

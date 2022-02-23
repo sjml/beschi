@@ -8,7 +8,6 @@ LANGUAGE_NAME = "Swift"
 class SwiftWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".swift"
-    in_progress = True
 
     def __init__(self, p: Protocol):
         super().__init__(protocol=p, tab="    ")
@@ -95,48 +94,47 @@ class SwiftWriter(Writer):
 
     def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
-        return lines
 
-        # accum = 0
-        # if self.protocol.is_simple(s[0]):
-        #     lines.append(f"return {self.protocol.calculate_size(s[0])};")
-        # else:
-        #     size_init = "let size: number = 0;"
-        #     lines.append(size_init)
+        accum = 0
+        if self.protocol.is_simple(s[0]):
+            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+        else:
+            size_init = "var size = 0"
+            lines.append(size_init)
 
-        #     for var_name, var_type in s[1]:
-        #         if self.protocol.is_simple(var_type):
-        #             accum += self.protocol.calculate_size(var_type)
-        #         else:
-        #             if var_type == "string":
-        #                 accum += BASE_TYPE_SIZES["uint32"]
-        #                 lines.append(f"size += textEnc.encode({accessor_prefix}{var_name}).byteLength;")
-        #             elif var_type == "[string]":
-        #                 accum += BASE_TYPE_SIZES["uint32"]
-        #                 lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
-        #                 lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + textEnc.encode({accessor_prefix}{var_name}[{var_name}_i]).byteLength;")
-        #                 lines.append("}")
-        #             elif var_type[0] == "[" and var_type[-1] == "]":
-        #                 listed_var_type = var_type[1:-1]
-        #                 if self.protocol.is_simple(listed_var_type):
-        #                     accum += BASE_TYPE_SIZES["uint32"]
-        #                     lines.append(f"size += {accessor_prefix}{var_name}.length * {self.protocol.calculate_size(listed_var_type)};")
-        #                 else:
-        #                     accum += BASE_TYPE_SIZES["uint32"]
-        #                     lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
-        #                     clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"{accessor_prefix}{var_name}[{var_name}_i].")
-        #                     if clines[0] == size_init:
-        #                         clines = clines[1:]
-        #                     clines.append(f"size += {caccum};")
-        #                     lines += [f"{self.tab}{l}" for l in clines]
-        #                     lines.append("}")
-        #             else:
-        #                 clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
-        #                 if clines[0] == size_init:
-        #                     clines = clines[1:]
-        #                 lines += clines
-        #                 accum += caccum
-        # return lines, accum
+            for var_name, var_type in s[1]:
+                if self.protocol.is_simple(var_type):
+                    accum += self.protocol.calculate_size(var_type)
+                else:
+                    if var_type == "string":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"size += {accessor_prefix}{var_name}.data(using: String.Encoding.utf8)!.count")
+                    elif var_type == "[string]":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"for {var_name}_i in {accessor_prefix}{var_name} {{")
+                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + {var_name}_i.data(using: String.Encoding.utf8)!.count")
+                        lines.append("}")
+                    elif var_type[0] == "[" and var_type[-1] == "]":
+                        listed_var_type = var_type[1:-1]
+                        if self.protocol.is_simple(listed_var_type):
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"size += {accessor_prefix}{var_name}.count * {self.protocol.calculate_size(listed_var_type)};")
+                        else:
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"for {var_name}_i in {accessor_prefix}{var_name} {{")
+                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"{var_name}_i.")
+                            if clines[0] == size_init:
+                                clines = clines[1:]
+                            clines.append(f"size += {caccum};")
+                            lines += [f"{self.tab}{l}" for l in clines]
+                            lines.append("}")
+                    else:
+                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        lines += clines
+                        accum += caccum
+        return lines, accum
 
     def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
         is_message = s[0] in self.protocol.messages
@@ -177,17 +175,17 @@ class SwiftWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-        #     self.write_line("GetSizeInBytes(): number {")
-        #     self.indent_level += 1
-        #     measure_lines, accumulator = self.gen_measurement(s, "this.")
-        #     [self.write_line(s) for s in measure_lines]
-        #     if accumulator > 0:
-        #         self.write_line(f"size += {accumulator};")
-        #     if len(measure_lines) > 1:
-        #         self.write_line(f"return size;")
-        #     self.indent_level -= 1
-        #     self.write_line("}")
-            # self.write_line()
+            self.write_line("public func GetSizeInBytes() -> UInt32 {")
+            self.indent_level += 1
+            measure_lines, accumulator = self.gen_measurement(s, "self.")
+            [self.write_line(s) for s in measure_lines]
+            if accumulator > 0:
+                self.write_line(f"size += {accumulator};")
+            if len(measure_lines) > 1:
+                self.write_line(f"return UInt32(size)")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
             self.write_line("public func WriteBytes(data: inout Data, tag: Bool) -> Void {")
             self.indent_level += 1
             self.write_line("let dataWriter = DataWriter(withData: &data)")
@@ -271,7 +269,7 @@ class SwiftWriter(Writer):
             self.indent_level += 1
             self.write_line(f"func GetMessageType() -> MessageType")
         self.write_line("func WriteBytes(data: inout Data, tag: Bool) -> Void")
-        self.write_line("// func GetSizeInBytes() -> UInt32")
+        self.write_line("func GetSizeInBytes() -> UInt32")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

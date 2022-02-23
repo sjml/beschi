@@ -135,8 +135,10 @@ if parsed["generate"] != nil {
 
     var data = Data()
     example.WriteBytes(data: &data, tag: false)
-
     try data.write(to: outPath)
+
+    softAssert(example.GetSizeInBytes() == 899, "size calculation check")
+    softAssert(example.GetSizeInBytes() == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))

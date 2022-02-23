@@ -37,6 +37,8 @@ if parsed["generate"] != nil {
     var data = Data()
     lmsg.WriteBytes(data: &data, tag: false)
 
+    softAssert(lmsg.GetSizeInBytes() == data.count, "written bytes check");
+
     // tweak the buffer so the message looks longer
     var buffer = [UInt8](data)
     buffer[0] = 0xFF

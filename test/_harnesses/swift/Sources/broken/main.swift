@@ -39,6 +39,8 @@ if parsed["generate"] != nil {
     broken.WriteBytes(data: &data, tag: false)
 
     try data.write(to: outPath)
+
+    softAssert(broken.GetSizeInBytes() == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
