@@ -5,11 +5,10 @@
     - typescript: wrap the read/writes in a class that tracks file position so client code doesn't have to manage the offset (put into boilerplate)
         - c# and go may also benefit from boilerplate
     - swift:
-        - needs something resembling namespacing -- right now it all falls apart if there are multiple generated files together because "MessageType" becomes ambiguous
-            - can just prefix everything, but yikes
         - writer does not guarantee little-endianness right now :(
         - label.endswith (check on these across the generators)
         - caveats: 
+            - enum/namespace shenanigans
             - might do a lot of memory copying? it's not always clear when that's happening
             - some different ergonomics
 

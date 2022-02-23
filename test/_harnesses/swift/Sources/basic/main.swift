@@ -2,7 +2,7 @@ import Foundation
 
 import GeneratedMessages
 
-var example = TestingMessage()
+var example = ComprehensiveMessage.TestingMessage()
 example.b = 250
 example.tf = true
 example.i16 = -32000
@@ -14,14 +14,14 @@ example.ui64 = 18000000000000000000
 example.f = 3.1415927410125732421875
 example.d = 2.718281828459045090795598298427648842334747314453125
 example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-example.v2 = Vec2()
+example.v2 = ComprehensiveMessage.Vec2()
 example.v2.x = 256.512
 example.v2.y = 1024.768
-example.v3 = Vec3()
+example.v3 = ComprehensiveMessage.Vec3()
 example.v3.x = 128.64
 example.v3.y = 2048.4096
 example.v3.z = 16.32
-example.c = Color()
+example.c = ComprehensiveMessage.Color()
 example.c.r = 255
 example.c.g = 128
 example.c.b = 0
@@ -34,56 +34,56 @@ example.sl = [
     "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
     "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
 ]
-var v21 = Vec2()
+var v21 = ComprehensiveMessage.Vec2()
 v21.x = 10.0
 v21.y = 15.0
-var v22 = Vec2()
+var v22 = ComprehensiveMessage.Vec2()
 v22.x = 20.0
 v22.y = 25.0
-var v23 = Vec2()
+var v23 = ComprehensiveMessage.Vec2()
 v23.x = 30.0
 v23.y = 35.0
-var v24 = Vec2()
+var v24 = ComprehensiveMessage.Vec2()
 v24.x = 40.0
 v24.y = 45.0
 example.v2l = [
     v21, v22, v23, v24,
 ]
-var v31 = Vec3()
+var v31 = ComprehensiveMessage.Vec3()
 v31.x = 10.0
 v31.y = 15.0
 v31.z = 17.5
-var v32 = Vec3()
+var v32 = ComprehensiveMessage.Vec3()
 v32.x = 20.0
 v32.y = 25.0
 v32.z = 27.5
-var v33 = Vec3()
+var v33 = ComprehensiveMessage.Vec3()
 v33.x = 30.0
 v33.y = 35.0
 v33.z = 37.5
-var v34 = Vec3()
+var v34 = ComprehensiveMessage.Vec3()
 v34.x = 40.0
 v34.y = 45.0
 v34.z = 47.5
 example.v3l = [
     v31, v32, v33, v34
 ]
-var c1 = Color()
+var c1 = ComprehensiveMessage.Color()
 c1.r = 255
 c1.g = 0
 c1.b = 0
-var c2 = Color()
+var c2 = ComprehensiveMessage.Color()
 c2.r = 0
 c2.g = 255
 c2.b = 0
-var c3 = Color()
+var c3 = ComprehensiveMessage.Color()
 c3.r = 0
 c3.g = 0
 c3.b = 255
 example.cl = [
     c1, c2, c3
 ]
-example.cx = ComplexData()
+example.cx = ComprehensiveMessage.ComplexData()
 example.cx.identifier = 127
 example.cx.label = "ComplexDataObject"
 example.cx.backgroundColor = c1
@@ -91,13 +91,13 @@ example.cx.textColor = c2
 example.cx.spectrum = [
     c3, c2, c1
 ]
-var cx1 = ComplexData()
+var cx1 = ComprehensiveMessage.ComplexData()
 cx1.identifier = 255
 cx1.label = "Complex1"
 cx1.backgroundColor = c3
 cx1.textColor = c1
 cx1.spectrum = [c3, c2, c1, c2, c3]
-var cx2 = ComplexData()
+var cx2 = ComprehensiveMessage.ComplexData()
 cx2.identifier = 63
 cx2.label = "Complex2"
 cx2.backgroundColor = c1
@@ -140,7 +140,7 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let inputOpt = TestingMessage.FromBytes(data)
+    let inputOpt = ComprehensiveMessage.TestingMessage.FromBytes(data)
     softAssert(inputOpt != nil, "parsing test message")
 
     let input = inputOpt!

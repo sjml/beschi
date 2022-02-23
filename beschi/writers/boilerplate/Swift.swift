@@ -1,5 +1,3 @@
-import Foundation
-
 class DataReader {
     enum DataReaderError: Error {
         case EOF
@@ -211,12 +209,5 @@ class DataWriter {
         self.WriteUInt32(UInt32(buffer.count))
         self.data.append(buffer)
     }
-}
-
-
-public protocol Message {
-    func GetMessageType() -> MessageType
-    func WriteBytes(data: inout Data, tag: Bool) -> Void
-    // func GetSizeInBytes() -> UInt32
 }
 

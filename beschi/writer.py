@@ -27,10 +27,12 @@ class Writer:
         for msg_type in self.protocol.messages:
             self.type_mapping[msg_type] = msg_type
 
+    # inserts any boilerplate code, indented at the current level
     def add_boilerplate(self):
         boilerplate_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "writers", "boilerplate", f"{self.language_name}{self.default_extension}")
         if os.path.exists(boilerplate_path):
-            self.output += open(boilerplate_path, "r").read().splitlines()
+            boilerplate_lines = open(boilerplate_path, "r").read().splitlines()
+            [self.write_line(bpl) for bpl in boilerplate_lines]
 
     # actually generate the code
     def generate(self) -> str:

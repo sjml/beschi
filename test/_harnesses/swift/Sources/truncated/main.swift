@@ -26,7 +26,7 @@ for arg in CommandLine.arguments[1...] {
 }
 
 
-var lmsg = ListMessage()
+var lmsg = BrokenMessages.ListMessage()
 lmsg.ints = [1, 2, 32767, 4, 5]
 
 if parsed["generate"] != nil {
@@ -46,7 +46,7 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let input = ListMessage.FromBytes(data)
+    let input = BrokenMessages.ListMessage.FromBytes(data)
 
     softAssert(input == nil, "reading truncated message")
 }

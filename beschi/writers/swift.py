@@ -142,7 +142,10 @@ class SwiftWriter(Writer):
         is_message = s[0] in self.protocol.messages
 
         if is_message:
-            self.write_line(f"public struct {s[0]} : Message {{")
+            if self.protocol.namespace != None:
+                self.write_line(f"public struct {s[0]} : {self.protocol.namespace}_Message {{")
+            else:
+                self.write_line(f"public struct {s[0]} : Message {{")
         else:
             self.write_line(f"public struct {s[0]} {{")
         self.indent_level += 1
@@ -209,17 +212,21 @@ class SwiftWriter(Writer):
         if is_message:
             self.write_line(f"public static func FromBytes(_ data: Data) -> {s[0]}? {{")
             self.indent_level += 1
-            self.write_line("do {")
-            self.indent_level += 1
-            self.write_line("let dataReader = DataReader(fromData: data)")
+            if len(s[1]) > 0:
+                self.write_line("do {")
+                self.indent_level += 1
+                self.write_line("let dataReader = DataReader(fromData: data)")
         else:
             self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {s[0]} {{")
             self.indent_level += 1
-        self.write_line(f"var n{s[0]} = {self.get_var(s[0])}()")
+        decl = "var"
+        if len(s[1]) == 0:
+            decl = "let"
+        self.write_line(f"{decl} n{s[0]} = {self.get_var(s[0])}()")
         for var_name, var_type in s[1]:
             [self.write_line(s) for s in self.deserializer(var_type, var_name, f"n{s[0]}")]
         self.write_line(f"return n{s[0]}")
-        if is_message:
+        if is_message and len(s[1]) > 0:
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("catch {")
@@ -245,6 +252,27 @@ class SwiftWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
+        self.write_line("import Foundation")
+        self.write_line()
+
+
+        if self.protocol.namespace != None:
+            self.write_line(f"public protocol {self.protocol.namespace}_Message {{")
+            self.indent_level += 1
+            self.write_line(f"func GetMessageType() -> {self.protocol.namespace}.MessageType")
+        else:
+            self.write_line("public protocol Message {")
+            self.indent_level += 1
+            self.write_line(f"func GetMessageType() -> MessageType")
+        self.write_line("func WriteBytes(data: inout Data, tag: Bool) -> Void")
+        self.write_line("// func GetSizeInBytes() -> UInt32")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        if self.protocol.namespace != None:
+            self.write_line(f"public /* namespace */ enum {self.protocol.namespace} {{")
+            self.indent_level += 1
 
         self.add_boilerplate()
 
@@ -253,6 +281,8 @@ class SwiftWriter(Writer):
         self.write_line("public enum MessageType: UInt8 {")
         self.indent_level += 1
         [self.write_line(f"case {k}Type = {i+1}") for i, k in enumerate(msg_types)]
+        if len(msg_types) == 0:
+            self.write_line("case __NullMessage = 0 /* to keep the compiler happy */")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -299,6 +329,10 @@ class SwiftWriter(Writer):
 
         for m in self.protocol.messages.items():
             self.gen_message(m)
+
+        if self.protocol.namespace != None:
+            self.indent_level -= 1
+            self.write_line("}")
 
         self.write_line()
         assert self.indent_level == 0

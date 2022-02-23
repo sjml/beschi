@@ -26,7 +26,7 @@ for arg in CommandLine.arguments[1...] {
 }
 
 
-var broken = TruncatedMessage()
+var broken = BrokenMessages.TruncatedMessage()
 broken.x = 1.0
 broken.y = 2.0
 
@@ -42,7 +42,7 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let input = FullMessage.FromBytes(data)
+    let input = BrokenMessages.FullMessage.FromBytes(data)
 
     softAssert(input == nil, "reading broken message")
 }
