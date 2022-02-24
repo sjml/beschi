@@ -4,8 +4,6 @@
         - maybe default to uint16 and have "longString" or long lists? eeeeh, gets complicated fast
     - typescript: wrap the read/writes in a class that tracks file position so client code doesn't have to manage the offset (put into boilerplate)
         - c# and go may also benefit from boilerplate
-    - swift:
-        - float/double writer does not guarantee little-endianness right now :(
 
 * generator cleanup
     - some leftover code from way back when
@@ -25,4 +23,7 @@
     * C
         - without resizable arrays this is a real pain. :( 
         - could integrate [stb_ds.h](http://nothings.org/stb_ds/), but don't like bringing in a whole set of functionality like that for generated code
+        - OR... have C just introduce a sidecar variable for each list's length
+            - reading can do the standard "pile it into an array and reallocate as needed" but then fill both variables
+            - before writing, the len variable has to be set correctly
     * rust?

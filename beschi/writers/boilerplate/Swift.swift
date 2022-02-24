@@ -200,12 +200,14 @@ class DataWriter {
 
     func WriteFloat32(_ f: Float32) {
         var _f = f
-        self.data.append(withUnsafeBytes(of: &_f, {Data($0)}))
+        var out = UInt32(littleEndian: withUnsafeBytes(of: &_f, {$0.load(fromByteOffset: 0, as: UInt32.self)}))
+        self.data.append(withUnsafeBytes(of: &out, {Data($0)}))
     }
 
     func WriteFloat64(_ d: Float64) {
         var _d = d
-        self.data.append(withUnsafeBytes(of: &_d, {Data($0)}))
+        var out = UInt64(littleEndian: withUnsafeBytes(of: &_d, {$0.load(fromByteOffset: 0, as: UInt64.self)}))
+        self.data.append(withUnsafeBytes(of: &out, {Data($0)}))
     }
 
     func WriteString(_ s: String) {
