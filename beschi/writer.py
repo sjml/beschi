@@ -28,11 +28,20 @@ class Writer:
             self.type_mapping[msg_type] = msg_type
 
     # inserts any boilerplate code, indented at the current level
-    def add_boilerplate(self):
-        boilerplate_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "writers", "boilerplate", f"{self.language_name}{self.default_extension}")
+    def add_boilerplate(self, substitutions: list[tuple[str,str]] = [], index: int =-1):
+        if index >= 0:
+            index_str = f".{index}"
+        else:
+            index_str = ""
+        filename = f"{self.language_name}{index_str}{self.default_extension}"
+        boilerplate_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "writers", "boilerplate", filename)
         if os.path.exists(boilerplate_path):
             boilerplate_lines = open(boilerplate_path, "r").read().splitlines()
+            for s in substitutions:
+                boilerplate_lines = [bpl.replace(s[0], s[1]) for bpl in boilerplate_lines]
             [self.write_line(bpl) for bpl in boilerplate_lines]
+        else:
+            print("no file", filename)
 
     # actually generate the code
     def generate(self) -> str:

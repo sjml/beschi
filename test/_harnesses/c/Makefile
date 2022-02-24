@@ -1,13 +1,15 @@
 WARNING_LEVEL := -Weverything
 SILENCE_WARNINGS := -Wno-float-equal -Wno-poison-system-directories -Wno-unused-parameter -Wno-padded
+BASE_DIR = $(shell pwd)
+INCLUDE_DIR := $(BASE_DIR)/../../../out/generated/c
 
-play: play.c beschi.h
-	clang $(WARNING_LEVEL) $(SILENCE_WARNINGS) -O3 -g -o $@ play.c
+basic: basic.c $(INCLUDE_DIR)/ComprehensiveMessage.h
+	clang $(WARNING_LEVEL) $(SILENCE_WARNINGS) -I$(INCLUDE_DIR) -O3 -g -o $@ basic.c
 
 .PHONY: clean
 clean:
-	rm -rf play
+	rm -rf basic
 
 .PHONY: check
-check: play
-	leaks -atExit -- ./play
+check: basic
+	leaks -atExit -- ./basic

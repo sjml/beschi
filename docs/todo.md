@@ -11,6 +11,10 @@
         - "list" type not used at all
 
 * testing framework
+    - check that multiple generated files can be included at once
+    - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
+    - add a POD list to basic
+    - check for infinite loops in protocol
     - comparison (size/perf) to flatbuffers/capnproto/etc?
         - I'm willing to bet that beschi will lose in performance, but hopefully not by much. There should be a noticeable win in buffer size, though. Enough to justify this project? Eeeeeeh? 
         - And if it's behind in both memory size AND performance, I still like the client-code ergonomics, so maybe not a total loss. 
@@ -20,10 +24,5 @@
 
 * more writers
     * python
-    * C
-        - without resizable arrays this is a real pain. :( 
-        - could integrate [stb_ds.h](http://nothings.org/stb_ds/), but don't like bringing in a whole set of functionality like that for generated code
-        - OR... have C just introduce a sidecar variable for each list's length
-            - reading can do the standard "pile it into an array and reallocate as needed" but then fill both variables
-            - before writing, the len variable has to be set correctly
+    * C (in progress)
     * rust?
