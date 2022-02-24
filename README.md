@@ -247,7 +247,7 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 
 
 ## Future
-I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this sytem, though, and really wants to see a generator for C or Swift or Rust or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
+I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this sytem, though, and really wants to see a generator for C or Rust or Haskell or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
 
 
 ## Beschi?

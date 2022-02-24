@@ -1,0 +1,8 @@
+- assumes IEEE 754 floats and doubles
+- assumes little-endian host (for now)
+- portability across OSes?
+- sidecar length variables on messages
+- new structs not necessarily zeroed
+- allocates and rewrites pointers during read
+- strings and lists need to be freed
+    - make {namespace}_free_{MessageType} functions?
