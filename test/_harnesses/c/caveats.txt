@@ -2,7 +2,12 @@
 - assumes little-endian host (for now)
 - portability across OSes?
 - sidecar length variables on messages
+    - could we do a safe strlen to get message length?
+    - unicode makes that hard :(
 - new structs not necessarily zeroed
 - allocates and rewrites pointers during read
 - strings and lists need to be freed
     - make {namespace}_free_{MessageType} functions?
+- no utf-8 decoding; just gives, takes, and measures a set of bytes
+- struct layout mirrors the order of the protocol file, which may raise warnings about padding on some compilers
+    - if this is important to you, optimize the order of the members in your protocol file
