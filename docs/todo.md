@@ -5,7 +5,7 @@
     - typescript: wrap the read/writes in a class that tracks file position so client code doesn't have to manage the offset (put into boilerplate)
         - c# and go may also benefit from boilerplate
     - swift:
-        - writer does not guarantee little-endianness right now :(
+        - float/double writer does not guarantee little-endianness right now :(
 
 * generator cleanup
     - some leftover code from way back when
