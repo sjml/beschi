@@ -14,7 +14,7 @@ typedef uint8_t beschi_err_t;
 #define BESCHI_ERR_EOF 1
 #define BESCHI_ERR_INVALID_DATA 2
 
-#define BESCHI_ERR_CHECK_RETURN if (err != BESCHI_ERR_OK) { return err; }
+#define BESCHI_ERR_CHECK_RETURN do {if (err != BESCHI_ERR_OK) { return err; } } while (0)
 
 #ifdef __cplusplus
 extern "C" {
