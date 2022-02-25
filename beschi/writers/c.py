@@ -8,7 +8,6 @@ LANGUAGE_NAME = "C"
 class CWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".h"
-    in_progress = True
 
     def __init__(self, p: Protocol):
         super().__init__(protocol=p, tab="    ")
@@ -38,11 +37,39 @@ class CWriter(Writer):
             "double": "Double",
         }
 
+        self.base_defaults: dict[str,str] = {
+            "byte":   "0",
+            "bool":   "false",
+            "uint16": "0",
+            "int16":  "0",
+            "uint32": "0",
+            "int32":  "0",
+            "uint64": "0",
+            "int64":  "0",
+            "float":  "0.0f",
+            "double": "0.0",
+        }
+
         self.subs: list[tuple[str,str]] = []
         self.prefix = "beschi_"
         if self.protocol.namespace != None:
             self.subs = [("beschi", self.protocol.namespace), ("BESCHI", self.protocol.namespace.upper())]
             self.prefix = f"{self.protocol.namespace}_"
+
+    def gen_default(self, members: list[tuple[str,str]]):
+        for mname, mtype in members:
+            if mtype in self.base_defaults:
+                self.write_line(f".{mname} = {self.base_defaults[mtype]},")
+            elif mtype == "string":
+                self.write_line(f".{mname} = \"\",")
+            elif mtype[0] == "[" and mtype[-1] == "]":
+                self.write_line(f".{mname} = NULL,")
+            else:
+                self.write_line(f".{mname} = {{")
+                self.indent_level += 1
+                self.gen_default(self.protocol.structs[mtype])
+                self.indent_level -= 1
+                self.write_line("},")
 
     def gen_struct(self, sname: str, members: list[tuple[str,str]], is_message: bool = False):
         self.write_line("typedef struct {")
@@ -69,6 +96,14 @@ class CWriter(Writer):
 
         self.indent_level -= 1
         self.write_line(f"}} {self.prefix}{sname};")
+        if is_message:
+            self.write_line(f"extern const {self.prefix}{sname} {self.prefix}{sname}_default;")
+            self.write_line(f"const {self.prefix}{sname} {self.prefix}{sname}_default = {{")
+            self.indent_level += 1
+            self.write_line(f"._mt = {self.prefix}MessageType_{sname},")
+            self.gen_default(members)
+            self.indent_level -= 1
+            self.write_line("};")
         self.write_line()
         if is_message:
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag);")
@@ -102,7 +137,7 @@ class CWriter(Writer):
             self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
             self.indent_level += 1
             if listed_type in BASE_TYPE_SIZES.keys():
-                self.write_line(f"err = {self.prefix}_Read{self.base_serializers[listed_type]}(r, &({accessor}{varname}));")
+                self.write_line(f"err = {self.prefix}_Read{self.base_serializers[listed_type]}(r, &({accessor}{varname}[i]));")
             elif listed_type == "string":
                 self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{varname}[i]), &({accessor}{varname}_els_len[i]));")
             else:
@@ -129,7 +164,7 @@ class CWriter(Writer):
             self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
             self.indent_level += 1
             if listed_type in BASE_TYPE_SIZES.keys():
-                self.write_line(f"err = {self.prefix}_Write{self.base_serializers[listed_type]}(w, &({accessor}{varname}));")
+                self.write_line(f"err = {self.prefix}_Write{self.base_serializers[listed_type]}(w, &({accessor}{varname}[i]));")
             elif listed_type == "string":
                 self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{varname}[i]), &({accessor}{varname}_els_len[i]));")
             else:
@@ -147,7 +182,7 @@ class CWriter(Writer):
 
         accum = 0
         if self.protocol.is_simple(s[0]):
-            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+            lines.append(f"*size = {self.protocol.calculate_size(s[0])};")
         else:
             size_init = "*size = 0;"
             lines.append(size_init)
@@ -191,7 +226,8 @@ class CWriter(Writer):
         self.indent_level += 1
         if is_message:
             self.write_line(f"dst->_mt = {self.prefix}MessageType_{sname};")
-        self.write_line(f"{self.prefix}err_t err;")
+        if len(members) > 0:
+            self.write_line(f"{self.prefix}err_t err;")
         [self.deserializer(v, t, "dst->") for v,t in members]
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1
@@ -224,8 +260,7 @@ class CWriter(Writer):
             [self.write_line(s) for s in measure_lines]
             if accumulator > 0:
                 self.write_line(f"*size += {accumulator};")
-            if len(measure_lines) > 1:
-                self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+            self.write_line(f"return {self.prefix.upper()}ERR_OK;")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
@@ -264,6 +299,7 @@ class CWriter(Writer):
             self.write_line("free(m);")
             self.indent_level -= 1
             self.write_line("}")
+            self.write_line()
 
 
 
@@ -285,7 +321,8 @@ class CWriter(Writer):
         self.write_line()
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}GetSizeInBytes(const void* m, size_t* len);")
-        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void** msgListOut, size_t* len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListOut, size_t* len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len);")
         self.write_line()
 
         for sname, smembers in self.protocol.structs.items():
@@ -298,8 +335,14 @@ class CWriter(Writer):
 
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m) {{")
         self.indent_level += 1
-        self.write_line("// TODO")
+        self.write_line("const uint8_t* buffer = m;")
+        self.write_line("uint8_t msgType = buffer[0];")
+        self.write_line(f"if (msgType > {len(self.protocol.messages)}) {{")
+        self.indent_level += 1
         self.write_line(f"return {self.prefix}MessageType___NullMessage;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line(f"return msgType;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -319,17 +362,72 @@ class CWriter(Writer):
             self.write_line(f"return {self.prefix}{msg_type}_GetSizeInBytes(m, len);")
             self.write_line("break;")
             self.indent_level -= 1
-            self.write_line("}")
+        self.write_line("}")
         self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
-        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void** msgListDst, size_t* len) {{")
+        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListDst, size_t* len) {{")
         self.indent_level += 1
-        self.write_line("// TODO")
+        self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
+        self.write_line("void** outList = malloc(sizeof(void*) * 32);")
+        self.write_line("*len = 0;")
+        self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
+        self.indent_level += 1
+        self.write_line("uint8_t msgType;")
+        self.write_line(f"{self.prefix}_ReadUInt8(r, &msgType);")
+        self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+        self.write_line()
+        self.write_line("void* out;")
+        self.write_line("switch (msgType) {")
+        for msg_type in self.protocol.messages.keys():
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
+            self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, out);")
+            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.write_line("outList[*len] = out;")
+            self.write_line("*len += 1;")
+            self.write_line("break;")
+            self.indent_level -= 1
+        self.write_line("default:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.write_line("break;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("*msgListDst = outList;")
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
+        self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len) {{")
+        self.indent_level += 1
+        self.write_line("for (size_t i = 0; i < len; i++) {")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(msgList[i]);")
+        self.write_line("switch (msgType) {")
+        for msg_type in self.protocol.messages.keys():
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"{self.prefix}{msg_type}_Destroy(msgList[i]);")
+            self.write_line("break;")
+            self.indent_level -= 1
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("free(msgList);")
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
         for sname, smembers in self.protocol.structs.items():
             self.gen_implementation(sname, smembers)

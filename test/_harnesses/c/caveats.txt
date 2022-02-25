@@ -13,6 +13,5 @@
 - only uses macros for error-checking; otherwise tries to be as straightforward as possible
 - note struct/message declaration order issue
 - STB-style header-only library
-todo
-- will need a destroy list function
-- default struct function?
+- in general way more verbose because that's how things roll in C
+- _defaults
