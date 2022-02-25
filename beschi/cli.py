@@ -5,6 +5,7 @@ from .protocol import Protocol
 from .writers import all_writers, experimental_writers
 from . import LIB_NAME, LIB_VERSION
 
+VERSION_STRING = f"{LIB_NAME} v{LIB_VERSION}"
 
 def main():
     writers = [w.lower() for w in all_writers.keys()]
@@ -19,7 +20,7 @@ def main():
     args = argparser.parse_args()
 
     if args.version:
-        print(f"{LIB_NAME} v{LIB_VERSION}")
+        print(VERSION_STRING)
         sys.exit(0)
 
     if args.protocol == None:

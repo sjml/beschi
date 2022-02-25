@@ -12,34 +12,37 @@ DATA_OUTPUT_DIR = "out/data"
 HARNESS_SRC_DIR = "test/_harnesses"
 HARNESS_BIN_DIR = "out/executables"
 
-def generate_for(protocol: str, output_name: str):
-    writers: dict[str, Writer] = beschi.writers.all_writers | beschi.writers.experimental_writers
+ALL_WRITERS = beschi.writers.all_writers | beschi.writers.experimental_writers
+STABLE_WRITERS = beschi.writers.all_writers
+EXPERIMENTAL_WRITERS = beschi.writers.experimental_writers
 
-    for label, writer_class in writers.items():
-        out_file_dir =  os.path.join(CODE_OUTPUT_DIR, label)
-        out_file_path = os.path.join(out_file_dir, f"{output_name}{writer_class.default_extension}")
+def generate_for(protocol: str, output_name: str, label: str):
+    writer_class = ALL_WRITERS[label]
 
-        if os.path.exists(out_file_path):
-            os.unlink(out_file_path)
-        assert(not os.path.exists(out_file_path))
+    out_file_dir =  os.path.join(CODE_OUTPUT_DIR, label)
+    out_file_path = os.path.join(out_file_dir, f"{output_name}{writer_class.default_extension}")
 
-        if not os.path.exists(out_file_dir):
-            os.makedirs(out_file_dir)
+    if os.path.exists(out_file_path):
+        os.unlink(out_file_path)
+    assert(not os.path.exists(out_file_path))
 
-        try:
-            # using the CLI instead of calling directly to make sure everything is wired up
-            subprocess.check_call(["beschi",
-                "--lang", label,
-                "--protocol", protocol,
-                "--output", out_file_path
-            ])
-            assert(os.path.exists(out_file_path))
-        except Exception as e:
-            if label in beschi.writers.experimental_writers:
-                sys.stderr.write(f"Experimental writer {label} failed while trying to produce {output_name}.\n")
-                sys.stderr.write(f"Exception:\n{e.with_traceback()}")
-            else:
-                raise e
+    if not os.path.exists(out_file_dir):
+        os.makedirs(out_file_dir)
+
+    try:
+        # using the CLI instead of calling directly to make sure everything is wired up
+        subprocess.check_call(["beschi",
+            "--lang", label,
+            "--protocol", protocol,
+            "--output", out_file_path
+        ])
+        assert(os.path.exists(out_file_path))
+    except Exception as e:
+        if label in beschi.writers.experimental_writers:
+            sys.stderr.write(f"Experimental writer {label} failed while trying to produce {output_name}.\n")
+            sys.stderr.write(f"Exception:\n{e.with_traceback()}")
+        else:
+            raise e
 
 def build_for(language: str, srcfile: str, libfile: str):
     try:

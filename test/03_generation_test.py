@@ -1,16 +1,17 @@
-import shutil
+import pytest
 
 import test_util
 
-# see if the executable version works
-def test_cli_exists():
-    assert(shutil.which("beschi") != None)
+PROTOCOLS_OUTPUTS = [
+    ("./test/_protocols/empty.toml", "Empty"),
+    ("./test/_protocols/example.toml", "ComprehensiveMessage"),
+    ("./test/_protocols/broken_messages.toml", "BrokenMessages"),
+    ("./test/_protocols/small_messages.toml", "SmallMessages"),
+    ("./test/_protocols/annotated.toml", "AppMessages"),
+]
 
 # generate each given file for the example protocol
-def test_generation():
-    test_util.generate_for("./test/_protocols/empty.toml", "Empty")
-    test_util.generate_for("./test/_protocols/example.toml", "ComprehensiveMessage")
-    test_util.generate_for("./test/_protocols/broken_messages.toml", "BrokenMessages")
-    test_util.generate_for("./test/_protocols/small_messages.toml", "SmallMessages")
-    test_util.generate_for("./test/_protocols/annotated.toml", "AppMessages")
+@pytest.mark.parametrize("protocol_output_pair", PROTOCOLS_OUTPUTS)
+def test_generation(protocol_output_pair, generator_label):
+    test_util.generate_for(protocol_output_pair[0], protocol_output_pair[1], generator_label)
 
