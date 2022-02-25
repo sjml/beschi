@@ -262,10 +262,6 @@ class CWriter(Writer):
 
             [destroyer(t, f"m->{n}") for (n,t) in members]
             self.write_line("free(m);")
-            # for each member:
-                # if complex:
-                #       recurse
-                # free the message
             self.indent_level -= 1
             self.write_line("}")
 

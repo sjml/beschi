@@ -1,0 +1,15 @@
+[meta]
+namespace = "MessageContainingMessage"
+
+[[messages]]
+_name = "MessageA"
+f = "float"
+
+[[messages]]
+_name = "MessageB"
+d = "double"
+
+[[messages]]
+_name = "Aggregate"
+f = "MessageA"
+d = "MessageB"

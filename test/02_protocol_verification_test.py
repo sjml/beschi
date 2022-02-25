@@ -67,3 +67,15 @@ def test_protocol_reserved_message_name():
 def test_protocol_message_duplicating_struct():
     with pytest.raises(ValueError):
         p = Protocol("test/_protocols/intentionally_bad/message_duplicating_struct_name.toml")
+
+def test_protocol_infinite_loop():
+    with pytest.raises(RecursionError):
+        p = Protocol("test/_protocols/intentionally_bad/simple_infinite_loop.toml")
+
+def test_protocol_deep_infinite_loop():
+    with pytest.raises(RecursionError):
+        p = Protocol("test/_protocols/intentionally_bad/deep_infinite_loop.toml")
+
+def test_protocol_message_containing_message():
+    with pytest.raises(ValueError):
+        p = Protocol("test/_protocols/intentionally_bad/message_containing_message.toml")

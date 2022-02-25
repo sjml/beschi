@@ -1,0 +1,18 @@
+[meta]
+namespace = "DeepInfiniteLoop"
+
+[[structs]]
+_name = "ContainerA"
+b = "[ContainerB]"
+
+[[structs]]
+_name = "ContainerB"
+c = "ContainerC"
+
+[[structs]]
+_name = "ContainerC"
+a = "ContainerA"
+
+[[messages]]
+_name = "Loop"
+a = "ContainerA"

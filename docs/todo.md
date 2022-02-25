@@ -9,12 +9,12 @@
     - some leftover code from way back when
         - label.endswith is used kind of awkwardly
         - "list" type not used at all
+    - messages are really just structs with some extra things; could probably streamline a lot of operations by consolidating them and having a flag
 
 * testing framework
     - check that multiple generated files can be included at once
     - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
     - add a POD list to basic
-    - check for infinite loops in protocol
     - comparison (size/perf) to flatbuffers/capnproto/etc?
         - I'm willing to bet that beschi will lose in performance, but hopefully not by much. There should be a noticeable win in buffer size, though. Enough to justify this project? Eeeeeeh? 
         - And if it's behind in both memory size AND performance, I still like the client-code ergonomics, so maybe not a total loss. 

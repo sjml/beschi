@@ -7,9 +7,12 @@ from . import LIB_NAME, LIB_VERSION
 
 
 def main():
+    writers = [w.lower() for w in all_writers.keys()]
+    exp_writers = [w.lower() for w in experimental_writers.keys()]
+
     argparser = argparse.ArgumentParser(description="Generate the code for reading/writing messages from a given protocol.")
     argparser.add_argument("--version", "-v", action="store_const", const=True, default=False, help="print the version and exit")
-    argparser.add_argument("--lang", "-l", type=str, help="language to generate")
+    argparser.add_argument("--lang", "-l", type=str, help=f"language to generate ({' '.join(sorted(writers))})")
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
     argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
 
@@ -20,10 +23,10 @@ def main():
         sys.exit(0)
 
     if args.protocol == None:
-        sys.stderr.write("ERROR: Missing protocol. Specify a file with '--protocol FILENAME'.")
+        sys.stderr.write("ERROR: Missing protocol. Specify a file with '--protocol FILENAME'.\n")
         sys.exit(1)
     if args.lang == None:
-        sys.stderr.write(f"ERROR: Missing language. Specify a language for output with '--lang {{{'|'.join(writers)}}}'.")
+        sys.stderr.write(f"ERROR: Missing language. Specify a language for output with '--lang {{{'|'.join(writers)}}}'.\n")
         sys.exit(1)
 
     try:
@@ -34,13 +37,14 @@ def main():
     except KeyError as ke:
         sys.stderr.write(f"ERROR: Invalid protocol file '{args.protocol}' is missing {ke}.\n")
         sys.exit(1)
+    except RecursionError as rec:
+        sys.stderr.write(f"ERROR: Invalid protocol file '{args.protocol}' has infinite loop: {rec}\n")
+        sys.exit(1)
     except Exception as e:
         sys.stderr.write(f"ERROR: Invalid protocol file '{args.protocol}'.\n")
         sys.stderr.write(f"\t{e}\n")
         sys.exit(1)
 
-    writers = [w.lower() for w in all_writers.keys()]
-    exp_writers = [w.lower() for w in experimental_writers.keys()]
     if args.lang not in writers and args.lang not in exp_writers:
         sys.stderr.write("\n".join([
             "ERROR: invalid language. Valid writers are:",

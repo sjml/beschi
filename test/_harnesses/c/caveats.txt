@@ -1,17 +1,18 @@
 - assumes IEEE 754 floats and doubles
 - assumes little-endian host (for now)
-- portability across OSes?
-- sidecar length variables on messages
-    - could we do a safe strlen to get message length?
-    - unicode makes that hard :(
-- also _mt at start of struct
+- struct layout mirrors the order of the protocol file, which may raise warnings about padding on some compilers
+    - if this is important to you, optimize the order of the members in your protocol file
+    - except for:
+        - sidecar length variables, els_len
+        - also _mt at start of struct
 - new structs not necessarily zeroed
 - allocates and rewrites pointers during read
 - strings and lists need to be freed
     - make {namespace}_free_{MessageType} functions?
-- no utf-8 decoding; just gives, takes, and measures a set of bytes
-- struct layout mirrors the order of the protocol file, which may raise warnings about padding on some compilers
-    - if this is important to you, optimize the order of the members in your protocol file
+- no utf-8 decoding; just gives, takes, and measures a set of bytes -- doesn't guarantee that it's null-terminated, etc.
 - only uses macros for error-checking; otherwise tries to be as straightforward as possible
 - note struct/message declaration order issue
+- STB-style header-only library
+todo
 - will need a destroy list function
+- default struct function?

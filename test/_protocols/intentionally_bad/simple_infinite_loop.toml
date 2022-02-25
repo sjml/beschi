@@ -1,0 +1,14 @@
+[meta]
+namespace = "SimpleInfiniteLoop"
+
+[[structs]]
+_name = "ContainerA"
+b = "ContainerB"
+
+[[structs]]
+_name = "ContainerB"
+a = "ContainerA"
+
+[[messages]]
+_name = "Loop"
+a = "ContainerA"

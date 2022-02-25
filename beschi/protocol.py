@@ -80,11 +80,45 @@ class Protocol():
                     if _contains_whitespace(var_name):
                         raise ValueError(f"Member name cannot contain whitespace: '{var_name}'")
                     if not self.verify_type_name(var_type):
+                        if var_type in self.messages:
+                            raise ValueError(f"Messages cannot contain other messages ({message_name} contains {var_type})")
                         raise NotImplementedError(f"No type called {var_type} (message: {message_name})")
                     self.messages[message_name].append((var_name, var_type))
 
             if len(protocol_data["messages"]) > 255:
                 raise ValueError("Cannot, at present, have more than 255 types of messages. Sorry. :(")
+
+        def get_deps(name: str, depset: set[str]):
+            lookup = name
+            if name[0] == "[" and name[-1] == "]":
+                lookup = name[1:-1]
+            if lookup in BASE_TYPE_SIZES or lookup == "string": return
+            if lookup in depset: return
+            depset.add(lookup)
+            if lookup in self.structs:
+                for _, deptype in self.structs[lookup]:
+                    get_deps(deptype, depset)
+            else:
+                for _, deptype in self.messages[lookup]:
+                    get_deps(deptype, depset)
+
+        deps: dict[str, set[str]] = {}
+        for s in self.structs:
+            depset = set()
+            get_deps(s, depset)
+            depset.remove(s)
+            deps[s] = depset
+        for m in self.messages:
+            depset = set()
+            get_deps(m, depset)
+            depset.remove(m)
+            deps[m] = depset
+
+        for s, depset in deps.items():
+            for d in depset:
+                if d not in deps: continue
+                if s in deps[d]:
+                    raise RecursionError(f"{s} and {d} reference each other")
 
     def __str__(self) -> str:
         return f"Protocol (namespace: {self.namespace}, {len(self.structs)} structs, {len(self.messages)} messages)"
