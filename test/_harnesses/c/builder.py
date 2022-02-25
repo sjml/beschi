@@ -18,7 +18,7 @@ FLAGS = [
 SILENCE_WARNINGS = [    # turn off these very specific warnings, though
     "float-equal",      # doing comparisons in the test harness; actually *do* want to to check identical
     "padded",           # automatically optimizing struct layout is a hard problem :(
-    "unused-parameter", # just while still developing; not all functions actually hooked up yet
+    "unused-parameter", # GetSizeInBytes takes a message pointer, but never looks at it if it's constant
 ]
 [FLAGS.append(f"-Wno-{sw}") for sw in SILENCE_WARNINGS]
 
