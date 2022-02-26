@@ -2,8 +2,6 @@
     - pie in the sky: instead of using int32 for list/string sizes, do an arbitrary-precision thing? (most lists/strings are small)
         - what kind of performance hit does that entail? is it worth the space tradeoff?
         - maybe default to uint16 and have "longString" or long lists? eeeeh, gets complicated fast
-    - typescript: wrap the read/writes in a class that tracks file position so client code doesn't have to manage the offset (put into boilerplate)
-        - c# and go may also benefit from boilerplate
 
 * generator cleanup
     - some leftover code from way back when

@@ -209,6 +209,7 @@ Note that generated struct objects also have `WriteBytes` and `FromBytes` equiva
 Beschi is a little bit fast and loose with how it does generation. This allows for simpler generator code (each language writer is around just 400 lines of fairly readable declarative code without layers of templates) and necessitates fewer dependencies (only TOML so far!), but it does mean that there are some situations it can't handle. 
 
 ### General
+* I make no claims that the produced code is optimal or necessarily even good. It passes a test suite, and I've used it "in production" for personal projects; it seems to work pretty well, but I'm not an expert programmer in all the generated languages, so am very open to feedback if there's something that could be improved. 
 * It makes efforts to follow the best practices of each language as much as possible, but the generated code probably won't win any awards from the linters. 
 * It always produces *valid* code (if it does not, that is a bug), but it may not be formatted to your (or gofmt's) liking. If you have strong opinions on that sort of thing, consider running it through a code formatter program after generation.
 * Makes no attempt to limit variable names other than disallowing whitespace. That means you could name a data member something that is a reserved word in a target language and it would cause compilation problems. If you call a message member "int" you won't be happy, so don't do that; stay happy.
@@ -254,7 +255,7 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * The generated code tries to be as straightforward as possible, so it shouldn't be terribly hard to debug if there's a problem with it. The only macro is a simple error check. 
 * C doesn't support any kind of namespacing other than prefixing functions/structs/variables with a string, so that's what the generated code does. You may want to use a shorter namespace string if you're planning to use C code, so as to save some horizontal space in your code editor. 
 * The code generated is an [STB-style](https://github.com/nothings/stb/) single-file header library. If you've never used one before, it's actually pretty simple. You `#include "MyGeneratedFile.h"` wherever you need to use the structures and functions, like you normally would with a library. But instead of having a separate file to compile, all the implementation is in the same file, just behind a definition guard. So to actually link the implementation code, in **exactly** one file, `#define {NAMESPACE}_IMPLEMENTATION` **before** you include it. 
-* The layout of the structs (mostly) mirrors the way they are declared in the protocol file, which may raise warnings about padding if you compile with warnings all the way up. If memory alignment is important to you, you may want to play with the delcaration order. 
+* The layout of the structs (mostly) mirrors the way they are declared in the protocol file, which may raise warnings about padding if you compile with warnings all the way up. If memory alignment is important to you, you may want to play with the declaration order. 
     - Exceptions are: 
         - Every message struct has an additional byte (`_mt`) at the start, used to identify it if its in a void** array. 
         - Every string and list have an associated `{varname}_len` variable storing their length, right before them in the array. 
@@ -263,13 +264,13 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * With the various length variables: they will be set properly when reading a message out of a buffer, but *you are responsible* for making sure they are correct before they go into a buffer. C has no way to track the length of arrays (without introducing another dependency), so it's up to you. 
 * The calculated length for strings does not include a null terminator. 
 * When declaring an instance of a message, it's probably best to use the generated constant `{namespace}_{message_name}_default` to make sure that its members are initialized and that its identifying byte is set correctly. Otherwise things might break. 
-* Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions might allocate memory if there are lists are strings in the structure. They will need to be `free`-ed or will leak. 
+* Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions might allocate memory if there are lists or strings in the structure. They will need to be `free`-ed or will leak. 
     - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
 * `ProcessRawBytes` gives you an array of pointers to `void` (`void**`); you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
 
 
 ## Future
-I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this sytem, though, and really wants to see a generator for Rust or Haskell or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
+I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this system, though, and really wants to see a generator for Rust or Haskell or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
 
 
 ## Beschi?
