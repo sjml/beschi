@@ -23,6 +23,11 @@ CFLAGS = [
     "-std=c99",         # c99 is the baseline
     "-pedantic-errors", # complain if compiler extensions come into play
 ]
+CSILENCE_WARNINGS = [
+    "c99-extensions"    # don't get *that* pedantic
+]
+[CFLAGS.append(f"-Wno-{sw}") for sw in CSILENCE_WARNINGS]
+
 CPPFLAGS = [
     "-std=c++11",       # c++11 is the baseline
 ]
