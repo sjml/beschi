@@ -12,8 +12,8 @@
     - messages are really just structs with some extra things; could probably streamline a lot of operations by consolidating them and having a flag
 
 * testing framework
+    - windows? 😬
     - check that multiple generated files can be included at once
-    - test that C code compiles and works from C++
     - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
     - add a POD list to basic
     - comparison (size/perf) to flatbuffers/capnproto/etc?
@@ -25,5 +25,5 @@
 
 * more writers
     * python
-    * java?
     * rust?
+    * java?

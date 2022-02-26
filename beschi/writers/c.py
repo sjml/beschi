@@ -130,10 +130,13 @@ class CWriter(Writer):
             self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
             if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
                 self.write_line(f"{accessor}{varname} = ({self.type_mapping[listed_type]}*)malloc(sizeof({self.type_mapping[listed_type]}) * {accessor}{varname}_len);")
+                self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
                 if listed_type == "string":
                     self.write_line(f"{accessor}{varname}_els_len = ({self.type_mapping['uint32']}*)malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{varname}_len);")
+                    self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             else:
                 self.write_line(f"{accessor}{varname} = ({self.prefix}{listed_type}*)malloc(sizeof({self.prefix}{listed_type}) * {accessor}{varname}_len);")
+                self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
             self.indent_level += 1
             if listed_type in BASE_TYPE_SIZES.keys():
@@ -371,10 +374,19 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListDst, size_t* len) {{")
         self.indent_level += 1
         self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
-        self.write_line("void** outList = (void**)malloc(sizeof(void*) * 32);")
+        self.write_line("size_t currCapacity = 8;")
+        self.write_line("void** outList = (void**)malloc(sizeof(void*) * currCapacity);")
+        self.write_line(f"if (outList == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.write_line("*len = 0;")
         self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
         self.indent_level += 1
+        self.write_line("while (*len >= currCapacity) {")
+        self.indent_level += 1
+        self.write_line("currCapacity *= 2;")
+        self.write_line("outList = (void**)realloc(outList, (sizeof(void*) * currCapacity));")
+        self.write_line(f"if (outList == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("uint8_t msgType;")
         self.write_line(f"{self.prefix}_ReadUInt8(r, &msgType);")
         self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
@@ -385,6 +397,7 @@ class CWriter(Writer):
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
+            self.write_line(f"if (out == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, ({self.prefix}{msg_type}*)out);")
             self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
             self.write_line("outList[*len] = out;")

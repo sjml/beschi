@@ -7,10 +7,13 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import builder_util
 
+CC = "clang"
+CXX = "clang++"
+
 FLAGS = [
     "-Weverything",     # actually, complain about everything
     "-Werror",          # loudly
-    "-O3",              # tweak it all the way to expose any problems that arise with optimizations
+    "-O0",              # tweak it all the way to expose any problems that arise with optimizations
     "-g"                # but be ready to debug as much as is possible
 ]
 SILENCE_WARNINGS = [    # turn off these very specific warnings, though
@@ -33,7 +36,7 @@ CPPFLAGS = [
 CPPSILENCE_WARNINGS = [
     # since this code is meant to be usable from C primarily,
     #   need to silence some warnings that demand more modern C++
-    "c99-extensions",    # don't get *that* pedantic
+    "c99-extensions", # don't get *that* pedantic
     "old-style-cast", # let us use c-style casts without complaining
     "zero-as-null-pointer-constant", # otherwise have to use nullptr, or redefine it, which feels like code smell
     "cast-qual", # really wish I could only silence this for string literals
@@ -59,7 +62,7 @@ class CBuilder(builder_util.Builder):
         deps = [self.srcfile, self.gen_file, "util.h"]
         if builder_util.needs_build(self.exepath, deps):
             call = [
-                "clang", *build_flags,
+                CC, *build_flags,
                 *CFLAGS,
                 "-o", self.exepath,
                 self.srcfile
@@ -68,7 +71,7 @@ class CBuilder(builder_util.Builder):
             subprocess.check_call(call)
         if builder_util.needs_build(self.exepath_cpp, deps):
             call = [
-                "clang++", *build_flags,
+                CXX, *build_flags,
                 *CPPFLAGS,
                 "-o", self.exepath_cpp,
                 "-x", "c++", self.srcfile
