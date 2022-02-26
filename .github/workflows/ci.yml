@@ -1,9 +1,7 @@
 name: Verification Tests
 
 on:
-  push:
-    branches:
-      - main
+  push
 
 jobs:
   ci:
