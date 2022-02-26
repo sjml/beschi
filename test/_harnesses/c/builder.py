@@ -12,6 +12,7 @@ CC = "clang"
 CXX = "clang++"
 
 FLAGS = [
+    "-pedantic-errors", # complain if compiler extensions come into play
     "-Weverything",     # actually, complain about everything
     "-Werror",          # loudly
     "-O0", "-g",        # have as much debug info as we can
@@ -19,12 +20,11 @@ FLAGS = [
 SILENCE_WARNINGS = [    # turn off these very specific warnings, though
     "float-equal",      # doing comparisons in the test harness; actually *do* want to to check identical
     "padded",           # automatically optimizing struct layout is a hard problem :(
-    "unused-parameter", # GetSizeInBytes takes a message pointer, but never looks at it if it's constant
+    "unused-parameter", # GetSizeInBytes takes a message pointer, but never looks at it if the size is constant precomputed
 ]
 [FLAGS.append(f"-Wno-{sw}") for sw in SILENCE_WARNINGS]
 CFLAGS = [
     "-std=c99",         # c99 is the baseline
-    "-pedantic-errors", # complain if compiler extensions come into play
 ]
 CSILENCE_WARNINGS = [
 ]
