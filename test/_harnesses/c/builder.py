@@ -58,19 +58,23 @@ class CBuilder(builder_util.Builder):
 
         deps = [self.srcfile, self.gen_file, "util.h"]
         if builder_util.needs_build(self.exepath, deps):
-            subprocess.check_call([
+            call = [
                 "clang", *build_flags,
                 *CFLAGS,
                 "-o", self.exepath,
                 self.srcfile
-            ])
+            ]
+            print("Building with:", call)
+            subprocess.check_call(call)
         if builder_util.needs_build(self.exepath_cpp, deps):
-            subprocess.check_call([
+            call = [
                 "clang++", *build_flags,
                 *CPPFLAGS,
                 "-o", self.exepath_cpp,
                 "-x", "c++", self.srcfile
-            ])
+            ]
+            print("Building with:", call)
+            subprocess.check_call(call)
 
     def clean(self):
         super().clean()
