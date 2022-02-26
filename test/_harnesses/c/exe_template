@@ -1,15 +1,21 @@
 #!/usr/bin/env bash
 
-WRAPPER=""
+WRAPPER_COMMAND=""
+WRAPPER_NAME=""
 
 hash leaks 2>/dev/null
 if [ $? -eq 0 ]; then
-    WRAPPER="leaks -atExit --"
+    WRAPPER_COMMAND="leaks -atExit --"
+    WRAPPER_NAME="leaks"
 fi
 
 hash valgrind 2>/dev/null
 if [ $? -eq 0 ]; then
-    WRAPPER="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose"
+    WRAPPER_COMMAND="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose --error-exitcode=1"
+    WRAPPER_NAME="valgrind"
 fi
 
-$WRAPPER $(dirname $0)/../../out/intermediate/{# EXE_NAME #} $@
+if [ ${#WRAPPER_NAME} -gt 0 ]; then
+    echo "Running with $WRAPPER_NAME..."
+fi
+$WRAPPER_COMMAND $(dirname $0)/../../out/intermediate/{# EXE_NAME #} $@
