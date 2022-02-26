@@ -104,6 +104,8 @@ int main(int argc, char** argv) {
 
         softAssert(err == BROKENMESSAGES_ERR_INVALID_DATA, "read broken stream error");
         softAssert(msgListLen == 4, "read broken stream length");
+
+        BrokenMessages_DestroyMessageList(msgList, msgListLen);
     }
 
     return check();

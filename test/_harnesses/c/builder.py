@@ -1,4 +1,5 @@
 import os
+import stat
 import platform
 import subprocess
 
@@ -13,8 +14,7 @@ CXX = "clang++"
 FLAGS = [
     "-Weverything",     # actually, complain about everything
     "-Werror",          # loudly
-    "-O0",              # tweak it all the way to expose any problems that arise with optimizations
-    "-g"                # but be ready to debug as much as is possible
+    "-O0", "-g",        # have as much debug info as we can
 ]
 SILENCE_WARNINGS = [    # turn off these very specific warnings, though
     "float-equal",      # doing comparisons in the test harness; actually *do* want to to check identical
@@ -50,6 +50,8 @@ class CBuilder(builder_util.Builder):
         if self.srcfile.endswith(".h"):
             self.srcfile = f"{self.srcfile[:-2]}.c"
         self.exepath_cpp = f"{self.exepath}pp"
+        self.intermediate_path = os.path.join(builder_util.INTERMEDIATE_DIR, self.exename)
+        self.intermediate_path_cpp = f"{self.intermediate_path}pp"
 
     def build(self):
         super().build()
@@ -60,28 +62,46 @@ class CBuilder(builder_util.Builder):
             build_flags += ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"]
 
         deps = [self.srcfile, self.gen_file, "util.h"]
-        if builder_util.needs_build(self.exepath, deps):
-            call = [
+        if builder_util.needs_build(self.intermediate_path, deps):
+            subprocess.check_call([
                 CC, *build_flags,
                 *CFLAGS,
-                "-o", self.exepath,
+                "-o", self.intermediate_path,
                 self.srcfile
-            ]
-            print("Building with:", call)
-            subprocess.check_call(call)
-        if builder_util.needs_build(self.exepath_cpp, deps):
-            call = [
+            ])
+        if builder_util.needs_build(self.intermediate_path_cpp, deps):
+            subprocess.check_call([
                 CXX, *build_flags,
                 *CPPFLAGS,
-                "-o", self.exepath_cpp,
+                "-o", self.intermediate_path_cpp,
                 "-x", "c++", self.srcfile
-            ]
-            print("Building with:", call)
-            subprocess.check_call(call)
+            ])
+
+        if builder_util.needs_build(self.exepath, [self.intermediate_path]):
+            shim = open("./exe_template").read()
+            shim = shim.replace("{# EXE_NAME #}", self.exename)
+            with open(self.exepath, "w") as shim_file:
+                shim_file.write(shim)
+            os.chmod(self.exepath, os.stat(self.exepath).st_mode | stat.S_IEXEC)
+
+        if builder_util.needs_build(self.exepath_cpp, [self.intermediate_path_cpp]):
+            shim = open("./exe_template").read()
+            shim = shim.replace("{# EXE_NAME #}", f"{self.exename}pp")
+            with open(self.exepath_cpp, "w") as shim_file:
+                shim_file.write(shim)
+            os.chmod(self.exepath_cpp, os.stat(self.exepath_cpp).st_mode | stat.S_IEXEC)
+
+
 
     def clean(self):
         super().clean()
-        builder_util.cleanup([f"{self.exepath}.dSYM", self.exepath_cpp, f"{self.exepath_cpp}.dSYM"])
+        builder_util.cleanup([
+            self.intermediate_path,
+            self.intermediate_path_cpp,
+            f"{self.intermediate_path}.dSYM",
+            f"{self.intermediate_path_cpp}.dSYM",
+            self.exepath_cpp,
+        ])
 
 
 

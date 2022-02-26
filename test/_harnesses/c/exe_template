@@ -1,3 +1,15 @@
 #!/usr/bin/env bash
 
-leaks -atExit -- $(dirname $0)/../../out/intermediate/{# EXE_NAME #} $@
+WRAPPER=""
+
+hash leaks 2>/dev/null
+if [ $? -eq 0 ]; then
+    WRAPPER="leaks -atExit --"
+fi
+
+hash valgrind 2>/dev/null
+if [ $? -eq 0 ]; then
+    WRAPPER="valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes --verbose"
+fi
+
+$WRAPPER $(dirname $0)/../../out/intermediate/{# EXE_NAME #} $@

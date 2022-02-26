@@ -375,16 +375,16 @@ class CWriter(Writer):
         self.indent_level += 1
         self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
         self.write_line("size_t currCapacity = 8;")
-        self.write_line("void** outList = (void**)malloc(sizeof(void*) * currCapacity);")
-        self.write_line(f"if (outList == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
+        self.write_line("*msgListDst = (void**)malloc(sizeof(void*) * currCapacity);")
+        self.write_line(f"if (*msgListDst == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.write_line("*len = 0;")
         self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
         self.indent_level += 1
         self.write_line("while (*len >= currCapacity) {")
         self.indent_level += 1
         self.write_line("currCapacity *= 2;")
-        self.write_line("outList = (void**)realloc(outList, (sizeof(void*) * currCapacity));")
-        self.write_line(f"if (outList == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
+        self.write_line("*msgListDst = (void**)realloc(*msgListDst, (sizeof(void*) * currCapacity));")
+        self.write_line(f"if (*msgListDst == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("uint8_t msgType;")
@@ -399,9 +399,9 @@ class CWriter(Writer):
             self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
             self.write_line(f"if (out == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, ({self.prefix}{msg_type}*)out);")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
-            self.write_line("outList[*len] = out;")
+            self.write_line("(*msgListDst)[*len] = out;")
             self.write_line("*len += 1;")
+            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")
@@ -412,7 +412,6 @@ class CWriter(Writer):
         self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line("*msgListDst = outList;")
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1
         self.write_line("}")
