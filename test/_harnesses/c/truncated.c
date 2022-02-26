@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         err = BrokenMessages_ListMessage_GetSizeInBytes(&lmsg, &bufferSize);
         BROKENMESSAGES_ERR_CHECK_RETURN;
 
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         BrokenMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = BrokenMessages_ListMessage_WriteBytes(&writer, &lmsg, false);
         BROKENMESSAGES_ERR_CHECK_RETURN;
@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
         fseek(fp, 0, SEEK_END);
         bufferSize = (size_t)ftell(fp);
         rewind(fp);
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         size_t ret = fread(buffer, 1, bufferSize, fp);
         fclose(fp);
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
         }
 
         BrokenMessages_DataAccess reader = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
-        BrokenMessages_ListMessage* input = malloc(sizeof(BrokenMessages_ListMessage));
+        BrokenMessages_ListMessage* input = (BrokenMessages_ListMessage*)malloc(sizeof(BrokenMessages_ListMessage));
         err = BrokenMessages_ListMessage_FromBytes(&reader, input);
 
         softAssert(err == BROKENMESSAGES_ERR_EOF, "reading broken message");

@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
         bufferSize += s;
         bufferSize += 12;
 
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         SmallMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = SmallMessages_ByteMessage_WriteBytes(&writer, &byteMsg, true);
         SMALLMESSAGES_ERR_CHECK_RETURN;
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
         fseek(fp, 0, SEEK_END);
         bufferSize = (size_t)ftell(fp);
         rewind(fp);
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         size_t ret = fread(buffer, 1, bufferSize, fp);
         fclose(fp);
 

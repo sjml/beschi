@@ -94,20 +94,19 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Data Type | C#       | C          | TypeScript | Go        | Swift     |
-|--------------------|----------|------------|------------|-----------|-----------|
-| `byte`             | `byte`   | `uint8_t`  | `number`   | `byte`    | `UInt8`   |
-| `bool`             | `bool`   | `bool`     | `boolean`  | `bool`    | `Bool`    |
-| `int16`            | `short`  | `uint16_t` | `number`   | `int16`   | `Int16`   |
-| `uint16`           | `ushort` | `int16_t`  | `number`   | `uint16`  | `UInt16`  |
-| `int32`            | `int`    | `uint32_t` | `number`   | `int32`   | `Int32`   |
-| `uint32`           | `uint`   | `int32_t`  | `number`   | `uint32`  | `UInt32`  |
-| `int64`            | `long`   | `uint64_t` | `bigint`   | `int64`   | `Int64`   |
-| `uint64`           | `ulong`  | `int64_t`  | `bigint`   | `uint64`  | `UInt64`  |
-| `float`            | `float`  | `float`    | `number`   | `float32` | `Float32` |
-| `double`           | `double` | `double`   | `number`   | `float64` | `Float64` |
-| `string`           | `string` | `char*`    | `string`   | `string`  | `String`  |
-
+| Protocol Type | C#       | Go        | C          | Swift     | TypeScript |
+|---------------|----------|-----------|------------|-----------|------------|
+| `byte`        | `byte`   | `byte`    | `uint8_t`  | `UInt8`   | `number`   |
+| `bool`        | `bool`   | `bool`    | `bool`     | `Bool`    | `boolean`  |
+| `int16`       | `short`  | `int16`   | `uint16_t` | `Int16`   | `number`   |
+| `uint16`      | `ushort` | `uint16`  | `int16_t`  | `UInt16`  | `number`   |
+| `int32`       | `int`    | `int32`   | `uint32_t` | `Int32`   | `number`   |
+| `uint32`      | `uint`   | `uint32`  | `int32_t`  | `UInt32`  | `number`   |
+| `int64`       | `long`   | `int64`   | `uint64_t` | `Int64`   | `bigint`   |
+| `uint64`      | `ulong`  | `uint64`  | `int64_t`  | `UInt64`  | `bigint`   |
+| `float`       | `float`  | `float32` | `float`    | `Float32` | `number`   |
+| `double`      | `double` | `float64` | `double`   | `Float64` | `number`   |
+| `string`      | `string` | `string`  | `char*`    | `String`  | `string`   |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. (C types are using `stdint.h` and `stdbool.h`.)
 
@@ -267,7 +266,6 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions might allocate memory if there are lists are strings in the structure. They will need to be `free`-ed or will leak. 
     - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
 * `ProcessRawBytes` gives you an array of pointers to `void` (`void**`); you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
-
 
 
 ## Future

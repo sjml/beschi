@@ -79,6 +79,10 @@ def run_for(language: str, srcfile: str):
         "--read", out_file
     ])
 
+    # HACKHACK
+    if language == "c":
+        run_for("cpp", srcfile)
+
 def check_files_identical(data_glob):
     filecmp.clear_cache()
     messages = (glob.glob(os.path.join(DATA_OUTPUT_DIR, data_glob)))

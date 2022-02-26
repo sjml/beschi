@@ -61,7 +61,7 @@ class CWriter(Writer):
             if mtype in self.base_defaults:
                 self.write_line(f".{mname} = {self.base_defaults[mtype]},")
             elif mtype == "string":
-                self.write_line(f".{mname} = \"\",")
+                self.write_line(f".{mname} = (char*)\"\",")
             elif mtype[0] == "[" and mtype[-1] == "]":
                 self.write_line(f".{mname} = NULL,")
             else:
@@ -129,11 +129,11 @@ class CWriter(Writer):
             self.write_line(f"err = {self.prefix}_ReadUInt32(r, &({accessor}{varname}_len));")
             self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
             if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
-                self.write_line(f"{accessor}{varname} = malloc(sizeof({self.type_mapping[listed_type]}) * {accessor}{varname}_len);")
+                self.write_line(f"{accessor}{varname} = ({self.type_mapping[listed_type]}*)malloc(sizeof({self.type_mapping[listed_type]}) * {accessor}{varname}_len);")
                 if listed_type == "string":
-                    self.write_line(f"{accessor}{varname}_els_len = malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{varname}_len);")
+                    self.write_line(f"{accessor}{varname}_els_len = ({self.type_mapping['uint32']}*)malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{varname}_len);")
             else:
-                self.write_line(f"{accessor}{varname} = malloc(sizeof({self.prefix}{listed_type}) * {accessor}{varname}_len);")
+                self.write_line(f"{accessor}{varname} = ({self.prefix}{listed_type}*)malloc(sizeof({self.prefix}{listed_type}) * {accessor}{varname}_len);")
             self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
             self.indent_level += 1
             if listed_type in BASE_TYPE_SIZES.keys():
@@ -315,7 +315,7 @@ class CWriter(Writer):
         self.write_line("typedef enum {")
         self.indent_level += 1
         self.write_line(f"{self.prefix}MessageType___NullMessage = 0,")
-        [self.write_line(f"{self.prefix}MessageType_{k} = {i+1},") for i, k in enumerate(self.protocol.messages.keys())]
+        [self.write_line(f"{self.prefix}MessageType_{k} = {i+1}{',' if i < len(self.protocol.messages)-1 else ''}") for i, k in enumerate(self.protocol.messages.keys())]
         self.indent_level -= 1
         self.write_line(f"}} {self.prefix}MessageType;")
         self.write_line()
@@ -335,14 +335,14 @@ class CWriter(Writer):
 
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m) {{")
         self.indent_level += 1
-        self.write_line("const uint8_t* buffer = m;")
+        self.write_line("const uint8_t* buffer = (const uint8_t*)m;")
         self.write_line("uint8_t msgType = buffer[0];")
         self.write_line(f"if (msgType > {len(self.protocol.messages)}) {{")
         self.indent_level += 1
         self.write_line(f"return {self.prefix}MessageType___NullMessage;")
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line(f"return msgType;")
+        self.write_line(f"return ({self.prefix}MessageType)msgType;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -359,7 +359,7 @@ class CWriter(Writer):
         for msg_type in self.protocol.messages.keys():
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
-            self.write_line(f"return {self.prefix}{msg_type}_GetSizeInBytes(m, len);")
+            self.write_line(f"return {self.prefix}{msg_type}_GetSizeInBytes((const {self.prefix}{msg_type}*)m, len);")
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line("}")
@@ -371,7 +371,7 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListDst, size_t* len) {{")
         self.indent_level += 1
         self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
-        self.write_line("void** outList = malloc(sizeof(void*) * 32);")
+        self.write_line("void** outList = (void**)malloc(sizeof(void*) * 32);")
         self.write_line("*len = 0;")
         self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
         self.indent_level += 1
@@ -385,7 +385,7 @@ class CWriter(Writer):
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
-            self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, out);")
+            self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, ({self.prefix}{msg_type}*)out);")
             self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
             self.write_line("outList[*len] = out;")
             self.write_line("*len += 1;")
@@ -413,7 +413,7 @@ class CWriter(Writer):
         for msg_type in self.protocol.messages.keys():
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
-            self.write_line(f"{self.prefix}{msg_type}_Destroy(msgList[i]);")
+            self.write_line(f"{self.prefix}{msg_type}_Destroy(({self.prefix}{msg_type}*)msgList[i]);")
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line(f"case {self.prefix}MessageType___NullMessage:")

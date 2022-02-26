@@ -25,5 +25,5 @@
 
 * more writers
     * python
-    * C (in progress)
+    * java?
     * rust?

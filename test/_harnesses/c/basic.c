@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     example.ui64 = 18000000000000000000UL;
     example.f = 3.1415927410125732421875f;
     example.d = 2.718281828459045090795598298427648842334747314453125;
-    example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
+    example.s = (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
     example.s_len = (uint32_t)strlen(example.s);
     example.v2.x = 256.512f;
     example.v2.y = 1024.768f;
@@ -35,13 +35,13 @@ int main(int argc, char** argv) {
     example.c.b = 0;
     example.sl_len = 7;
     char* sl[7] = {
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
-        "Vivamus pellentesque turpis aliquet pretium tincidunt.",
-        "Nulla facilisi.",
-        "🐼❤️✝️",
-        "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
-        "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
+        (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        (char*)"Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
+        (char*)"Vivamus pellentesque turpis aliquet pretium tincidunt.",
+        (char*)"Nulla facilisi.",
+        (char*)"🐼❤️✝️",
+        (char*)"用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
+        (char*)"لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
     };
     example.sl = sl;
     uint32_t sampleTextLengths[7] = {
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
     ComprehensiveMessage_ComplexData cx;
     cx.identifier = 127;
-    cx.label = "ComplexDataObject";
+    cx.label = (char*)"ComplexDataObject";
     cx.label_len = (uint32_t)strlen(cx.label);
     cx.backgroundColor = c1;
     cx.textColor = c2;
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
 
     ComprehensiveMessage_ComplexData cx1;
     cx1.identifier = 255;
-    cx1.label = "Complex1";
+    cx1.label = (char*)"Complex1";
     cx1.label_len = (uint32_t)strlen(cx1.label);
     cx1.backgroundColor = c3;
     cx1.textColor = c1;
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
 
     ComprehensiveMessage_ComplexData cx2;
     cx2.identifier = 63;
-    cx2.label = "Complex2";
+    cx2.label = (char*)"Complex2";
     cx2.label_len = (uint32_t)strlen(cx2.label);
     cx2.backgroundColor = c1;
     cx2.textColor = c3;
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
         err = ComprehensiveMessage_TestingMessage_GetSizeInBytes(&example, &bufferSize);
         COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
 
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         ComprehensiveMessage_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = ComprehensiveMessage_TestingMessage_WriteBytes(&writer, &example, false);
         COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
         fseek(fp, 0, SEEK_END);
         bufferSize = (size_t)ftell(fp);
         rewind(fp);
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         size_t ret = fread(buffer, 1, bufferSize, fp);
         fclose(fp);
 
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
         }
 
         ComprehensiveMessage_DataAccess reader = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
-        ComprehensiveMessage_TestingMessage* input = malloc(sizeof(ComprehensiveMessage_TestingMessage));
+        ComprehensiveMessage_TestingMessage* input = (ComprehensiveMessage_TestingMessage*)malloc(sizeof(ComprehensiveMessage_TestingMessage));
         err = ComprehensiveMessage_TestingMessage_FromBytes(&reader, input);
         COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
 

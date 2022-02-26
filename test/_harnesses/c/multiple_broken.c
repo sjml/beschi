@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
         bufferSize += s;
         bufferSize += 7;
 
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         BrokenMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
         BROKENMESSAGES_ERR_CHECK_RETURN;
@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         fseek(fp, 0, SEEK_END);
         bufferSize = (size_t)ftell(fp);
         rewind(fp);
-        buffer = malloc(bufferSize);
+        buffer = (uint8_t*)malloc(bufferSize);
         size_t ret = fread(buffer, 1, bufferSize, fp);
         fclose(fp);
 

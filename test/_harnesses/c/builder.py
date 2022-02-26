@@ -8,8 +8,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import builder_util
 
 FLAGS = [
-    "-std=c99",         # c99 is the baseline
-    "-pedantic-errors", # complain if compiler extensions come into play
     "-Weverything",     # actually, complain about everything
     "-Werror",          # loudly
     "-O3",              # tweak it all the way to expose any problems that arise with optimizations
@@ -21,12 +19,29 @@ SILENCE_WARNINGS = [    # turn off these very specific warnings, though
     "unused-parameter", # GetSizeInBytes takes a message pointer, but never looks at it if it's constant
 ]
 [FLAGS.append(f"-Wno-{sw}") for sw in SILENCE_WARNINGS]
+CFLAGS = [
+    "-std=c99",         # c99 is the baseline
+    "-pedantic-errors", # complain if compiler extensions come into play
+]
+CPPFLAGS = [
+    "-std=c++11",       # c++11 is the baseline
+]
+CPPSILENCE_WARNINGS = [
+    # since this code is meant to be usable from C primarily,
+    #   need to silence some warnings that demand more modern C++
+    "old-style-cast", # let us use c-style casts without complaining
+    "zero-as-null-pointer-constant", # otherwise have to use nullptr, or redefine it, which feels like code smell
+    "cast-qual", # really wish I could only silence this for string literals
+]
+[CPPFLAGS.append(f"-Wno-{sw}") for sw in CPPSILENCE_WARNINGS]
+
 
 class CBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("c")
         if self.srcfile.endswith(".h"):
             self.srcfile = f"{self.srcfile[:-2]}.c"
+        self.exepath_cpp = f"{self.exepath}pp"
 
     def build(self):
         super().build()
@@ -40,13 +55,21 @@ class CBuilder(builder_util.Builder):
         if builder_util.needs_build(self.exepath, deps):
             subprocess.check_call([
                 "clang", *build_flags,
+                *CFLAGS,
                 "-o", self.exepath,
                 self.srcfile
+            ])
+        if builder_util.needs_build(self.exepath_cpp, deps):
+            subprocess.check_call([
+                "clang++", *build_flags,
+                *CPPFLAGS,
+                "-o", self.exepath_cpp,
+                "-x", "c++", self.srcfile
             ])
 
     def clean(self):
         super().clean()
-        builder_util.cleanup([f"{self.exepath}.dSYM"])
+        builder_util.cleanup([f"{self.exepath}.dSYM", self.exepath_cpp, f"{self.exepath_cpp}.dSYM"])
 
 
 
