@@ -1,6 +1,7 @@
 // To use this header file, include it normally wherever you need access
 //   to its structures and functions.
-// Then in *exactly* one file, define BESCHI_IMPLEMENTATION before including it.
+// Then in *exactly* one file, #define BESCHI_IMPLEMENTATION
+//   *before* including it.
 
 #ifndef INCLUDE_BESCHI_H
 #define INCLUDE_BESCHI_H

@@ -2,7 +2,7 @@
 
 [![Verification Tests](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
-This is a custom bit-packing and unpacking code generator for C#, Go, Swift, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
+This is a custom bit-packing and unpacking code generator for C#, Go, C, Swift, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
 
 The original project started off using [FlatBuffers](https://google.github.io/flatbuffers/), which are actually pretty great for a lot of use cases and I definitely recommend you look at them if you want something with more functionality and polish. However, for what I was doing I needed the actual produced buffers to be as tiny as possible — with FlatBuffers, the resulting data is a little bulky because of the vtables and support for changing schema while still being able to use old data. Since my messages only exist in flight and are never persisted, client and server can stay in lockstep, so the buffers can be more compact. The code for creating and reading messages with Beschi is also a bit smoother... at least, it's a bit more to my personal tastes in code.
 
@@ -174,20 +174,18 @@ vec3.y = 2.0f;
 vec3.z = 3.0f;
 ```
 
-TypeScript:
-```typescript
-const vec3 = new AppMessages.Vector3Message();
-vec3.x = 1.0;
-vec3.y = 2.0;
-vec3.z = 3.0;
-```
+C:
+```c
+AppMessages_Vector3Message vec3 = AppMessages_Vector3Message_default;
+vec3.x = 1.0f;
+vec3.y = 2.0f;
+vec3.z = 3.0f;
 
-Swift:
-```swift
-var example = AppMessages.Vector3Message()
-vec3.x = 1.0
-vec3.y = 2.0
-vec3.z = 3.0
+// or
+AppMessages_Vector3Message* vec3ptr = malloc(sizeof(AppMessages_Vector3Message));
+vec3ptr->x = 1.0f;
+vec3ptr->y = 2.0f;
+vec3ptr->z = 3.0f;
 ```
 
 Note that all data members are initialized to zero values (or empty strings/lists). There's no way, at present, to specify other defaults in a protocol, so that needs to be handled in client code. 
@@ -220,7 +218,7 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * Strings and lists use an unsigned 32-bit integer to record their lengths in the buffers. That's enough for more than 4 GB of ASCII text in a string; if you need more, you probably outgrew this system long ago.
 * There is no effort made at checking data integrity or the like. It would not be too hard to add a checksum message or data member and perform that verification in client code, though. 
 * There is no partial deserialization, like with FlatBuffers, where you can just snag a specific piece of data out of the buffer. I mostly work with small messages that I always want to fully decode, so this was just added overhead; if that's something you need, consider other options. 
-* There is no functionality for versioning messages, so if you update your protocol, messages generated from the older code will not be able to be readable by new code. Beschi messages are not intended to persist beyond the time it takes to shuttle them across a network or memory pipe. Versioning can be accomplished on the client side, but will require manual decoding steps and probably retaining the old generated code.
+* There is no functionality for versioning messages, so if you update your protocol, messages generated from the older code will not be readable by new code. Beschi messages are not intended to persist beyond the time it takes to shuttle them across a network or memory pipe. Versioning can be accomplished on the client side, but will require manual decoding steps and probably retaining the old generated code.
 
 ### Go
 * Usually the identifying enum is accessed by `{namespace}.MessageType.{specific_message_name}Type`, but Go doesn't do enums the way the other languages do, so it's missing the `.MessageType.` in the middle. 
@@ -245,9 +243,35 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * There might be some extraneous memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, but maybe it's ok? Anyway, something to keep awareness of. 
 * Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
 
+### C
+* Unsurprisingly, C code that uses Beschi messages tends to be much more verbose than code from more modern languages. The syntax is a bit different, too, because of the lack of multiple return values and exceptions in C. 
+    - Nearly all functions require you to pass in pointers to your objects, and return a `{namespace}_err_t` that you should check is equal to `{NAMESPACE}_ERR_OK` before you use those objects. 
+    - Take a look at the test harnesses to see how it works, in general. 
+* As always, C makes it far easier to mess things up if you don't pay close attention. Feed the wrong kind of data to a function and it will *try* to recover gracefully and return an error, but it's also just as likely that you'll crash. 
+* There's a lot of variants of C, and the generated code is not tested across all of them. It makes the following assumptions:
+    - A C99 compiler (makes use of variable declaration in loops and designated initializers)
+    - IEEE-754 floating point numbers (a pretty safe assumption, but if you're running on some exotic hardware, this might fail)
+    - Little-endian processor (a less safe assumption, but in general is ok; would like to fix this at some point anyway)
+* The generated code tries to be as straightforward as possible, so it shouldn't be terribly hard to debug if there's a problem with it. The only macro is a simple error check. 
+* C doesn't support any kind of namespacing other than prefixing functions/structs/variables with a string, so that's what the generated code does. You may want to use a shorter namespace string if you're planning to use C code, so as to save some horizontal space in your code editor. 
+* The code generated is an [STB-style](https://github.com/nothings/stb/) single-file header library. If you've never used one before, it's actually pretty simple. You `#include "MyGeneratedFile.h"` wherever you need to use the structures and functions, like you normally would with a library. But instead of having a separate file to compile, all the implementation is in the same file, just behind a definition guard. So to actually link the implementation code, in **exactly** one file, `#define {NAMESPACE}_IMPLEMENTATION` **before** you include it. 
+* The layout of the structs (mostly) mirrors the way they are declared in the protocol file, which may raise warnings about padding if you compile with warnings all the way up. If memory alignment is important to you, you may want to play with the delcaration order. 
+    - Exceptions are: 
+        - Every message struct has an additional byte (`_mt`) at the start, used to identify it if its in a void** array. 
+        - Every string and list have an associated `{varname}_len` variable storing their length, right before them in the array. 
+        - Lists of strings have a second variable of `{varname}_els_len` recording the lengths of each element in the array. 
+        - You probably shouldn't declare members in the protocol that would shadow these variables, but I'm not the boss of you. 
+* With the various length variables: they will be set properly when reading a message out of a buffer, but *you are responsible* for making sure they are correct before they go into a buffer. C has no way to track the length of arrays (without introducing another dependency), so it's up to you. 
+* The calculated length for strings does not include a null terminator. 
+* When declaring an instance of a message, it's probably best to use the generated constant `{namespace}_{message_name}_default` to make sure that its members are initialized and that its identifying byte is set correctly. Otherwise things might break. 
+* Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions might allocate memory if there are lists are strings in the structure. They will need to be `free`-ed or will leak. 
+    - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
+* `ProcessRawBytes` gives you an array of pointers to `void` (`void**`); you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
+
+
 
 ## Future
-I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this sytem, though, and really wants to see a generator for C or Rust or Haskell or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
+I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this sytem, though, and really wants to see a generator for Rust or Haskell or whatever, let me know. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
 
 
 ## Beschi?

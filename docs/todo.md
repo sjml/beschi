@@ -13,6 +13,7 @@
 
 * testing framework
     - check that multiple generated files can be included at once
+    - test that C code compiles and works from C++
     - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
     - add a POD list to basic
     - comparison (size/perf) to flatbuffers/capnproto/etc?
