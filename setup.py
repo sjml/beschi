@@ -24,6 +24,8 @@ setup(
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Code Generators',
     ],
+    include_package_data=True,
+    package_data={'beschi': ['writers/boilerplate/*']},
     packages=find_packages(
         include=['beschi', 'beschi.writers'],
         exclude=['test'], # seems to include test no matter what. ¯\_(ツ)_/¯
