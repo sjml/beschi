@@ -94,22 +94,22 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Data Type | C#       | TypeScript | Go        | Swift     |
-|--------------------|----------|------------|-----------|-----------|
-| `byte`             | `byte`   | `number`   | `byte`    | `UInt8`   |
-| `bool`             | `bool`   | `boolean`  | `bool`    | `Bool`    |
-| `int16`            | `short`  | `number`   | `int16`   | `Int16`   |
-| `uint16`           | `ushort` | `number`   | `uint16`  | `UInt16`  |
-| `int32`            | `int`    | `number`   | `int32`   | `Int32`   |
-| `uint32`           | `uint`   | `number`   | `uint32`  | `UInt32`  |
-| `int64`            | `long`   | `bigint`   | `int64`   | `Int64`   |
-| `uint64`           | `ulong`  | `bigint`   | `uint64`  | `UInt64`  |
-| `float`            | `float`  | `number`   | `float32` | `Float32` |
-| `double`           | `double` | `number`   | `float64` | `Float64` |
-| `string`           | `string` | `string`   | `string`  | `String`  |
+| Protocol Data Type | C#       | C          | TypeScript | Go        | Swift     |
+|--------------------|----------|------------|------------|-----------|-----------|
+| `byte`             | `byte`   | `uint8_t`  | `number`   | `byte`    | `UInt8`   |
+| `bool`             | `bool`   | `bool`     | `boolean`  | `bool`    | `Bool`    |
+| `int16`            | `short`  | `uint16_t` | `number`   | `int16`   | `Int16`   |
+| `uint16`           | `ushort` | `int16_t`  | `number`   | `uint16`  | `UInt16`  |
+| `int32`            | `int`    | `uint32_t` | `number`   | `int32`   | `Int32`   |
+| `uint32`           | `uint`   | `int32_t`  | `number`   | `uint32`  | `UInt32`  |
+| `int64`            | `long`   | `uint64_t` | `bigint`   | `int64`   | `Int64`   |
+| `uint64`           | `ulong`  | `int64_t`  | `bigint`   | `uint64`  | `UInt64`  |
+| `float`            | `float`  | `float`    | `number`   | `float32` | `Float32` |
+| `double`           | `double` | `double`   | `number`   | `float64` | `Float64` |
+| `string`           | `string` | `char*`    | `string`   | `string`  | `String`  |
 
 
-All the numbers are stored as little-endian in the buffer, if that matters for you. 
+All the numbers are stored as little-endian in the buffer, if that matters for you. (C types are using `stdint.h` and `stdbool.h`.)
 
 
 ## Usage in code
