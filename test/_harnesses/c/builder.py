@@ -24,7 +24,6 @@ CFLAGS = [
     "-pedantic-errors", # complain if compiler extensions come into play
 ]
 CSILENCE_WARNINGS = [
-    "c99-extensions"    # don't get *that* pedantic
 ]
 [CFLAGS.append(f"-Wno-{sw}") for sw in CSILENCE_WARNINGS]
 
@@ -34,6 +33,7 @@ CPPFLAGS = [
 CPPSILENCE_WARNINGS = [
     # since this code is meant to be usable from C primarily,
     #   need to silence some warnings that demand more modern C++
+    "c99-extensions",    # don't get *that* pedantic
     "old-style-cast", # let us use c-style casts without complaining
     "zero-as-null-pointer-constant", # otherwise have to use nullptr, or redefine it, which feels like code smell
     "cast-qual", # really wish I could only silence this for string literals
