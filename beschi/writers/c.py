@@ -8,7 +8,6 @@ LANGUAGE_NAME = "C"
 class CWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".h"
-    in_progress = True
 
     def __init__(self, p: Protocol):
         super().__init__(protocol=p, tab="    ")
