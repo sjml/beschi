@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 from beschi import LIB_VERSION, LIB_NAME
 
-with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md')) as f:
+with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md'), encoding="utf-8", mode="r") as f:
     LONGDESC = f.read()
     SHORTDESC = re.search(r'bit-packing and unpacking code generator for [^\.]*', LONGDESC).group()
 
