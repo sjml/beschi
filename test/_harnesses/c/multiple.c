@@ -7,7 +7,7 @@
 #define SMALLMESSAGES_IMPLEMENTATION
 #include "SmallMessages.h"
 
-#if _MSC_VER
+#ifdef _MSC_VER
     // don't care about deprecations in the test harness code
     #pragma warning(disable : 4996)
 #endif
