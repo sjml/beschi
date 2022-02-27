@@ -7,6 +7,10 @@
 #define BROKENMESSAGES_IMPLEMENTATION
 #include "BrokenMessages.h"
 
+#if _MSC_VER
+    // don't care about deprecations in the test harness code
+    #pragma warning(disable : 4996)
+#endif
 
 int main(int argc, char** argv) {
     char* genPath = NULL;
@@ -49,7 +53,7 @@ int main(int argc, char** argv) {
 
         free(buffer);
 
-        printf("fwrite count: %lu\nerror: %d\nbuffer size: %lu\n", ret, err, bufferSize);
+        printf("fwrite count: %zu\nerror: %d\nbuffer size: %zu\n", ret, err, bufferSize);
         printf("written to: %s\n", genPath);
     }
 
