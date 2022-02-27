@@ -1,0 +1,10 @@
+[package]
+name = "rust-harness"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "play"
+path = "src/play/main.rs"
+
+[dependencies]
