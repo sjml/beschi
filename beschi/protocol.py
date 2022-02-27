@@ -120,9 +120,9 @@ class Protocol():
                 if s in deps[d]:
                     raise RecursionError(f"{s} and {d} reference each other")
 
+
     def __str__(self) -> str:
         return f"Protocol (namespace: {self.namespace}, {len(self.structs)} structs, {len(self.messages)} messages)"
-
 
     def verify_type_name(self, type_name) -> bool:
         if type_name[0] == "[" and type_name[-1] == "]":

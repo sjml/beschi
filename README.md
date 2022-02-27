@@ -2,11 +2,13 @@
 
 [![Verification Tests](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
-This is a custom bit-packing and unpacking code generator for C#, Go, C, Swift, and TypeScript. It was initially written for a larger project but I extracted it into its own thing.
+This is a custom bit-packing and unpacking code generator for C#, Go, C, Swift, and TypeScript. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
-The original project started off using [FlatBuffers](https://google.github.io/flatbuffers/), which are actually pretty great for a lot of use cases and I definitely recommend you look at them if you want something with more functionality and polish. However, for what I was doing I needed the actual produced buffers to be as tiny as possible — with FlatBuffers, the resulting data is a little bulky because of the vtables and support for changing schema while still being able to use old data. Since my messages only exist in flight and are never persisted, client and server can stay in lockstep, so the buffers can be more compact. The code for creating and reading messages with Beschi is also a bit smoother... at least, it's a bit more to my personal tastes in code.
+The original project started off using FlatBuffers, which are pretty great for a lot of use cases and I definitely recommend you look at them if you need the features they offer. I faced two issues, though: 
+1. The code for getting data in and out of FlatBuffers is super awkward.
+2. The actual binary data created by flatbuffers is relatively bulky. 
 
-Beschi messages lose the FlatBuffer benefit of being able to snag data out without fully deserializing, but in my use case (a) most messages are very small and (b) I basically *always* want *all* the data. So for this particular use case, I can lose the overhead and have some more ergonomic client code. 
+Both of these problems stem from the fact that FlatBuffers provide a lot of interesting functionality like being able to update the data schema, partially deserialize data to pluck out a single element, etc. But I wasn't using any of that functionality -- since my messages only exist in flight and are never persisted, client and server can stay in lockstep, and the buffers can be more compact. Partial deserialization was not a benefit for me, since most of my messages were very small and I basically *always* need *all* the data. I didn't want an opaque buffer that I could munge data in and out of; I just wanted native language structures that I could package for transmission. So for this particular use case, I can lose the overhead, get smaller buffers, and have some easier-to-write client code.
 
 I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
 
@@ -28,12 +30,12 @@ beschi --lang csharp --protocol ./messages.toml
 
 By default, it prints to standard output, but you can also write to a file with an output flag like `--output ./Messages.cs`.
 
-From the input protocol file (detailed below), you get a code file that you can integrate to a project allowing you encode messages as compact and portable binary buffers. For example, I used it in a project where Unity, a Go server, and a web client were all passing data back and forth to each other. When the message format needed to change, it was just a matter of tweaking the protocol file and regenerating the language files, instead of having to do the painstaking and error-prone manual bit-packing and unpacking across multiple languages. 
+From the input protocol file (detailed below), you get a code file that you can integrate to a project allowing you encode messages as compact and portable binary buffers. For example, I used it in a project where a Unity game, a Go server, and a web client were all passing data back and forth to each other. When the message format needed to change, it was just a matter of tweaking the protocol and regenerating the language files, instead of having to do the painstaking and error-prone manual bit-packing and unpacking across multiple languages. 
 
 
 ## Protocols
 
-The protocol files are written in [TOML](https://toml.io). There's [a fuller example in the test suite](test/_protocols/example.toml), but here's an annotated sample.
+The protocol files are written in [TOML](https://toml.io). There's [a fuller example in the test suite](https://github.com/sjml/beschi/tree/main/test/_protocols/example.toml), but here's an annotated sample.
 
 ```toml
 # the "meta" section only has the namespace
@@ -149,9 +151,9 @@ if msg.X == 1.0 && msg.Y == 4096.1234 && msg.Z < 0.0 {
 }
 ```
 
-For the most part, Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference [outlined in detail below](#caveats). Notice in the example above, for instance, that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. Similarly, see how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to make working across languages feel as seamless as possible, but there are some differences that we adapt to as much as possible. 
+For the most part, Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference [outlined in detail below](#caveats). Notice in the example above, for instance, that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. (Doing equality comparisons on floats is usually a bad idea, but in this instance we *want* to check that they are actually bitwise identical.) Similarly, see how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to make working across languages feel as seamless as possible, but there are some differences that we adapt to as much as possible. 
 
-There are more extensive examples in [the test harnesses](test/_harnesses).
+There are more extensive examples in [the test harnesses](https://github.com/sjml/beschi/tree/main/test/_harnesses).
 
 ## Message objects
 
@@ -257,16 +259,16 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * The code generated is an [STB-style](https://github.com/nothings/stb/) single-file header library. If you've never used one before, it's actually pretty simple. You `#include "MyGeneratedFile.h"` wherever you need to use the structures and functions, like you normally would with a library. But instead of having a separate file to compile, all the implementation is in the same file, just behind a definition guard. So to actually link the implementation code, in **exactly** one file, `#define {NAMESPACE}_IMPLEMENTATION` **before** you include it. 
 * The layout of the structs (mostly) mirrors the way they are declared in the protocol file, which may raise warnings about padding if you compile with warnings all the way up. If memory alignment is important to you, you may want to play with the declaration order. 
     - Exceptions are: 
-        - Every message struct has an additional byte (`_mt`) at the start, used to identify it if its in a void** array. 
+        - Every message struct has an additional byte (`_mt`) at the start, used to identify it if its in a `void**` array. 
         - Every string and list have an associated `{varname}_len` variable storing their length, right before them in the array. 
         - Lists of strings have a second variable of `{varname}_els_len` recording the lengths of each element in the array. 
         - You probably shouldn't declare members in the protocol that would shadow these variables, but I'm not the boss of you. 
 * With the various length variables: they will be set properly when reading a message out of a buffer, but *you are responsible* for making sure they are correct before they go into a buffer. C has no way to track the length of arrays (without introducing another dependency), so it's up to you. 
-* The calculated length for strings does not include a null terminator. 
+* The calculated length for strings should *not* include the null terminator. 
 * When declaring an instance of a message, it's probably best to use the generated constant `{namespace}_{message_name}_default` to make sure that its members are initialized and that its identifying byte is set correctly. Otherwise things might break. 
 * Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions might allocate memory if there are lists or strings in the structure. They will need to be `free`-ed or will leak. 
     - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
-* `ProcessRawBytes` gives you an array of pointers to `void` (`void**`); you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
+* `ProcessRawBytes` fills an array of pointers to `void` (`void**`), so you need to pass it a *pointer* to such an array, a `void***`. I know, I know. Anyway, once it's filled, you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
 
 
 ## Future

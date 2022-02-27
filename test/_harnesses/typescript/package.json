@@ -1,4 +1,6 @@
 {
+  "name": "typescript-harness",
+  "private": true,
   "devDependencies": {
     "@types/minimist": "^1.2.2",
     "@types/node": "^17.0.17",
