@@ -1,14 +1,11 @@
-
 use std::fs;
 use std::fmt;
-use std::convert::TryInto;
 
 #[derive(Debug)]
 pub enum BeschiError {
     EndOfFile,
     InvalidData,
 }
-
 impl fmt::Display for BeschiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -18,42 +15,71 @@ impl fmt::Display for BeschiError {
     }
 }
 
-#[derive(Default)]
-struct Vec3 {
-    x: f32,
-    y: f32,
-    z: f32,
+struct BufferReader {
+    buffer: Vec<u8>,
+    current_position: usize,
 }
-
-fn get_vec3(buffer: &[u8]) -> Result<Vec3, BeschiError> {
-    if buffer.len() < 12 {
-        return Err(BeschiError::EndOfFile);
+impl BufferReader {
+    pub fn new(buffer: Vec<u8>) -> Self {
+        BufferReader { buffer, current_position: 0 }
     }
 
-    Ok(Vec3 {
-        x: f32::from_le_bytes((&buffer[0..4]).try_into().unwrap()),
-        y: f32::from_le_bytes((&buffer[4..8]).try_into().unwrap()),
-        z: 0.0,
-    })
+    pub fn is_finished(self) -> bool {
+        if self.current_position >= self.buffer.len() {
+            return true
+        }
+        false
+    }
+
+    pub fn has_remaining(self, size: usize) -> bool {
+        if self.current_position + size >= self.buffer.len() {
+            return false
+        }
+        true
+    }
+
+    pub fn take(&mut self, amount: usize) -> Result<&[u8], BeschiError> {
+        if amount + self.current_position > self.buffer.len() {
+            return Err(BeschiError::EndOfFile);
+        }
+
+        let ret: &[u8] = &self.buffer
+            [self.current_position..self.current_position+amount];
+        self.current_position += amount;
+        println!("taking {} bytes, new offset is {}", amount, self.current_position);
+        Ok(ret)
+    }
+}
+
+#[derive(Default)]
+struct Vec2 {
+    x: f32,
+    y: f32,
+}
+impl Vec2 {
+    pub fn from_bytes(reader: &mut BufferReader) -> Result<Vec2, BeschiError> {
+        let xbytes = reader.take(4)?;
+        let x = f32::from_le_bytes(xbytes.try_into().unwrap());
+        let ybytes = reader.take(4)?;
+        let y = f32::from_le_bytes(ybytes.try_into().unwrap());
+
+        Ok(Vec2 {x, y})
+    }
 }
 
 fn main() {
-    let filename = "../../../out/data/broken.c.msg";
-    let buffer = fs::read(&filename).unwrap();
-    println!("buffer length: {}", buffer.len());
+        let filename = "../../../out/data/broken.c.msg";
+        let buffer = fs::read(&filename).unwrap();
 
-    let v3 = match get_vec3(&buffer) {
-        Ok(v) => v,
-        // would probably want this to propogate and let the message reader return null,
-        //   but just playing at the moment
-        Err(_) => Vec3 { x: -1.0, y: -1.0, z: -1.0 }
-    };
+        let mut reader = BufferReader::new(buffer);
 
-    println!("x: {}, y: {}, z: {}", v3.x, v3.y, v3.z);
-
-    let v32 = get_vec3(&buffer);
-    if v32.is_err() {
-        println!("Couldn't fully read buffer from {}", filename);
-    }
-
+        // would let this error propagate to the caller in larger context
+        let v2 = match Vec2::from_bytes(&mut reader) {
+            Err(_) => {
+                println!("couldn't read buffer for some reason! :(");
+                Vec2 { x: -1.0, y: -1.0 }
+            },
+            Ok(v) => v
+        };
+        println!("{{ x: {:.1}, y: {:.1} }}", v2.x, v2.y);
 }
