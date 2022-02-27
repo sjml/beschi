@@ -11,7 +11,7 @@ static void softAssert(bool condition, const char* label) {
     }
 }
 
-static int check() {
+static int check(void) {
     if (!OK) {
         fprintf(stderr, "Failed assertions.\n");
         return 1;

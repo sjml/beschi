@@ -7,6 +7,10 @@
 #define SMALLMESSAGES_IMPLEMENTATION
 #include "SmallMessages.h"
 
+#ifdef _MSC_VER
+    // don't care about deprecations in the test harness code
+    #pragma warning(disable : 4996)
+#endif
 
 int main(int argc, char** argv) {
     char* genPath = NULL;
@@ -23,7 +27,7 @@ int main(int argc, char** argv) {
     SmallMessages_FloatMessage floatMsg = SmallMessages_FloatMessage_default;
     floatMsg.floatMember = 1234.5678f;
     SmallMessages_LongMessage longMsg = SmallMessages_LongMessage_default;
-    longMsg.intMember = 2147483647L + 10;
+    longMsg.intMember = (int64_t)2147483647L + 10;
 
 
     size_t bufferSize;
@@ -92,7 +96,7 @@ int main(int argc, char** argv) {
         // redundant here...
         softAssert(bufferSize == ret, "written bytes check");
 
-        printf("fwrite count: %lu\nerror: %d\nbuffer size: %lu\n", ret, err, bufferSize);
+        printf("fwrite count: %zu\nerror: %d\nbuffer size: %zu\n", ret, err, bufferSize);
         printf("written to: %s\n", genPath);
     }
 

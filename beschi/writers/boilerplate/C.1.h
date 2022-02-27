@@ -133,7 +133,7 @@ beschi_err_t beschi__WriteUInt8(beschi_DataAccess *w, const uint8_t *ui8) {
 
 beschi_err_t beschi__WriteBool(beschi_DataAccess *w, const bool *b) {
     beschi_err_t err;
-    uint8_t byteVal = b ? 1 : 0;
+    uint8_t byteVal = (uint8_t)(b ? 1 : 0);
     err = beschi__WriteUInt8(w, &byteVal);
     BESCHI_ERR_CHECK_RETURN;
     return BESCHI_ERR_OK;
