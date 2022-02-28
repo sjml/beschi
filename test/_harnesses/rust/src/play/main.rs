@@ -256,7 +256,7 @@ fn main() {
     println!("s: {}", basic.s);
     println!("v2: {{ x: {:.1}, y: {:.1} }}", basic.v2.x, basic.v2.y);
     println!("v3: {{ x: {:.1}, y: {:.1}, z: {:.1} }}", basic.v3.x, basic.v3.y, basic.v3.z);
-    println!("c: {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", basic.c.r, basic.c.g, basic.c.b);
+    println!("c: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.c.r, basic.c.g, basic.c.b);
     println!("sl:");
     for s in basic.sl {
         println!("    {}", s);
@@ -271,26 +271,26 @@ fn main() {
     }
     println!("cl:");
     for c in basic.cl {
-        println!("    {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", c.r, c.g, c.b);
+        println!("    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
     }
     println!("cx:");
     println!("  identifier: {:#04X}", basic.cx.identifier);
     println!("  label: {}", basic.cx.label);
-    println!("  text_color: {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", basic.cx.text_color.r, basic.cx.text_color.g, basic.cx.text_color.b);
-    println!("  background_color: {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", basic.cx.background_color.r, basic.cx.background_color.g, basic.cx.background_color.b);
+    println!("  text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.cx.text_color.r, basic.cx.text_color.g, basic.cx.text_color.b);
+    println!("  background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.cx.background_color.r, basic.cx.background_color.g, basic.cx.background_color.b);
     println!("  spectrum:");
     for c in basic.cx.spectrum {
-        println!("    {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", c.r, c.g, c.b);
+        println!("    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
     }
     println!("cxl:");
     for cx in basic.cxl {
         println!("    identifier: {:#04X}", cx.identifier);
         println!("    label: {}", cx.label);
-        println!("    text_color: {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", cx.text_color.r, cx.text_color.g, cx.text_color.b);
-        println!("    background_color: {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", cx.background_color.r, cx.background_color.g, cx.background_color.b);
+        println!("    text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.text_color.r, cx.text_color.g, cx.text_color.b);
+        println!("    background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.background_color.r, cx.background_color.g, cx.background_color.b);
         println!("    spectrum:");
         for c in cx.spectrum {
-            println!("      {{ r: {:#04x}, y: {:#04x}, z: {:#04x} }}", c.r, c.g, c.b);
+            println!("      {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
         }
     }
 
