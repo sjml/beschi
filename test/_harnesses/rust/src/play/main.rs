@@ -235,6 +235,62 @@ impl TestingMessage {
         }
         Ok(ret)
     }
+
+}
+impl std::fmt::Display for TestingMessage {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, "b: {}", self.b)?;
+        writeln!(f, "tf: {}", self.tf)?;
+        writeln!(f, "i16: {}", self.i16)?;
+        writeln!(f, "ui16: {}", self.ui16)?;
+        writeln!(f, "i32: {}", self.i32)?;
+        writeln!(f, "ui32: {}", self.ui32)?;
+        writeln!(f, "i64: {}", self.i64)?;
+        writeln!(f, "ui64: {}", self.ui64)?;
+        writeln!(f, "f: {}", self.f)?;
+        writeln!(f, "d: {}", self.d)?;
+        writeln!(f, "s: {}", self.s)?;
+        writeln!(f, "v2: {{ x: {:.1}, y: {:.1} }}", self.v2.x, self.v2.y)?;
+        writeln!(f, "v3: {{ x: {:.1}, y: {:.1}, z: {:.1} }}", self.v3.x, self.v3.y, self.v3.z)?;
+        writeln!(f, "c: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", self.c.r, self.c.g, self.c.b)?;
+        writeln!(f, "sl:")?;
+        for s in &self.sl {
+            writeln!(f, "    {}", s)?;
+        }
+        writeln!(f, "v2l:")?;
+        for v2 in &self.v2l {
+            writeln!(f, "    {{ x: {:.1}, y: {:.1} }}", v2.x, v2.y)?;
+        }
+        writeln!(f, "v3l:")?;
+        for v3 in &self.v3l {
+            writeln!(f, "    {{ x: {:.1}, y: {:.1}, z: {:.1} }}", v3.x, v3.y, v3.z)?;
+        }
+        writeln!(f, "cl:")?;
+        for c in &self.cl {
+            writeln!(f, "    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b)?;
+        }
+        writeln!(f, "cx:")?;
+        writeln!(f, "  identifier: {:#04X}", self.cx.identifier)?;
+        writeln!(f, "  label: {}", self.cx.label)?;
+        writeln!(f, "  text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", self.cx.text_color.r, self.cx.text_color.g, self.cx.text_color.b)?;
+        writeln!(f, "  background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", self.cx.background_color.r, self.cx.background_color.g, self.cx.background_color.b)?;
+        writeln!(f, "  spectrum:")?;
+        for c in &self.cx.spectrum {
+            writeln!(f, "    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b)?;
+        }
+        writeln!(f, "cxl:")?;
+        for cx in &self.cxl {
+            writeln!(f, "    identifier: {:#04X}", cx.identifier)?;
+            writeln!(f, "    label: {}", cx.label)?;
+            writeln!(f, "    text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.text_color.r, cx.text_color.g, cx.text_color.b)?;
+            writeln!(f, "    background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.background_color.r, cx.background_color.g, cx.background_color.b)?;
+            writeln!(f, "    spectrum:")?;
+            for c in &cx.spectrum {
+                writeln!(f, "      {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b)?;
+            }
+        }
+        write!(f, "")
+    }
 }
 
 fn main() {
@@ -243,83 +299,5 @@ fn main() {
 
     let mut reader = BufferReader::new(buffer);
     let basic = TestingMessage::from_bytes(&mut reader).unwrap();
-    println!("b: {}", basic.b);
-    println!("tf: {}", basic.tf);
-    println!("i16: {}", basic.i16);
-    println!("ui16: {}", basic.ui16);
-    println!("i32: {}", basic.i32);
-    println!("ui32: {}", basic.ui32);
-    println!("i64: {}", basic.i64);
-    println!("ui64: {}", basic.ui64);
-    println!("f: {}", basic.f);
-    println!("d: {}", basic.d);
-    println!("s: {}", basic.s);
-    println!("v2: {{ x: {:.1}, y: {:.1} }}", basic.v2.x, basic.v2.y);
-    println!("v3: {{ x: {:.1}, y: {:.1}, z: {:.1} }}", basic.v3.x, basic.v3.y, basic.v3.z);
-    println!("c: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.c.r, basic.c.g, basic.c.b);
-    println!("sl:");
-    for s in basic.sl {
-        println!("    {}", s);
-    }
-    println!("v2l:");
-    for v2 in basic.v2l {
-        println!("    {{ x: {:.1}, y: {:.1} }}", v2.x, v2.y);
-    }
-    println!("v3l:");
-    for v3 in basic.v3l {
-        println!("    {{ x: {:.1}, y: {:.1}, z: {:.1} }}", v3.x, v3.y, v3.z);
-    }
-    println!("cl:");
-    for c in basic.cl {
-        println!("    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
-    }
-    println!("cx:");
-    println!("  identifier: {:#04X}", basic.cx.identifier);
-    println!("  label: {}", basic.cx.label);
-    println!("  text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.cx.text_color.r, basic.cx.text_color.g, basic.cx.text_color.b);
-    println!("  background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", basic.cx.background_color.r, basic.cx.background_color.g, basic.cx.background_color.b);
-    println!("  spectrum:");
-    for c in basic.cx.spectrum {
-        println!("    {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
-    }
-    println!("cxl:");
-    for cx in basic.cxl {
-        println!("    identifier: {:#04X}", cx.identifier);
-        println!("    label: {}", cx.label);
-        println!("    text_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.text_color.r, cx.text_color.g, cx.text_color.b);
-        println!("    background_color: {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", cx.background_color.r, cx.background_color.g, cx.background_color.b);
-        println!("    spectrum:");
-        for c in cx.spectrum {
-            println!("      {{ r: {:#04x}, g: {:#04x}, b: {:#04x} }}", c.r, c.g, c.b);
-        }
-    }
-
+    println!("{}", basic);
 }
-
-// fn main() {
-//     let filename = "../../../out/data/broken.c.msg";
-//     let buffer = fs::read(&filename).unwrap();
-
-//     let mut reader = BufferReader::new(buffer);
-
-//     // would let these errors propagate to the caller in larger context
-//     let v2 = match Vec2::from_bytes(&mut reader) {
-//         Err(_) => {
-//             println!("couldn't read buffer for vec 2 :(");
-//             Vec2 { x: -1.0, y: -1.0 }
-//         },
-//         Ok(v) => v
-//     };
-//     println!("{{ x: {:.1}, y: {:.1} }}", v2.x, v2.y);
-
-//     reader.rewind();
-
-//     let v3 = match Vec3::from_bytes(&mut reader) {
-//         Err(_) => {
-//             println!("couldn't read buffer for vec 3 :(");
-//             Vec3 { x: -1.0, y: -1.0, z: -1.0 }
-//         },
-//         Ok(v) => v
-//     };
-//     println!("{{ x: {:.1}, y: {:.1}, x: {:.1} }}", v3.x, v3.y, v3.z);
-// }
