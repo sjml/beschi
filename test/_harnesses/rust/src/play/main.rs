@@ -67,6 +67,10 @@ impl Vec2 {
 
         Ok(Vec2 {x, y})
     }
+    pub fn write_bytes(self, buffer: &mut Vec<u8>) {
+        buffer.extend(self.x.to_le_bytes());
+        buffer.extend(self.y.to_le_bytes());
+    }
 }
 
 #[derive(Default)]
@@ -300,4 +304,13 @@ fn main() {
     let mut reader = BufferReader::new(buffer);
     let basic = TestingMessage::from_bytes(&mut reader).unwrap();
     println!("{}", basic);
+
+
+
+    let mut out_data: Vec<u8> = Vec::new();
+    let out = Vec2 { x: 1.0, y: 2.0 };
+    out.write_bytes(&mut out_data);
+
+    let filename = "../../../out/data/broken.rust.msg";
+    fs::write(filename, out_data).unwrap();
 }
