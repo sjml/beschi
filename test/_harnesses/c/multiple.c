@@ -55,29 +55,29 @@ int main(int argc, char** argv) {
         buffer = (uint8_t*)malloc(bufferSize);
         SmallMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = SmallMessages_ByteMessage_WriteBytes(&writer, &byteMsg, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgA, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgB, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_EmptyMessage_WriteBytes(&writer, &emptyMsg, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_LongMessage_WriteBytes(&writer, &longMsg, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_FloatMessage_WriteBytes(&writer, &floatMsg, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgA, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgB, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgB, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgB, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_IntMessage_WriteBytes(&writer, &intMsgA, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         err = SmallMessages_EmptyMessage_WriteBytes(&writer, &emptyMsg, true);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
 
         fp = fopen(genPath, "wb");
         if (fp == NULL) {
@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
         void** msgList = NULL;
         size_t msgListLen = 0;
         err = SmallMessages_ProcessRawBytes(&reader, &msgList, &msgListLen);
-        SMALLMESSAGES_ERR_CHECK_RETURN;
+        if (err != SMALLMESSAGES_ERR_OK) { return err; }
         free(buffer);
 
         softAssert(msgListLen == 12, "reading multiple messages length");

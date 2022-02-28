@@ -44,25 +44,25 @@ int main(int argc, char** argv) {
         buffer = (uint8_t*)malloc(bufferSize);
         BrokenMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
 
         // write a truncated message tagged as a full one
         const uint8_t id = (uint8_t)full._mt;
         err = BrokenMessages__WriteUInt8(&writer, &id);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_TruncatedMessage_WriteBytes(&writer, &trunc, false);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
 
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_FullMessage_WriteBytes(&writer, &full, true);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
 
 
         fp = fopen(genPath, "wb");

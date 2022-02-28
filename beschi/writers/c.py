@@ -56,6 +56,13 @@ class CWriter(Writer):
             self.subs = [("beschi", self.protocol.namespace), ("BESCHI", self.protocol.namespace.upper())]
             self.prefix = f"{self.protocol.namespace}_"
 
+    def err_check_return(self):
+        self.write_line(f"if (err != {self.prefix.upper()}ERR_OK) {{")
+        self.indent_level += 1
+        self.write_line("return err;")
+        self.indent_level -= 1
+        self.write_line("}")
+
     def gen_default(self, members: list[tuple[str,str]]):
         for mname, mtype in members:
             if mtype in self.base_defaults:
@@ -120,14 +127,14 @@ class CWriter(Writer):
     def deserializer(self, varname: str, vartype: str, accessor: str):
         if vartype in BASE_TYPE_SIZES.keys():
             self.write_line(f"err = {self.prefix}_Read{self.base_serializers[vartype]}(r, &({accessor}{varname}));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
         elif vartype == "string":
             self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{varname}), &({accessor}{varname}_len));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
         elif vartype[0] == "[" and vartype[-1] == "]":
             listed_type = vartype[1:-1]
             self.write_line(f"err = {self.prefix}_ReadUInt32(r, &({accessor}{varname}_len));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
                 self.write_line(f"{accessor}{varname} = ({self.type_mapping[listed_type]}*)malloc(sizeof({self.type_mapping[listed_type]}) * {accessor}{varname}_len);")
                 self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
@@ -146,24 +153,24 @@ class CWriter(Writer):
             else:
                 self.write_line(f"err = {self.prefix}{listed_type}_FromBytes(r, &({accessor}{varname}[i]));")
 
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             self.indent_level -= 1
             self.write_line("}")
         else:
             self.write_line(f"err = {self.prefix}{vartype}_FromBytes(r, &({accessor}{varname}));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
 
     def serializer(self, varname: str, vartype: str, accessor: str):
         if vartype in BASE_TYPE_SIZES.keys():
             self.write_line(f"err = {self.prefix}_Write{self.base_serializers[vartype]}(w, &({accessor}{varname}));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
         elif vartype == "string":
             self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{varname}), &({accessor}{varname}_len));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
         elif vartype[0] == "[" and vartype[-1] == "]":
             listed_type = vartype[1:-1]
             self.write_line(f"err = {self.prefix}_WriteUInt32(w, &({accessor}{varname}_len));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
             self.indent_level += 1
             if listed_type in BASE_TYPE_SIZES.keys():
@@ -173,12 +180,12 @@ class CWriter(Writer):
             else:
                 self.write_line(f"err = {self.prefix}{listed_type}_WriteBytes(w, &({accessor}{varname}[i]));")
 
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             self.indent_level -= 1
             self.write_line("}")
         else:
             self.write_line(f"err = {self.prefix}{vartype}_WriteBytes(w, &({accessor}{varname}));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
 
     def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
@@ -247,7 +254,7 @@ class CWriter(Writer):
             self.write_line("if (tag) {")
             self.indent_level += 1
             self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t *)&(src->_mt));")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             self.indent_level -= 1
             self.write_line("}")
         [self.serializer(v, t, "src->") for v,t in members]
@@ -389,7 +396,7 @@ class CWriter(Writer):
         self.write_line("}")
         self.write_line("uint8_t msgType;")
         self.write_line(f"{self.prefix}_ReadUInt8(r, &msgType);")
-        self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+        self.err_check_return()
         self.write_line()
         self.write_line("void* out;")
         self.write_line("switch (msgType) {")
@@ -401,7 +408,7 @@ class CWriter(Writer):
             self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, ({self.prefix}{msg_type}*)out);")
             self.write_line("(*msgListDst)[*len] = out;")
             self.write_line("*len += 1;")
-            self.write_line(f"{self.prefix.upper()}ERR_CHECK_RETURN;")
+            self.err_check_return()
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")

@@ -126,12 +126,11 @@ int main(int argc, char** argv) {
 
     if (genPath != NULL) {
         err = ComprehensiveMessage_TestingMessage_GetSizeInBytes(&example, &bufferSize);
-        COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
-
+        if (err != COMPREHENSIVEMESSAGE_ERR_OK) { return err; }
         buffer = (uint8_t*)malloc(bufferSize);
         ComprehensiveMessage_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = ComprehensiveMessage_TestingMessage_WriteBytes(&writer, &example, false);
-        COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
+        if (err != COMPREHENSIVEMESSAGE_ERR_OK) { return err; }
 
         fp = fopen(genPath, "wb");
         if (fp == NULL) {
@@ -172,7 +171,7 @@ int main(int argc, char** argv) {
         ComprehensiveMessage_DataAccess reader = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         ComprehensiveMessage_TestingMessage* input = (ComprehensiveMessage_TestingMessage*)malloc(sizeof(ComprehensiveMessage_TestingMessage));
         err = ComprehensiveMessage_TestingMessage_FromBytes(&reader, input);
-        COMPREHENSIVEMESSAGE_ERR_CHECK_RETURN;
+        if (err != COMPREHENSIVEMESSAGE_ERR_OK) { return err; }
 
         softAssert(err == COMPREHENSIVEMESSAGE_ERR_OK, "parsing test message");
 

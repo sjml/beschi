@@ -29,7 +29,9 @@ beschi_err_t beschi__ReadUInt8(beschi_DataAccess *r, uint8_t *ui8) {
 beschi_err_t beschi__ReadBool(beschi_DataAccess *r, bool *b) {
     uint8_t byteVal;
     beschi_err_t err = beschi__ReadUInt8(r, &byteVal);
-    BESCHI_ERR_CHECK_RETURN;
+    if (err != BESCHI_ERR_OK) {
+        return err;
+    }
     *b = byteVal > 0;
     return BESCHI_ERR_OK;
 }
@@ -109,7 +111,9 @@ beschi_err_t beschi__ReadDouble(beschi_DataAccess *r, double *d) {
 beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, uint32_t *len) {
     beschi_err_t err;
     err = beschi__ReadUInt32(r, len);
-    BESCHI_ERR_CHECK_RETURN;
+    if (err != BESCHI_ERR_OK) {
+        return err;
+    }
     if (r->bufferSize < r->position + *len) {
         return BESCHI_ERR_EOF;
     }
@@ -135,7 +139,9 @@ beschi_err_t beschi__WriteBool(beschi_DataAccess *w, const bool *b) {
     beschi_err_t err;
     uint8_t byteVal = (uint8_t)(b ? 1 : 0);
     err = beschi__WriteUInt8(w, &byteVal);
-    BESCHI_ERR_CHECK_RETURN;
+    if (err != BESCHI_ERR_OK) {
+        return err;
+    }
     return BESCHI_ERR_OK;
 }
 
@@ -214,7 +220,9 @@ beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double *d) {
 beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const uint32_t *len) {
     beschi_err_t err;
     err = beschi__WriteUInt32(w, len);
-    BESCHI_ERR_CHECK_RETURN;
+    if (err != BESCHI_ERR_OK) {
+        return err;
+    }
     if (w->bufferSize < w->position + *len) {
         return BESCHI_ERR_EOF;
     }

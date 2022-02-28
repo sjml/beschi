@@ -28,12 +28,12 @@ int main(int argc, char** argv) {
 
     if (genPath != 0) {
         err = BrokenMessages_TruncatedMessage_GetSizeInBytes(&broken, &bufferSize);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
 
         buffer = (uint8_t*)malloc(bufferSize);
         BrokenMessages_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         err = BrokenMessages_TruncatedMessage_WriteBytes(&writer, &broken, false);
-        BROKENMESSAGES_ERR_CHECK_RETURN;
+        if (err != BROKENMESSAGES_ERR_OK) { return err; }
 
         fp = fopen(genPath, "wb");
         if (fp == NULL) {
