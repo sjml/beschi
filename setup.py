@@ -38,6 +38,8 @@ setup(
     extras_require={
         'dev': [
             'pytest',
+        ],
+        'publish': [
             'build',
             'twine'
         ]

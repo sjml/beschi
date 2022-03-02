@@ -1,1 +1,5 @@
 str vs String?
+have take return a proper array with the use of const generics?
+    - fn take<u8, const COUNT: usize>() -> Result<[u8;COUNT], Err>
+    - does that even work? play around a bit.
+    - is there an actual benefit here?

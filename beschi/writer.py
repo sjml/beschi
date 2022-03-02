@@ -1,8 +1,14 @@
 import os
+import re
 
 from .protocol import Protocol, COLLECTION_TYPES
 
 DEFAULT_INDENT = "    "
+
+class TextUtil:
+    def convert_to_lower_snake_case(s: str) -> str:
+        s = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', s)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s).lower()
 
 
 class Writer:

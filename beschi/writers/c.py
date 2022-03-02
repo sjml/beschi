@@ -321,7 +321,6 @@ class CWriter(Writer):
         self.write_line()
         self.add_boilerplate(self.subs, 0)
 
-        # structure definitions and message declarations
         self.write_line("typedef enum {")
         self.indent_level += 1
         self.write_line(f"{self.prefix}MessageType___NullMessage = 0,")
