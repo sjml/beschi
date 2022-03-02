@@ -2,6 +2,34 @@
     - pie in the sky: instead of using int32 for list/string sizes, do an arbitrary-precision thing? (most lists/strings are small)
         - what kind of performance hit does that entail? is it worth the space tradeoff?
         - maybe default to uint16 and have "longString" or long lists? eeeeh, gets complicated fast
+    - unify FromBytes so it takes a buffer across all of them?
+    - open question: should the multiple message format (as read by ProcessRawBytes) be a little smarter?
+        - right now is very minimal
+        - but maybe could also have a little header: 
+            - first four bytes are number of messages
+            - next set of four bytes each are the length of each message
+            - (or should the length of each message come right before it? is this an arbitrary distinction or are there performance/usability tradeoffs?)
+            - could even do checksums or something in here if needed
+            - *then* the messages themselves
+        - should be an associated PackMessages function that takes a list of messages and makes these bytes from it
+    - language-specific flags
+        - typescript: 
+            - use namespace (not recommended as best practice)
+        - rust: 
+            - don't rename data_members to lower_snake_case (otherwise required to avoid warnings)
+        - go: 
+            - don't rename members to Uppercase (otherwise required to be able to access them)
+        - python: 
+            - rename members to lower_snake_case
+        - csharp: 
+            - rename members to UpperCamelCase
+
+        - thoughts on renaming... priorities go as follows:
+            - creating code that works out of the box with no warnings in target language
+            - creating code that works out of the box in target language (so you should be able to access the data members of a message, for instance)
+            - THEN principle of least surprise (so only renaming things by default if they would cause warnings)
+            - otherwise, rename requires active request (--csharp-rename-members)
+            - automatic renames can be supressed if people want (--rust-no-rename-members)
 
 * generator cleanup
     - some leftover code from way back when
@@ -24,3 +52,4 @@
     * python
     * rust?
     * java?
+    * lua?
