@@ -1,8 +1,21 @@
+* immediate todo
+    - code sweep, especially of oldest generators
+        - some leftover code from way back when
+            - label.endswith is used kind of awkwardly
+            - "list" type not used at all
+            - a lot of copypasta that could be reduced with a simple recursion (not weird templating)
+        - messages are really just structs with some extra things; could probably streamline a lot of operations by consolidating them and having a flag
+    - unify FromBytes so it takes a buffer across all of them
+    - typescript revamp with data reader
+    - member renaming / language-specific flags that get fed to writers
+    - make multiple message stream a bit smarter (below)
+    - redo docs
+        - revamp readme, move separate language out to own files
+
 * functionality
     - pie in the sky: instead of using int32 for list/string sizes, do an arbitrary-precision thing? (most lists/strings are small)
         - what kind of performance hit does that entail? is it worth the space tradeoff?
         - maybe default to uint16 and have "longString" or long lists? eeeeh, gets complicated fast
-    - unify FromBytes so it takes a buffer across all of them?
     - open question: should the multiple message format (as read by ProcessRawBytes) be a little smarter?
         - right now is very minimal
         - but maybe could also have a little header: 
@@ -31,12 +44,6 @@
             - otherwise, rename requires active request (--csharp-rename-members)
             - automatic renames can be supressed if people want (--rust-no-rename-members)
 
-* generator cleanup
-    - some leftover code from way back when
-        - label.endswith is used kind of awkwardly
-        - "list" type not used at all
-    - messages are really just structs with some extra things; could probably streamline a lot of operations by consolidating them and having a flag
-
 * testing framework
     - check that multiple generated files can be included at once
     - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
@@ -50,6 +57,5 @@
 
 * more writers
     * python
-    * rust?
     * java?
     * lua?
