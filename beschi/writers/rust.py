@@ -60,14 +60,13 @@ class RustWriter(Writer):
         elif vartype[0] == "[" and vartype[-1] == "]":
             listed_type = vartype[1:-1]
             self.write_line(f"writer.extend(({accessor}{varname}.len() as u32).to_le_bytes());")
-            self.write_line(f"for el in {accessor}{varname} {{")
+            self.write_line(f"for el in &{accessor}{varname} {{")
             self.indent_level += 1
             self.serializer("el", listed_type, "")
             self.indent_level -= 1
             self.write_line("}")
         else:
             self.write_line(f"{accessor}{varname}.write_bytes(writer);")
-
 
     def deserializer(self, varname: str, vartype: str, accessor: str):
         if vartype in BASE_TYPE_SIZES.keys():
@@ -95,7 +94,51 @@ class RustWriter(Writer):
         else:
             self.write_line(f"let {varname} = {vartype}::from_bytes(reader)?;")
 
-    def gen_struct(self, sname: str, members: list[tuple[str,str]], is_message: bool = False):
+    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+        lines: list[str] = []
+        accum = 0
+
+        if self.protocol.is_simple(s[0]):
+            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+        else:
+            size_init = "let mut size: u32 = 0;"
+            lines.append(size_init)
+
+            for var_name, var_type in s[1]:
+                if self.protocol.is_simple(var_type):
+                    accum += self.protocol.calculate_size(var_type)
+                else:
+                    if var_type == "string":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"size += {accessor_prefix}{var_name}.len() as u32;")
+                    elif var_type == "[string]":
+                        accum += BASE_TYPE_SIZES["uint32"]
+                        lines.append(f"for s in &{accessor_prefix}{var_name} {{")
+                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + (s.len() as u32);")
+                        lines.append("}")
+                    elif var_type[0] == "[" and var_type[-1] == "]":
+                        listed_var_type = var_type[1:-1]
+                        if self.protocol.is_simple(listed_var_type):
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"size += ({accessor_prefix}{var_name}.len() as u32) * {self.protocol.calculate_size(listed_var_type)};")
+                        else:
+                            accum += BASE_TYPE_SIZES["uint32"]
+                            lines.append(f"for el in &{accessor_prefix}{var_name} {{")
+                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"el.")
+                            if clines[0] == size_init:
+                                clines = clines[1:]
+                            clines.append(f"size += {caccum};")
+                            lines += [f"{self.tab}{l}" for l in clines]
+                            lines.append("}")
+                    else:
+                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        lines += clines
+                        accum += caccum
+        return lines, accum
+
+    def gen_struct(self, sname: str, members: list[tuple[str,str]]):
         self.write_line("#[derive(Default)]")
         self.write_line(f"pub struct {sname} {{")
         self.indent_level += 1
@@ -116,7 +159,7 @@ class RustWriter(Writer):
 
         self.write_line(f"impl {sname} {{")
         self.indent_level += 1
-        self.write_line(f"pub fn from_bytes(reader: &mut BufferReader) -> Result<{sname}, {self.protocol.namespace}Error> {{")
+        self.write_line(f"pub fn from_bytes({'_' if len(members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
         self.indent_level += 1
         for member_name, member_type in members:
             self.deserializer(member_name, member_type, "")
@@ -125,9 +168,29 @@ class RustWriter(Writer):
         self.write_line(f"Ok({sname} {{{', '.join(varnames)}}})")
         self.indent_level -= 1
         self.write_line("}")
-
-        self.write_line("pub fn write_bytes(self, writer: &mut Vec<u8>) {")
+        self.write_line("pub fn get_size_in_bytes(&self) -> u32 {")
         self.indent_level += 1
+        measure_lines, accumulator = self.gen_measurement((sname, members), "self.")
+        [self.write_line(s) for s in measure_lines]
+        if accumulator > 0:
+            self.write_line(f"size += {accumulator};")
+        if len(measure_lines) > 1:
+            self.write_line("return size;")
+        self.indent_level -= 1
+        self.write_line("}")
+
+        if sname in self.protocol.messages:
+            self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")
+            self.indent_level += 1
+            self.write_line("if tag {")
+            self.indent_level += 1
+            msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
+            self.write_line(f"writer.push({msg_type_id} as u8);")
+            self.indent_level -= 1
+            self.write_line("}")
+        else:
+            self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>) {")
+            self.indent_level += 1
         for member_name, member_type in members:
             self.serializer(member_name, member_type, "self.")
         self.indent_level -= 1
@@ -143,8 +206,10 @@ class RustWriter(Writer):
         self.write_line(f"// Do not edit directly.")
         self.write_line()
         subs = []
+        self.prefix = "Beschi"
         if self.protocol.namespace != None:
             subs = [("Beschi", self.protocol.namespace)]
+            self.prefix = self.protocol.namespace
         self.add_boilerplate(substitutions=subs)
 
         for sname, smembers in self.protocol.structs.items():
@@ -159,5 +224,24 @@ class RustWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        self.write_line(f"pub fn process_raw_bytes(reader: &mut BufferReader) -> Result<Vec<Message>, {self.prefix}Error> {{")
+        self.indent_level += 1
+        self.write_line("let mut msg_list: Vec<Message> = Vec::new();")
+        self.write_line("while !reader.is_finished() {")
+        self.indent_level += 1
+        self.write_line("let msg_type = reader.take_byte()?;")
+        self.write_line("match msg_type {")
+        self.indent_level += 1
+        for i, k in enumerate(self.protocol.messages.keys()):
+            self.write_line(f"{i+1} => msg_list.push(Message::{k}({k}::from_bytes(reader)?)),")
+        self.write_line(f"_ => return Err({self.prefix}Error::InvalidData),")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("Ok(msg_list)")
+        self.indent_level -= 1
+        self.write_line("}")
 
         return "\n".join(self.output)

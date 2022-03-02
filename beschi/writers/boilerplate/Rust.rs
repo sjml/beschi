@@ -23,12 +23,12 @@ impl BufferReader {
         BufferReader { buffer, current_position: 0 }
     }
 
-    // pub fn is_finished(self) -> bool {
-    //     if self.current_position >= self.buffer.len() {
-    //         return true
-    //     }
-    //     false
-    // }
+    pub fn is_finished(&self) -> bool {
+        if self.current_position >= self.buffer.len() {
+            return true
+        }
+        false
+    }
 
     pub fn has_remaining(&self, size: usize) -> bool {
         if self.current_position + size > self.buffer.len() {

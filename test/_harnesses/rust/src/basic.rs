@@ -100,7 +100,7 @@ fn main() {
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
-        example.write_bytes(&mut writer);
+        example.write_bytes(&mut writer, false);
         checker.soft_assert(writer.len() == 899, "size calculation check");
 
         let filename = args.get("generate").unwrap();

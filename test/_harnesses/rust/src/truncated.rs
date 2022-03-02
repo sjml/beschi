@@ -20,7 +20,7 @@ fn main() {
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
-        lmsg.write_bytes(&mut writer);
+        lmsg.write_bytes(&mut writer, false);
 
         // tweak the buffer so the message looks longer
         writer[0] = 0xFF;

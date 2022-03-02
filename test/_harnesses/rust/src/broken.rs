@@ -20,7 +20,7 @@ fn main() {
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
-        broken.write_bytes(&mut writer);
+        broken.write_bytes(&mut writer, false);
 
         let filename = args.get("generate").unwrap();
         checker.soft_assert(writer.len() == 8, "size calculation check");
