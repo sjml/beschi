@@ -142,7 +142,10 @@ class RustWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
-        self.add_boilerplate(substitutions=[("Beschi", self.protocol.namespace)])
+        subs = []
+        if self.protocol.namespace != None:
+            subs = [("Beschi", self.protocol.namespace)]
+        self.add_boilerplate(substitutions=subs)
 
         for sname, smembers in self.protocol.structs.items():
             self.gen_struct(sname, smembers)

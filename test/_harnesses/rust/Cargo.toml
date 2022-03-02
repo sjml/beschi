@@ -3,12 +3,8 @@ name = "rust-harness"
 version = "0.1.0"
 edition = "2021"
 
-[[libs]]
-name = "generated"
-path = "src/generated"
-
 [[bin]]
 name = "basic"
-path = "src/basic/main.rs"
+path = "src/basic.rs"
 
 [dependencies]

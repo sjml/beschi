@@ -1,47 +1,20 @@
+// message files will include code that's not necessarily called in each test
+#![allow(dead_code)]
+
 use std::fs;
-use std::env;
-use std::collections::HashMap;
 
-mod comprehensive_message;
-use comprehensive_message::*;
+// in a real program you would want this file to have an appropriate name
+//   but for testing I'd rather not deal with it having a different name
+//   than all the other files.
+#[allow(non_snake_case)]
+mod ComprehensiveMessage;
+use ComprehensiveMessage::*;
 
-struct Checker {
-    ok: bool,
-}
-impl Checker {
-    fn soft_assert(&mut self, condition: bool, label: &str) {
-        if !condition {
-            eprintln!("FAILED! Rust: {}", label);
-            self.ok = false;
-        }
-    }
-}
-
-fn arg_parse() -> HashMap<String, String> {
-    let mut args = HashMap::new();
-
-    let mut current_keyword: Option<String> = None;
-    for a in env::args() {
-        if a.starts_with("--") {
-            current_keyword = Some(a[2..].to_string());
-            continue;
-        }
-        match current_keyword {
-            Some(kw) => {
-                args.insert(kw, a);
-                current_keyword = None;
-                continue;
-            },
-            None => (),
-        }
-    }
-
-    return args;
-}
+mod util;
 
 fn main() {
-    let mut checker = Checker { ok: true };
-    let args = arg_parse();
+    let mut checker = util::Checker { ok: true };
+    let args = util::arg_parse();
 
     let example = TestingMessage {
         b: 250,
