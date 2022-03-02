@@ -7,4 +7,20 @@ edition = "2021"
 name = "basic"
 path = "src/basic.rs"
 
+[[bin]]
+name = "broken"
+path = "src/broken.rs"
+
+[[bin]]
+name = "truncated"
+path = "src/truncated.rs"
+
+[[bin]]
+name = "multiple"
+path = "src/multiple.rs"
+
+[[bin]]
+name = "multiple_broken"
+path = "src/multiple_broken.rs"
+
 [dependencies]

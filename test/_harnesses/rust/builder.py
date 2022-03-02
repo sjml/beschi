@@ -31,7 +31,7 @@ class RustBuilder(builder_util.Builder):
                 "--bin", self.srcname,
             ])
             shutil.copy(
-                os.path.join("target", "release", self.srcname),
+                os.path.join("target", "debug", self.srcname),
                 self.exepath
             )
 
