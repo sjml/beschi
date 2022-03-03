@@ -16,6 +16,8 @@ fn main() {
     let mut checker = util::Checker { ok: true };
     let args = util::arg_parse();
 
+    #[allow(clippy::approx_constant)]
+    #[allow(clippy::excessive_precision)]
     let example = TestingMessage {
         b: 250,
         tf: true,

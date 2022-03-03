@@ -59,8 +59,8 @@ impl BufferReader {
         let len = self.read_u32()?;
         let string_bytes = self.take(len as usize)?;
         match String::from_utf8(string_bytes.to_vec()) {
-            Err(_) => return Err(BeschiError::InvalidData),
-            Ok(v) => return Ok(v)
+            Err(_) => Err(BeschiError::InvalidData),
+            Ok(v) => Ok(v)
         }
     }
 

@@ -27,7 +27,7 @@ fn main() {
         full.write_bytes(&mut writer, true);
 
         // write a truncated message tagged as a full one
-        writer.push(1 as u8);
+        writer.push(1_u8);
         trunc.write_bytes(&mut writer, false);
 
         full.write_bytes(&mut writer, true);

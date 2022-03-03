@@ -99,7 +99,7 @@ class RustWriter(Writer):
         accum = 0
 
         if self.protocol.is_simple(s[0]):
-            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+            lines.append(f"{self.protocol.calculate_size(s[0])}")
         else:
             size_init = "let mut size: u32 = 0;"
             lines.append(size_init)
@@ -175,7 +175,7 @@ class RustWriter(Writer):
         if accumulator > 0:
             self.write_line(f"size += {accumulator};")
         if len(measure_lines) > 1:
-            self.write_line("return size;")
+            self.write_line("size")
         self.indent_level -= 1
         self.write_line("}")
 
@@ -185,7 +185,7 @@ class RustWriter(Writer):
             self.write_line("if tag {")
             self.indent_level += 1
             msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
-            self.write_line(f"writer.push({msg_type_id} as u8);")
+            self.write_line(f"writer.push({msg_type_id}_u8);")
             self.indent_level -= 1
             self.write_line("}")
         else:

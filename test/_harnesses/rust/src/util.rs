@@ -18,19 +18,16 @@ pub fn arg_parse() -> HashMap<String, String> {
 
     let mut current_keyword: Option<String> = None;
     for a in env::args() {
-        if a.starts_with("--") {
-            current_keyword = Some(a[2..].to_string());
+        if let Some(keyword) = a.strip_prefix("--") {
+            current_keyword = Some(keyword.to_string());
             continue;
         }
-        match current_keyword {
-            Some(kw) => {
-                args.insert(kw, a);
-                current_keyword = None;
-                continue;
-            },
-            None => (),
+        if let Some(kw) = current_keyword {
+            args.insert(kw, a);
+            current_keyword = None;
+            continue;
         }
     }
 
-    return args;
+    args
 }
