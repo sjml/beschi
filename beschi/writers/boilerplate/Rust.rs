@@ -56,12 +56,17 @@ impl BufferReader {
     }
 
     pub fn read_string(&mut self) -> Result<String, BeschiError> {
-        let len = self.read_u32()?;
+        let len = self.read_{# STRING_SIZE_TYPE #}()?;
         let string_bytes = self.take(len as usize)?;
         match String::from_utf8(string_bytes.to_vec()) {
             Err(_) => Err(BeschiError::InvalidData),
             Ok(v) => Ok(v)
         }
+    }
+
+    pub fn read_u8(&mut self) -> Result<u8, BeschiError> {
+        let byte = self.take_byte()?;
+        Ok(byte)
     }
 
     pub fn read_i16(&mut self) -> Result<i16, BeschiError> {

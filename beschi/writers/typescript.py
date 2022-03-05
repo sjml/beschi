@@ -45,7 +45,7 @@ class TypeScriptWriter(Writer):
     def deserializer(self, var: Variable, accessor: str):
         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
         if var.is_list:
-            self.write_line(f"const {var_clean}_Length = da.Get{self.base_serializers['uint32']}();")
+            self.write_line(f"const {var_clean}_Length = da.Get{self.base_serializers[self.protocol.list_size_type]}();")
             self.write_line(f"{accessor}{var.name} = Array<{self.type_mapping[var.vartype]}>({var_clean}_Length);")
             idx = self.indent_level
             self.write_line(f"for (let i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
@@ -63,7 +63,7 @@ class TypeScriptWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"da.Set{self.base_serializers['uint32']}({accessor}{var.name}.length);")
+            self.write_line(f"da.Set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
             self.write_line(f"for (let i = 0; i < {accessor}{var.name}.length; i++) {{")
             self.indent_level += 1
             self.write_line(f"let el = {accessor}{var.name}[i];")
@@ -90,12 +90,12 @@ class TypeScriptWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"size += {accessor}{var.name}.length * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
                         lines.append(f"for (let {var.name}_i=0; {var.name}_i < {accessor}{var.name}.length; {var.name}_i++) {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + _textEnc.encode({accessor}{var.name}[{var.name}_i]).byteLength;")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + _textEnc.encode({accessor}{var.name}[{var.name}_i]).byteLength;")
                         lines.append("}")
                     else:
                         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
@@ -110,7 +110,7 @@ class TypeScriptWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"size += _textEnc.encode({accessor}{var.name}).byteLength;")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
@@ -238,7 +238,9 @@ class TypeScriptWriter(Writer):
             self.write_line(f"namespace {self.protocol.namespace} {{")
             self.indent_level += 1
 
-        self.add_boilerplate()
+        self.add_boilerplate(substitutions=[
+            ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type])
+        ])
 
         self.write_line("export enum MessageType {")
         self.indent_level += 1

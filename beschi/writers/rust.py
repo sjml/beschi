@@ -42,7 +42,7 @@ class RustWriter(Writer):
 
     def deserializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"let {var.name}_len = reader.read_u32()?;")
+            self.write_line(f"let {var.name}_len = reader.read_{self.get_native_list_size()}()?;")
             if var.vartype in self.type_mapping:
                 self.write_line(f"let mut {var.name}: Vec<{self.type_mapping[var.vartype]}> = Vec::new();")
             else:
@@ -68,7 +68,7 @@ class RustWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"writer.extend(({accessor}{var.name}.len() as u32).to_le_bytes());")
+            self.write_line(f"writer.extend(({accessor}{var.name}.len() as {self.get_native_list_size()}).to_le_bytes());")
             self.write_line(f"for el in &{accessor}{var.name} {{")
             self.indent_level += 1
             inner = Variable(self.protocol, "el", var.vartype)
@@ -83,7 +83,7 @@ class RustWriter(Writer):
             else:
                 self.write_line(f"writer.extend({accessor}{var.name}.to_le_bytes());")
         elif var.vartype == "string":
-            self.write_line(f"writer.extend(({accessor}{var.name}.len() as u32).to_le_bytes());")
+            self.write_line(f"writer.extend(({accessor}{var.name}.len() as {self.get_native_string_size()}).to_le_bytes());")
             self.write_line(f"writer.extend({accessor}{var.name}.as_bytes());")
         else:
             self.write_line(f"{accessor}{var.name}.write_bytes(writer);")
@@ -100,12 +100,12 @@ class RustWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"size += ({accessor}{var.name}.len() as u32) * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
                         lines.append(f"for s in &{accessor}{var.name} {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + (s.len() as u32);")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + (s.len() as u32);")
                         lines.append("}")
                     else:
                         lines.append(f"for el in &{accessor}{var.name} {{")
@@ -119,7 +119,7 @@ class RustWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"size += {accessor}{var.name}.len() as u32;")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
@@ -194,10 +194,10 @@ class RustWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
-        subs = []
+        subs = [("{# STRING_SIZE_TYPE #}", self.get_native_string_size())]
         self.prefix = "Beschi"
         if self.protocol.namespace != None:
-            subs = [("Beschi", self.protocol.namespace)]
+            subs.append(("Beschi", self.protocol.namespace))
             self.prefix = self.protocol.namespace
         self.add_boilerplate(substitutions=subs)
 

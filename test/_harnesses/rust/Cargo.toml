@@ -23,4 +23,8 @@ path = "src/multiple.rs"
 name = "multiple_broken"
 path = "src/multiple_broken.rs"
 
+[[bin]]
+name = "sized"
+path = "src/sized.rs"
+
 [dependencies]

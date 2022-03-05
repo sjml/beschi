@@ -8,6 +8,7 @@ PROTOCOLS_OUTPUTS = [
     ("./test/_protocols/broken_messages.toml", "BrokenMessages"),
     ("./test/_protocols/small_messages.toml", "SmallMessages"),
     ("./test/_protocols/annotated.toml", "AppMessages"),
+    ("./test/_protocols/sized.toml", "SizedMessage"),
 ]
 
 # generate each given file for the example protocol

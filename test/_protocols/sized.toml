@@ -1,0 +1,10 @@
+[meta]
+namespace = "SizedMessage"
+list_size_type = "byte"
+string_size_type = "byte"
+
+
+[[messages]]
+_name = "TextContainer"
+label = "string"
+collection = "[string]"

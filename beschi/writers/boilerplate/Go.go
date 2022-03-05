@@ -6,7 +6,7 @@ import (
 )
 
 func readString(data io.Reader, str *string) error {
-	var len uint32
+	var len {# STRING_SIZE_TYPE #}
 	binary.Read(data, binary.LittleEndian, &len)
 	sbytes := make([]byte, len)
 	err := binary.Read(data, binary.LittleEndian, &sbytes)
@@ -18,7 +18,7 @@ func readString(data io.Reader, str *string) error {
 }
 
 func writeString(data io.Writer, str *string) {
-	strLen := (uint32)(len(*str))
+	strLen := ({# STRING_SIZE_TYPE #})(len(*str))
 	binary.Write(data, binary.LittleEndian, strLen)
 	io.WriteString(data, *str)
 }

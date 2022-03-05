@@ -79,7 +79,7 @@ export class DataAccess {
     }
 
     GetString(): string {
-        const len = this.GetUint32();
+        const len = this.Get{# STRING_SIZE_TYPE #}();
         const strBuffer = new Uint8Array(this.buffer.buffer, this.currentOffset, len);
         this.currentOffset += len;
         return _textDec.decode(strBuffer);
@@ -137,7 +137,7 @@ export class DataAccess {
 
     SetString(val: string) {
         const strBuffer = _textEnc.encode(val);
-        this.SetUint32(strBuffer.byteLength);
+        this.Set{# STRING_SIZE_TYPE #}(strBuffer.byteLength);
         const arr = new Uint8Array(this.buffer.buffer);
         arr.set(strBuffer, this.currentOffset);
         this.currentOffset += strBuffer.byteLength;

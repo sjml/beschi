@@ -1,0 +1,10 @@
+[meta]
+namespace = "BadlySizedMessage"
+list_size_type = "int32"
+string_size_type = "bool"
+
+
+[[structs]]
+_name = "TextContainer"
+label = "string"
+collection = "[string]"

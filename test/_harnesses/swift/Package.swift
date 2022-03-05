@@ -12,6 +12,7 @@ let package = Package(
         .executable(name: "truncated", targets: ["truncated"]),
         .executable(name: "multiple", targets: ["multiple"]),
         .executable(name: "multiple_broken", targets: ["multiple_broken"]),
+        .executable(name: "sized", targets: ["sized"]),
     ],
     dependencies: [],
     targets: [
@@ -21,5 +22,6 @@ let package = Package(
         .executableTarget(name: "truncated", dependencies: ["GeneratedMessages"]),
         .executableTarget(name: "multiple", dependencies: ["GeneratedMessages"]),
         .executableTarget(name: "multiple_broken", dependencies: ["GeneratedMessages"]),
+        .executableTarget(name: "sized", dependencies: ["GeneratedMessages"]),
     ]
 )

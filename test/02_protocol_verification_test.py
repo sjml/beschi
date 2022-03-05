@@ -79,3 +79,10 @@ def test_protocol_deep_infinite_loop():
 def test_protocol_message_containing_message():
     with pytest.raises(ValueError):
         _ = Protocol("test/_protocols/intentionally_bad/message_containing_message.toml")
+
+def test_protocol_size_values():
+    _ = Protocol("test/_protocols/sized.toml")
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/bad_list_size_val.toml")
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/bad_string_size_val.toml")

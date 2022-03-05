@@ -4,5 +4,6 @@ Cargo.lock
 src/ComprehensiveMessage.rs
 src/BrokenMessages.rs
 src/SmallMessages.rs
+src/SizedMessage.rs
 src/AppMessages.rs
 src/Empty.rs

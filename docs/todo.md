@@ -1,5 +1,4 @@
 * immediate todo
-    - size_type as meta flag (don't just assume u32)
     - make multiple message stream a bit smarter (below)
     - redo docs
         - revamp readme, move separate language out to own files
@@ -28,6 +27,7 @@
 
 * testing framework
     - check that multiple generated files can be included at once
+    - test uninitialized message
     - make pathological protocol (multiple nested lists of things) to make sure serializer/deserializer generation handles indexing properly
     - add a POD list to basic
     - comparison (size/perf) to flatbuffers/capnproto/etc?

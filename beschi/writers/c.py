@@ -67,7 +67,7 @@ class CWriter(Writer):
 
     def deserializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"err = {self.prefix}_ReadUInt32(r, &({accessor}{var.name}_len));")
+            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[self.protocol.list_size_type]}(r, &({accessor}{var.name}_len));")
             self.err_check_return()
             if var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
                 pref = ""
@@ -76,10 +76,10 @@ class CWriter(Writer):
             self.write_line(f"{accessor}{var.name} = ({pref}{self.type_mapping[var.vartype]}*)malloc(sizeof({pref}{self.type_mapping[var.vartype]}) * {accessor}{var.name}_len);")
             self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             if var.vartype == "string":
-                self.write_line(f"{accessor}{var.name}_els_len = ({self.type_mapping['uint32']}*)malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{var.name}_len);")
+                self.write_line(f"{accessor}{var.name}_els_len = ({self.get_native_string_size()}*)malloc(sizeof({self.get_native_string_size()}) * {accessor}{var.name}_len);")
                 self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             idx = self.indent_level
-            self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+            self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
             self.indent_level += 1
             inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
             self.deserializer(inner, accessor)
@@ -101,10 +101,10 @@ class CWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"err = {self.prefix}_WriteUInt32(w, &({accessor}{var.name}_len));")
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[self.protocol.list_size_type]}(w, &({accessor}{var.name}_len));")
             self.err_check_return()
             idx = self.indent_level
-            self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+            self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
             self.indent_level += 1
             inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
             self.serializer(inner, accessor)
@@ -136,15 +136,15 @@ class CWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"*size += {accessor}{var.name}_len * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
-                        lines.append(f"for (uint32_t i = 0; i < {accessor}{var.name}_len; i++) {{")
-                        lines.append(f"{self.tab}*size += {NUMERIC_TYPE_SIZES['uint32']} + {accessor}{var.name}_els_len[i];")
+                        lines.append(f"for ({self.get_native_list_size()} i = 0; i < {accessor}{var.name}_len; i++) {{")
+                        lines.append(f"{self.tab}*size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + {accessor}{var.name}_els_len[i];")
                         lines.append("}")
                     else:
-                        lines.append(f"for (uint32_t i = 0; i < {accessor}{var.name}_len; i++) {{")
+                        lines.append(f"for ({self.get_native_list_size()} i = 0; i < {accessor}{var.name}_len; i++) {{")
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}[i].")
                         if clines[0] == size_init:
                             clines = clines[1:]
@@ -155,7 +155,7 @@ class CWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"*size += {accessor}{var.name}_len;")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
@@ -188,7 +188,7 @@ class CWriter(Writer):
                 self.write_line(f"free({accessor}{var.name});")
             else:
                 idx = self.indent_level
-                self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+                self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
                 self.indent_level += 1
                 inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
                 self.destructor(inner, accessor)
@@ -209,15 +209,15 @@ class CWriter(Writer):
             self.write_line(f"{self.prefix}MessageType _mt;")
         for var in sdata.members:
             if var.is_list:
-                self.write_line(f"{self.type_mapping['uint32']} {var.name}_len;")
+                self.write_line(f"{self.get_native_list_size()} {var.name}_len;")
                 if var.vartype == "string":
-                    self.write_line(f"{self.type_mapping['uint32']}* {var.name}_els_len;")
+                    self.write_line(f"{self.get_native_list_size()}* {var.name}_els_len;")
                 if var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
                     self.write_line(f"{self.type_mapping[var.vartype]}* {var.name};")
                 elif var.vartype in self.protocol.structs:
                     self.write_line(f"{self.prefix}{var.vartype}* {var.name};")
             elif var.vartype == "string":
-                self.write_line(f"{self.type_mapping['uint32']} {var.name}_len;")
+                self.write_line(f"{self.get_native_string_size()} {var.name}_len;")
                 self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
             elif var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
@@ -304,7 +304,11 @@ class CWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
-        self.add_boilerplate(self.subs, 0)
+        self.add_boilerplate(self.subs + [
+            ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type]),
+            ("{# STRING_SIZE_TYPE_LOWER #}", self.base_serializers[self.protocol.string_size_type].lower()),
+            ("{# STRING_SIZE_TYPE_NATIVE #}", self.get_native_string_size()),
+        ], 0)
 
         self.write_line("typedef enum {")
         self.indent_level += 1
@@ -325,7 +329,10 @@ class CWriter(Writer):
         for mname, mdata in self.protocol.messages.items():
             self.gen_struct(mname, mdata)
 
-        self.add_boilerplate(self.subs, 1)
+        self.add_boilerplate(self.subs + [
+            ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type]),
+            ("{# STRING_SIZE_TYPE_LOWER #}", self.base_serializers[self.protocol.string_size_type].lower()),
+        ], 1)
 
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m) {{")
         self.indent_level += 1

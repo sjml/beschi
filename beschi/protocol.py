@@ -61,6 +61,8 @@ class Struct():
 class Protocol():
     def __init__(self, filename: str = None):
         self.namespace: str = None
+        self.list_size_type: str = "uint32"
+        self.string_size_type: str = "uint32"
         self.structs: OrderedDict[str,Struct] = OrderedDict()
         self.messages: OrderedDict[str,Struct] = OrderedDict()
 
@@ -69,10 +71,20 @@ class Protocol():
 
         protocol_data = toml.load(filename)
 
-        if "meta" in protocol_data and "namespace" in protocol_data["meta"]:
-            if _contains_whitespace(protocol_data["meta"]["namespace"]):
-                raise ValueError(f"Namespace cannot contain whitespace: '{protocol_data['meta']['namespace']}'")
-            self.namespace = protocol_data["meta"]["namespace"]
+        if "meta" in protocol_data:
+            if "namespace" in protocol_data["meta"]:
+                if _contains_whitespace(protocol_data["meta"]["namespace"]):
+                    raise ValueError(f"Namespace cannot contain whitespace: '{protocol_data['meta']['namespace']}'")
+                self.namespace = protocol_data["meta"]["namespace"]
+            valid_sizes = ["byte", "uint16", "int16", "uint32", "int32", "uint64", "int64"]
+            if "list_size_type" in protocol_data["meta"]:
+                if protocol_data["meta"]["list_size_type"] not in valid_sizes:
+                    raise ValueError(f"List size type is not valid: '{protocol_data['meta']['list_size_type']}'")
+                self.list_size_type = protocol_data["meta"]["list_size_type"]
+            if "string_size_type" in protocol_data["meta"]:
+                if protocol_data["meta"]["string_size_type"] not in valid_sizes:
+                    raise ValueError(f"String size type is not valid: '{protocol_data['meta']['string_size_type']}'")
+                self.string_size_type = protocol_data["meta"]["string_size_type"]
 
         if "structs" not in protocol_data: protocol_data["structs"] = []
         if "messages" not in protocol_data: protocol_data["messages"] = []

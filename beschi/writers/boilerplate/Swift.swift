@@ -136,7 +136,7 @@ class DataReader {
     }
 
     func GetString() throws -> String {
-        let stringLength = try Int(self.GetInt32())
+        let stringLength = try Int(self.Get{# STRING_SIZE_TYPE #}())
         if (self.data.count < self.currentOffset + stringLength) {
             throw DataReaderError.EOF
         }
@@ -212,7 +212,7 @@ class DataWriter {
 
     func WriteString(_ s: String) {
         let buffer = s.data(using: String.Encoding.utf8)!
-        self.WriteUInt32(UInt32(buffer.count))
+        self.Write{# STRING_SIZE_TYPE #}({# STRING_SIZE_TYPE #}(buffer.count))
         self.data.append(buffer)
     }
 }

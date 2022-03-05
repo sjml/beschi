@@ -40,7 +40,7 @@ class SwiftWriter(Writer):
 
     def deserializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"let {var.name}_Length = try dataReader.Get{self.type_mapping['uint32']}()")
+            self.write_line(f"let {var.name}_Length = try dataReader.Get{self.get_native_list_size()}()")
             self.write_line(f"{accessor}{var.name} = []")
             self.write_line(f"for _ in 0..<{var.name}_Length {{")
             self.indent_level += 1
@@ -56,7 +56,7 @@ class SwiftWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"dataWriter.Write{self.type_mapping['uint32']}({self.type_mapping['uint32']}({accessor}{var.name}.count))")
+            self.write_line(f"dataWriter.Write{self.get_native_list_size()}({self.get_native_list_size()}({accessor}{var.name}.count))")
             self.write_line(f"for el in {accessor}{var.name} {{")
             self.indent_level += 1
             inner = Variable(self.protocol, "el", var.vartype)
@@ -80,12 +80,12 @@ class SwiftWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"size += {accessor}{var.name}.count * {self.protocol.get_size_of(var.vartype)}")
                     elif var.vartype == "string":
                         lines.append(f"for s in {accessor}{var.name} {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + s.data(using: String.Encoding.utf8)!.count")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + s.data(using: String.Encoding.utf8)!.count")
                         lines.append("}")
                     else:
                         lines.append(f"for {var.name}_el in {accessor}{var.name} {{")
@@ -99,7 +99,7 @@ class SwiftWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"size += {accessor}{var.name}.data(using: String.Encoding.utf8)!.count")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
@@ -236,7 +236,9 @@ class SwiftWriter(Writer):
             self.write_line(f"public /* namespace */ enum {self.protocol.namespace} {{")
             self.indent_level += 1
 
-        self.add_boilerplate()
+        self.add_boilerplate(substitutions=[
+            ("{# STRING_SIZE_TYPE #}", self.get_native_string_size())
+        ])
 
         self.write_line("public enum MessageType: UInt8 {")
         self.indent_level += 1

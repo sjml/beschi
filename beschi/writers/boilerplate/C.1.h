@@ -108,9 +108,9 @@ beschi_err_t beschi__ReadDouble(beschi_DataAccess *r, double *d) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, uint32_t *len) {
+beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_TYPE_LOWER #}_t *len) {
     beschi_err_t err;
-    err = beschi__ReadUInt32(r, len);
+    err = beschi__Read{# STRING_SIZE_TYPE #}(r, len);
     if (err != BESCHI_ERR_OK) {
         return err;
     }
@@ -217,9 +217,9 @@ beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double *d) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const uint32_t *len) {
+beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const {# STRING_SIZE_TYPE_LOWER #}_t *len) {
     beschi_err_t err;
-    err = beschi__WriteUInt32(w, len);
+    err = beschi__Write{# STRING_SIZE_TYPE #}(w, len);
     if (err != BESCHI_ERR_OK) {
         return err;
     }

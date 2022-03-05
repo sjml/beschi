@@ -46,12 +46,12 @@ class GoWriter(Writer):
             self.write_line("}")
 
         if var.is_list:
-            self.write_line(f"var {var.name}_Len {self.type_mapping['uint32']}")
+            self.write_line(f"var {var.name}_Len {self.get_native_list_size()}")
             self.write_line(f"err = binary.Read(data, binary.LittleEndian, &{var.name}_Len)")
             err_panic()
             self.write_line(f"{accessor}.{var.name} = make([]{self.type_mapping[var.vartype]}, {var.name}_Len)")
             idx = self.indent_level
-            self.write_line(f"for i{idx} := ({self.type_mapping['uint32']})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
+            self.write_line(f"for i{idx} := ({self.get_native_list_size()})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
             self.indent_level += 1
             inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
             self.deserializer(inner, accessor)
@@ -68,10 +68,10 @@ class GoWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"{var.name}_Len := ({self.type_mapping['uint32']})(len({accessor}.{var.name}))")
+            self.write_line(f"{var.name}_Len := ({self.get_native_list_size()})(len({accessor}.{var.name}))")
             self.write_line(f"binary.Write(data, binary.LittleEndian, {var.name}_Len)")
             idx = self.indent_level
-            self.write_line(f"for i{idx} := ({self.type_mapping['uint32']})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
+            self.write_line(f"for i{idx} := ({self.get_native_list_size()})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
             self.indent_level += 1
             inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
             self.serializer(inner, accessor)
@@ -96,12 +96,12 @@ class GoWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"size += len({accessor}{var.name}) * {self.protocol.get_size_of(var.vartype)}")
                     elif var.vartype == "string":
                         lines.append(f"for _, s := range {accessor}{var.name} {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + len(s)")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + len(s)")
                         lines.append("}")
                     else:
                         lines.append(f"for _, el := range {accessor}{var.name} {{")
@@ -115,7 +115,7 @@ class GoWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"size += len({accessor}{var.name})")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
@@ -205,10 +205,9 @@ class GoWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
+        subs = [("{# STRING_SIZE_TYPE #}", self.get_native_string_size())]
         if self.protocol.namespace:
-            subs = [("Beschi", self.protocol.namespace)]
-        else:
-            subs = []
+            subs.append(("Beschi", self.protocol.namespace))
 
         self.add_boilerplate(subs)
         self.write_line()

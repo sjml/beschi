@@ -74,3 +74,9 @@ class Writer:
     # return text with current indentation level
     def indent_string(self, text: str) -> str:
         return (self.tab * self.indent_level) + text
+
+    def get_native_list_size(self) -> str:
+        return self.type_mapping[self.protocol.list_size_type]
+
+    def get_native_string_size(self) -> str:
+        return self.type_mapping[self.protocol.string_size_type]

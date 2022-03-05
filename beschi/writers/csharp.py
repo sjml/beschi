@@ -39,7 +39,7 @@ class CSharpWriter(Writer):
     def deserializer(self, var: Variable, accessor: str):
         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
         if var.is_list:
-            self.write_line(f"{self.type_mapping['uint32']} {var_clean}_Length = br.{self.base_deserializers['uint32']}();")
+            self.write_line(f"{self.get_native_list_size()} {var_clean}_Length = br.{self.base_deserializers[self.protocol.list_size_type]}();")
             self.write_line(f"{accessor}{var.name} = new {self.type_mapping[var.vartype]}[{var_clean}_Length];")
             idx = self.indent_level
             self.write_line(f"for (int i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++)")
@@ -50,7 +50,7 @@ class CSharpWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
-            self.write_line(f"{self.type_mapping['uint32']} {var_clean}_Length = br.{self.base_deserializers['uint32']}();")
+            self.write_line(f"{self.get_native_string_size()} {var_clean}_Length = br.{self.base_deserializers[self.protocol.string_size_type]}();")
             self.write_line(f"byte[] {var_clean}_Buffer = br.ReadBytes((int){var_clean}_Length);")
             self.write_line(f"{accessor}{var.name} = System.Text.Encoding.UTF8.GetString({var_clean}_Buffer);")
         elif var.vartype in self.base_deserializers:
@@ -60,7 +60,7 @@ class CSharpWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"bw.Write(({self.type_mapping['uint32']}){accessor}{var.name}.Length);")
+            self.write_line(f"bw.Write(({self.get_native_list_size()}){accessor}{var.name}.Length);")
             self.write_line(f"foreach ({self.type_mapping[var.vartype]} el in {accessor}{var.name})")
             self.write_line("{")
             self.indent_level += 1
@@ -70,7 +70,7 @@ class CSharpWriter(Writer):
             self.write_line("}")
         elif var.vartype == "string":
             self.write_line(f"byte[] {var.name}_Buffer = System.Text.Encoding.UTF8.GetBytes({accessor}{var.name});")
-            self.write_line(f"bw.Write(({self.type_mapping['uint32']}){var.name}_Buffer.Length);")
+            self.write_line(f"bw.Write(({self.get_native_string_size()}){var.name}_Buffer.Length);")
             self.write_line(f"bw.Write({var.name}_Buffer);")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"bw.Write({accessor}{var.name});")
@@ -89,13 +89,13 @@ class CSharpWriter(Writer):
 
             for var in st.members:
                 if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
                         lines.append(f"size += {accessor}{var.name}.Length * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
                         lines.append(f"foreach (string s in {accessor}{var.name})")
                         lines.append("{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + System.Text.Encoding.UTF8.GetBytes(s).Length;")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + System.Text.Encoding.UTF8.GetBytes(s).Length;")
                         lines.append("}")
                     else:
                         lines.append(f"foreach ({self.type_mapping[var.vartype]} el in {accessor}{var.name})")
@@ -110,7 +110,7 @@ class CSharpWriter(Writer):
                     if var.is_simple():
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                         lines.append(f"size += {accessor}{var.name}.Length;")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
