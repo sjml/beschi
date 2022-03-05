@@ -8,7 +8,6 @@ LANGUAGE_NAME = "Rust"
 class RustWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".rs"
-    in_progress = True
 
     def __init__(self, p: Protocol):
         for _, s in p.structs.items():

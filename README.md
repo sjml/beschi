@@ -96,19 +96,19 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Type | C#       | Go        | C          | Swift     | TypeScript |
-|---------------|----------|-----------|------------|-----------|------------|
-| `byte`        | `byte`   | `byte`    | `uint8_t`  | `UInt8`   | `number`   |
-| `bool`        | `bool`   | `bool`    | `bool`     | `Bool`    | `boolean`  |
-| `int16`       | `short`  | `int16`   | `uint16_t` | `Int16`   | `number`   |
-| `uint16`      | `ushort` | `uint16`  | `int16_t`  | `UInt16`  | `number`   |
-| `int32`       | `int`    | `int32`   | `uint32_t` | `Int32`   | `number`   |
-| `uint32`      | `uint`   | `uint32`  | `int32_t`  | `UInt32`  | `number`   |
-| `int64`       | `long`   | `int64`   | `uint64_t` | `Int64`   | `bigint`   |
-| `uint64`      | `ulong`  | `uint64`  | `int64_t`  | `UInt64`  | `bigint`   |
-| `float`       | `float`  | `float32` | `float`    | `Float32` | `number`   |
-| `double`      | `double` | `float64` | `double`   | `Float64` | `number`   |
-| `string`      | `string` | `string`  | `char*`    | `String`  | `string`   |
+| Protocol Type | C#       | Go        | C          | Rust     | Swift     | TypeScript |
+|---------------|----------|-----------|------------|----------|-----------|------------|
+| `byte`        | `byte`   | `byte`    | `uint8_t`  | `u8`     | `UInt8`   | `number`   |
+| `bool`        | `bool`   | `bool`    | `bool`     | `bool`   | `Bool`    | `boolean`  |
+| `int16`       | `short`  | `int16`   | `uint16_t` | `i16`    | `Int16`   | `number`   |
+| `uint16`      | `ushort` | `uint16`  | `int16_t`  | `u16`    | `UInt16`  | `number`   |
+| `int32`       | `int`    | `int32`   | `uint32_t` | `i32`    | `Int32`   | `number`   |
+| `uint32`      | `uint`   | `uint32`  | `int32_t`  | `u32`    | `UInt32`  | `number`   |
+| `int64`       | `long`   | `int64`   | `uint64_t` | `i64`    | `Int64`   | `bigint`   |
+| `uint64`      | `ulong`  | `uint64`  | `int64_t`  | `u64`    | `UInt64`  | `bigint`   |
+| `float`       | `float`  | `float32` | `float`    | `f32`    | `Float32` | `number`   |
+| `double`      | `double` | `float64` | `double`   | `f64`    | `Float64` | `number`   |
+| `string`      | `string` | `string`  | `char*`    | `String` | `String`  | `string`   |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. (C types are using `stdint.h` and `stdbool.h`.)
 
@@ -244,6 +244,11 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * Swift support is kind of experimental. It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
 * There might be some extraneous memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, but maybe it's ok? Anyway, something to keep awareness of. 
 * Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
+
+### Rust
+* Beschi does its best to generate code that feels at home in the target languages, which means the Rust version has some different semantics. 
+* Messages are defined as an enum with data, so instead of having to examine and cast them, you use Rust's usual pattern-matching to figure out what kind of message structure you're looking at. 
+* The generated code shouldn't generate warnings from the standard compiler... but `clippy` is another matter. Most of the warnings I've seen are things that can be changed by altering the protocol (for example, all members of an enum having the same suffix). So if you want `clippy` to be happy, be ready to either suppress some warnings or tinker with your protocol. 
 
 ### C
 * Unsurprisingly, C code that uses Beschi messages tends to be much more verbose than code from more modern languages. The syntax is a bit different, too, because of the lack of multiple return values and exceptions in C. 
