@@ -1,6 +1,5 @@
 * immediate todo
     - size_type as meta flag (don't just assume u32)
-    - member renaming / language-specific flags that get fed to writers
     - make multiple message stream a bit smarter (below)
     - redo docs
         - revamp readme, move separate language out to own files
@@ -20,23 +19,12 @@
             - *then* the messages themselves
         - should be an associated PackMessages function that takes a list of messages and makes these bytes from it
     - language-specific flags
-        - typescript: 
-            - use namespace (not recommended as best practice)
-        - rust: 
-            - don't rename data_members to lower_snake_case (otherwise required to avoid warnings)
-        - go: 
-            - don't rename members to Uppercase (otherwise required to be able to access them)
-        - python: 
-            - rename members to lower_snake_case
-        - csharp: 
-            - rename members to UpperCamelCase
-
         - thoughts on renaming... priorities go as follows:
             - creating code that works out of the box with no warnings in target language
             - creating code that works out of the box in target language (so you should be able to access the data members of a message, for instance)
             - THEN principle of least surprise (so only renaming things by default if they would cause warnings)
             - otherwise, rename requires active request (--csharp-rename-members)
-            - automatic renames can be supressed if people want (--rust-no-rename-members)
+            - automatic renames can be supressed if people want (--rust-no-rename)
 
 * testing framework
     - check that multiple generated files can be included at once

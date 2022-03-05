@@ -11,7 +11,7 @@ class CWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".h"
 
-    def __init__(self, p: Protocol):
+    def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")
 
         self.type_mapping["byte"] = "uint8_t"

@@ -1,5 +1,6 @@
 import os
 import re
+import argparse
 
 from .protocol import Protocol
 
@@ -25,6 +26,9 @@ class Writer:
     in_progress = False # if set to True, writer will not be added to
                         #  the writers.all_writers object, so will be
                         #  shielded from the test suite
+
+    def get_additional_args(parser: argparse.ArgumentParser):
+        pass
 
     def __init__(self, protocol: Protocol, tab: str = DEFAULT_INDENT):
         self.indent_level: int = 0

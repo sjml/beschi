@@ -1,3 +1,5 @@
+import argparse
+
 from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
@@ -9,13 +11,20 @@ class GoWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".go"
 
-    def __init__(self, p: Protocol):
-        for _, s in p.structs.items():
-            for var in s.members:
-                var.name = TextUtil.capitalize(var.name)
-        for _, m in p.messages.items():
-            for var in m.members:
-                var.name = TextUtil.capitalize(var.name)
+    def get_additional_args(parser: argparse.ArgumentParser):
+        group = parser.add_argument_group(LANGUAGE_NAME)
+        group.add_argument("--go-no-rename", action="store_const", const=True, default=False, help="don't rename data members to Uppercase")
+
+    def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
+        rename = not extra_args["go_no_rename"]
+
+        if rename:
+            for _, s in p.structs.items():
+                for var in s.members:
+                    var.name = TextUtil.capitalize(var.name)
+            for _, m in p.messages.items():
+                for var in m.members:
+                    var.name = TextUtil.capitalize(var.name)
 
         super().__init__(protocol=p, tab="\t")
 

@@ -9,7 +9,7 @@ class SwiftWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".swift"
 
-    def __init__(self, p: Protocol):
+    def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")
 
         self.type_mapping["byte"] = "UInt8"

@@ -1,3 +1,5 @@
+import argparse
+
 from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
@@ -9,8 +11,14 @@ class TypeScriptWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".ts"
 
-    def __init__(self, p: Protocol):
+    def get_additional_args(parser: argparse.ArgumentParser):
+        group = parser.add_argument_group(LANGUAGE_NAME)
+        group.add_argument("--typescript-use-namespace", action="store_const", const=True, default=False, help="wrap generated TypeScript code in a namespace")
+
+    def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="  ")
+
+        self.use_namespace = extra_args["typescript_use_namespace"]
 
         for var_type in NUMERIC_TYPE_SIZES:
             if var_type == "bool":
@@ -226,6 +234,10 @@ class TypeScriptWriter(Writer):
         self.write_line(f"// Do not edit directly.")
         self.write_line()
 
+        if self.use_namespace:
+            self.write_line(f"namespace {self.protocol.namespace} {{")
+            self.indent_level += 1
+
         self.add_boilerplate()
 
         self.write_line("export enum MessageType {")
@@ -294,6 +306,10 @@ class TypeScriptWriter(Writer):
 
         for mname, mdata in self.protocol.messages.items():
             self.gen_struct(mname, mdata)
+
+        if self.use_namespace:
+            self.indent_level -= 1
+            self.write_line("}")
 
         self.write_line()
         assert self.indent_level == 0

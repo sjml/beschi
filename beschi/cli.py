@@ -17,6 +17,9 @@ def main():
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
     argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
 
+    for _, wclass in all_writers.items():
+        wclass.get_additional_args(argparser)
+
     args = argparser.parse_args()
 
     if args.version:
@@ -59,7 +62,8 @@ def main():
     except KeyError:
         writer_class = experimental_writers[args.lang]
 
-    writer = writer_class(protocol)
+    extra_args = {flag: val for flag, val in args._get_kwargs() if flag.startswith(args.lang)}
+    writer = writer_class(protocol, extra_args=extra_args)
     try:
         output = writer.generate()
     except NotImplementedError as nie:
