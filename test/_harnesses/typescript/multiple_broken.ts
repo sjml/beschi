@@ -20,32 +20,30 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     size += 1; // trunc marker
 
     const data = new ArrayBuffer(size);
-    const dv = new DataView(data);
-    let offset = 0;
+    const da = new BrokenMessages.DataAccess(data);
 
-
-    offset = full.WriteBytes(dv, true, offset);
-    offset = full.WriteBytes(dv, true, offset);
-    offset = full.WriteBytes(dv, true, offset);
+    full.WriteBytes(da, true);
+    full.WriteBytes(da, true);
+    full.WriteBytes(da, true);
 
     // write a truncated message tagged as a full one
-    dv.setUint8(offset, BrokenMessages.MessageType.FullMessageType);
-    offset += 1;
-    offset = trunc.WriteBytes(dv, false, offset);
+    da.buffer.setUint8(da.currentOffset, BrokenMessages.MessageType.FullMessageType);
+    da.currentOffset += 1;
+    trunc.WriteBytes(da, false);
 
-    offset = full.WriteBytes(dv, true, offset);
-    offset = full.WriteBytes(dv, true, offset);
-    offset = full.WriteBytes(dv, true, offset);
+    full.WriteBytes(da, true);
+    full.WriteBytes(da, true);
+    full.WriteBytes(da, true);
 
-    writeBuffer(Buffer.from(data, 0, offset), filePath);
+    writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(size == offset, "written bytes check");
+    softAssert(size == da.currentOffset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
 
-    const msgList = BrokenMessages.ProcessRawBytes(dv, 0).vals;
+    const msgList = BrokenMessages.ProcessRawBytes(dv);
 
     softAssert(msgList.length == 5, "read broken stream length");
     softAssert(msgList[4] == null, "read broken stream null sentinel");

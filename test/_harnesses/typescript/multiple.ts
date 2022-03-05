@@ -26,31 +26,30 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     size += 12;
 
     const data = new ArrayBuffer(size);
-    const dv = new DataView(data);
-    let offset = 0;
+    const da = new SmallMessages.DataAccess(data);
 
-    offset = byteMsg.WriteBytes(dv, true, offset);   //  0
-    offset = intMsgA.WriteBytes(dv, true, offset);   //  1
-    offset = intMsgB.WriteBytes(dv, true, offset);   //  2
-    offset = emptyMsg.WriteBytes(dv, true, offset);  //  3
-    offset = longMsg.WriteBytes(dv, true, offset);   //  4
-    offset = floatMsg.WriteBytes(dv, true, offset);  //  5
-    offset = intMsgA.WriteBytes(dv, true, offset);   //  6
-    offset = intMsgB.WriteBytes(dv, true, offset);   //  7
-    offset = intMsgB.WriteBytes(dv, true, offset);   //  8
-    offset = intMsgB.WriteBytes(dv, true, offset);   //  9
-    offset = intMsgA.WriteBytes(dv, true, offset);   // 10
-    offset = emptyMsg.WriteBytes(dv, true, offset);  // 11
+    byteMsg.WriteBytes(da, true);   //  0
+    intMsgA.WriteBytes(da, true);   //  1
+    intMsgB.WriteBytes(da, true);   //  2
+    emptyMsg.WriteBytes(da, true);  //  3
+    longMsg.WriteBytes(da, true);   //  4
+    floatMsg.WriteBytes(da, true);  //  5
+    intMsgA.WriteBytes(da, true);   //  6
+    intMsgB.WriteBytes(da, true);   //  7
+    intMsgB.WriteBytes(da, true);   //  8
+    intMsgB.WriteBytes(da, true);   //  9
+    intMsgA.WriteBytes(da, true);   // 10
+    emptyMsg.WriteBytes(da, true);  // 11
 
-    writeBuffer(Buffer.from(data, 0, offset), filePath);
+    writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(size == offset, "written bytes check");
+    softAssert(size == da.currentOffset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
 
-    const msgList = SmallMessages.ProcessRawBytes(dv, 0).vals;
+    const msgList = SmallMessages.ProcessRawBytes(dv);
 
     softAssert(msgList.length == 12, "reading multiple messages length");
 

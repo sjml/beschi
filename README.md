@@ -233,17 +233,16 @@ Beschi is a little bit fast and loose with how it does generation. This allows f
 * Following [current recommendations from the TypeScript team](https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html), it ignores the defined namespace in favor of treating the whole exported code file as a module. You can still get the same syntax by importing like: `import * as AppMessages from './AppMessages';`. 
 * The generated TypeScript code uses decorators to provide something similar to static functions. There might be a better way of handling this, and I'm open to suggestion, but for now you have to have `experimentalDecorators` enabled in your TypeScript configuration. 
 * 64-bit integers (both signed and unsigned) are implemented with BigInt, which has [pretty broad support at this point](https://caniuse.com/?search=bigint). Your client code may need to handle them differently though -- you can't seamlessly do math with a regular `number` and a `bigint`. Users of other languages are used to these kinds of folds, but JavaScript/TypeScript users may find them new and annoying. :) 
-* The generated `WriteBytes()` function for TypeScript takes an additional `offset: number` parameter. Since JavaScript doesn't keep track of a position when writing into a buffer, we have to manually tell it where to start writing. The function also returns a new offset letting you know where it finished writing. 
-* Similarly, the TypeScript implementation of `ProcessRawBytes` also takes an offset parameter, and instead of just returning a list of Messages, returns an object: `{ vals: Message[], offset: number }`.
-* `FromBytes` also takes an offset and returns a structure similar to the one from `ProcessRawBytes`: `{ val: SpecificMessageType, offset: number }`
+* Reading and writing messages is wrapped in a custom `DataAccess` class that tracks position in a `DataView`. You can either construct it yourself if you want to, for instance, do multiple passes of writing to the same buffer. If you pass a `DataView` to a function that expects a `DataAccess`, the latter will be used internally but not returned to you. 
 
 ### C#
 * No particular caveats, actually! Perhaps a side effect of C# being the first generator that was made for this system is that its semantics match up pretty well. 
 
 ### Swift
-* Swift support is kind of experimental. It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
+* It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
 * There might be some extraneous memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, but maybe it's ok? Anyway, something to keep awareness of. 
 * Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
+* As with TypeScript, Beschi-generated Swift code uses `DataReader` and `DataWriter` classes to track progress through `Data` objects when reading and writing messages. 
 
 ### Rust
 * Beschi does its best to generate code that feels at home in the target languages, which means the Rust version has some different semantics. 

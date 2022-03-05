@@ -6,21 +6,20 @@ const lmsg = new BrokenMessages.ListMessage();
 lmsg.ints = [1, 2, 32767, 4, 5];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(16);
-    const dv = new DataView(data);
-    const offset = lmsg.WriteBytes(dv, false, 0);
-
-    softAssert(lmsg.GetSizeInBytes() == offset, "written bytes check");
+    const msgLen = 16;
+    const data = new ArrayBuffer(msgLen);
+    const da = new BrokenMessages.DataAccess(data);
+    lmsg.WriteBytes(da, false);
 
     // tweak the buffer so the message looks longer
-    dv.setUint8(0, 0xFF);
+    da.buffer.setUint8(0, 0xFF);
 
-    writeBuffer(Buffer.from(data, 0, offset), filePath);
+    writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = BrokenMessages.ListMessage.FromBytes(dv, 0).val;
+    const input = BrokenMessages.ListMessage.FromBytes(dv);
 
     softAssert(input == null, "reading truncated message");
 }

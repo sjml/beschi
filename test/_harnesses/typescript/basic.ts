@@ -105,18 +105,18 @@ example.cxl = [cx1, cx2];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const data = new ArrayBuffer(example.GetSizeInBytes());
-    const dv = new DataView(data);
-    const offset = example.WriteBytes(dv, false, 0);
+    const da = new ComprehensiveMessage.DataAccess(data);
+    example.WriteBytes(da, false);
 
-    writeBuffer(Buffer.from(data, 0, offset), filePath);
+    writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
     softAssert(example.GetSizeInBytes() == 899, "size calculation check");
-    softAssert(example.GetSizeInBytes() == offset, "written bytes check");
+    softAssert(example.GetSizeInBytes() == da.currentOffset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = ComprehensiveMessage.TestingMessage.FromBytes(dv, 0).val;
+    const input = ComprehensiveMessage.TestingMessage.FromBytes(dv);
     softAssert(input != null, "parsing test message");
 
     softAssert(input.b == example.b, "byte");
