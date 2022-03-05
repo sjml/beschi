@@ -8,8 +8,8 @@ from . import LIB_NAME, LIB_VERSION
 VERSION_STRING = f"{LIB_NAME} v{LIB_VERSION}"
 
 def main():
-    writers = [w.lower() for w in all_writers.keys()]
-    exp_writers = [w.lower() for w in experimental_writers.keys()]
+    writers = [w.lower() for w in all_writers]
+    exp_writers = [w.lower() for w in experimental_writers]
 
     argparser = argparse.ArgumentParser(description="Generate the code for reading/writing messages from a given protocol.")
     argparser.add_argument("--version", "-v", action="store_const", const=True, default=False, help="print the version and exit")

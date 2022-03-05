@@ -5,12 +5,19 @@
             - "list" type not used at all
             - a lot of copypasta that could be reduced with a simple recursion (not weird templating)
         - messages are really just structs with some extra things; could probably streamline a lot of operations by consolidating them and having a flag
-    - unify FromBytes so it takes a buffer across all of them
+        - size_type as meta flag (don't just assume u32)
     - typescript revamp with data reader
     - member renaming / language-specific flags that get fed to writers
     - make multiple message stream a bit smarter (below)
     - redo docs
         - revamp readme, move separate language out to own files
+
+* unity (the concept, not the game engine)
+    - frombytes has some different semantics across the languages -- does it need a special struct or can it use the recommended language built-in stuff? 
+        - message FromBytes should take buffer; vecs take local language structure if needed; processraw creates the reader if it needs?
+        - should there be a different signature for vecs? effectively internals? 
+        - fromreader vs frombytes? 
+
 
 * functionality
     - pie in the sky: instead of using int32 for list/string sizes, do an arbitrary-precision thing? (most lists/strings are small)

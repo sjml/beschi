@@ -1,5 +1,5 @@
-from ..protocol import Protocol, BASE_TYPE_SIZES, COLLECTION_TYPES
-from ..writer import Writer
+from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
+from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
 LANGUAGE_NAME = "TypeScript"
@@ -12,7 +12,7 @@ class TypeScriptWriter(Writer):
     def __init__(self, p: Protocol):
         super().__init__(protocol=p, tab="  ")
 
-        for var_type in BASE_TYPE_SIZES:
+        for var_type in NUMERIC_TYPE_SIZES:
             if var_type == "bool":
                 self.type_mapping[var_type] = "boolean"
             elif var_type in ["int64", "uint64"]:
@@ -21,250 +21,154 @@ class TypeScriptWriter(Writer):
                 # <sigh>, JavaScript
                 self.type_mapping[var_type] = "number"
 
+        self.base_serializers: dict[str,str] = {
+            "byte": "Uint8",
+            "uint16": "Uint16",
+            "int16": "Int16",
+            "uint32": "Uint32",
+            "int32": "Int32",
+            "uint64": "BigUint64",
+            "int64": "BigInt64",
+            "float": "Float32",
+            "double": "Float64",
+        }
 
-    def deserializer(self, var_type: str, var_name: str, parent: str = "this") -> list[str]:
-        if parent:
-            pref = parent + "."
+    def deserializer(self, var: Variable, accessor: str):
+        var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
+        if var.is_list:
+            self.write_line(f"const {var_clean}_Length = dv.get{self.base_serializers['uint32']}(offset, true);")
+            self.write_line(f"offset += {NUMERIC_TYPE_SIZES['uint32']};")
+            self.write_line(f"{accessor}{var.name} = Array<{self.type_mapping[var.vartype]}>({var_clean}_Length);")
+            idx = self.indent_level
+            self.write_line(f"for (let i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
+            self.indent_level += 1
+            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+            self.deserializer(inner, accessor)
+            self.indent_level -= 1
+            self.write_line("}")
+        elif var.vartype == "string":
+            self.write_line(f"const {var_clean}_Length = dv.get{self.base_serializers['uint32']}(offset, true);")
+            self.write_line(f"offset += {NUMERIC_TYPE_SIZES['uint32']};")
+            self.write_line(f"const {var_clean}_Buffer = new Uint8Array(dv.buffer, offset, {var_clean}_Length);")
+            self.write_line(f"offset += {var_clean}_Length;")
+            self.write_line(f"{accessor}{var.name} = textDec.decode({var_clean}_Buffer);")
+        elif var.vartype == "bool":
+            self.write_line(f"{accessor}{var.name} = (dv.getUint8(offset) > 0);")
+            self.write_line("offset += 1;")
+        elif var.vartype in self.base_serializers:
+            pre = ""
+            post = ""
+            if var.vartype == "float":
+                pre = "Math.fround("
+                post = ")"
+            self.write_line(f"{accessor}{var.name} = {pre}dv.get{self.base_serializers[var.vartype]}(offset{', true' if var.vartype != 'byte' else ''}){post};")
+            self.write_line(f"offset += {NUMERIC_TYPE_SIZES[var.vartype]};")
         else:
-            pref = ""
-        label = var_name
-        if label.endswith("_i]"):
-            label = "i_"
-        if var_type in BASE_TYPE_SIZES:
-            func = None
-            pre_wrap = ""
-            post_wrap = ""
-            off = 0
-            if var_type == "uint16":
-                func = "getUint16"
-                off = 2
-            elif var_type == "int16":
-                func = "getInt16"
-                off = 2
-            elif var_type == "uint32":
-                func = "getUint32"
-                off = 4
-            elif var_type == "int32":
-                func = "getInt32"
-                off = 4
-            elif var_type == "uint64":
-                func = "getBigUint64"
-                off = 8
-            elif var_type == "int64":
-                func = "getBigInt64"
-                off = 8
-            elif var_type == "float":
-                func = "getFloat32"
-                pre_wrap = "Math.fround("
-                post_wrap = ")"
-                off = 4
-            elif var_type == "double":
-                func = "getFloat64"
-                off = 8
+            self.write_line(f"const {var_clean}_ret = {var.vartype}.FromBytes(dv, offset);")
+            self.write_line(f"{accessor}{var.name} = {var_clean}_ret.val;")
+            self.write_line(f"offset = {var_clean}_ret.offset;")
 
-            if func != None:
-                return [
-                    f"{pref}{var_name} = {pre_wrap}dv.{func}(offset, true){post_wrap};",
-                    f"offset += {off};"
-                ]
-
-            if var_type == "byte":
-                return [
-                    f"{pref}{var_name} = dv.getUint8(offset);",
-                    "offset += 1;"
-                ]
-            elif var_type == "bool":
-                return [
-                    f"const {label}Byte = dv.getUint8(offset);",
-                    f"{pref}{var_name} = ({label}Byte > 0);",
-                    "offset += 1;"
-                ]
-            if func == None:
-                raise NotImplementedError(f"Type {var_type} not deserializable yet.")
-        elif var_type == "string":
-            return [
-                f"const {label}Length = dv.getUint32(offset, true);",
-                "offset += 4;",
-                f"const {label}Buffer = new Uint8Array(dv.buffer, offset, {label}Length);",
-                f"offset += {label}Length;",
-                f"{pref}{var_name} = textDec.decode({label}Buffer);",
-            ]
-        elif var_type in self.protocol.structs:
-            return [
-                f"const {label}RetVal = {var_type}.FromBytes(dv, offset);",
-                f"{pref}{var_name} = {label}RetVal.val;",
-                f"offset = {label}RetVal.offset;",
-            ]
-        elif var_type[0] == "[" and var_type[-1] == "]":
-            interior = var_type[1:-1]
-            out = [
-                f"const {var_name}Length = dv.getUint32(offset, true);",
-                "offset += 4;",
-                f"{pref}{var_name} = Array<{self.get_var(interior)}>({var_name}Length);",
-                f"for (let {var_name}_i = 0; {var_name}_i < {var_name}Length; {var_name}_i++)",
-                "{"
-            ]
-            out += [
-                self.tab + deser for deser in self.deserializer(
-                    interior, f"{var_name}[{var_name}_i]", parent
-                )
-            ]
-            out += "}"
-            return out
+    def serializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"dv.set{self.base_serializers['uint32']}(offset, {accessor}{var.name}.length, true);")
+            self.write_line(f"offset += {NUMERIC_TYPE_SIZES['uint32']};")
+            self.write_line(f"for (let i = 0; i < {accessor}{var.name}.length; i++) {{")
+            self.indent_level += 1
+            self.write_line(f"let el = {accessor}{var.name}[i];")
+            inner = Variable(self.protocol, "el", var.vartype)
+            self.serializer(inner, "")
+            self.indent_level -= 1
+            self.write_line("}")
+        elif var.vartype == "string":
+            self.write_line(f"const {var.name}_Buffer = textEnc.encode({accessor}{var.name});")
+            self.write_line(f"dv.set{self.base_serializers['uint32']}(offset, {var.name}_Buffer.byteLength, true);")
+            self.write_line(f"offset += {NUMERIC_TYPE_SIZES['uint32']};")
+            self.write_line(f"const {var.name}_Arr = new Uint8Array(dv.buffer);")
+            self.write_line(f"{var.name}_Arr.set({var.name}_Buffer, offset);")
+            self.write_line(f"offset += {var.name}_Buffer.byteLength;")
+        elif var.vartype in NUMERIC_TYPE_SIZES:
+            if var.vartype == "bool":
+                self.write_line(f"dv.setUint8(offset, {accessor}{var.name} ? 1 : 0);")
+                self.write_line("offset += 1;")
+            else:
+                self.write_line(f"dv.set{self.base_serializers[var.vartype]}(offset, {accessor}{var.name}{', true' if var.vartype != 'byte' else ''});")
+                self.write_line(f"offset += {NUMERIC_TYPE_SIZES[var.vartype]};")
         else:
-            raise NotImplementedError(f"Type {var_type} not deserializable yet.")
+            self.write_line(f"offset = {accessor}{var.name}.WriteBytes(dv, offset);")
 
-
-    def serializer(self, var_type: str, var_name: str, parent: str = "this") -> list[str]:
-        if parent:
-            pref = parent + "."
-        else:
-            pref = ""
-        if var_type in BASE_TYPE_SIZES:
-            func = None
-            off = 0
-            if var_type == "uint16":
-                func = "setUint16"
-                off = 2
-            if var_type == "int16":
-                func = "setInt16"
-                off = 2
-            if var_type == "uint32":
-                func = "setUint32"
-                off = 4
-            if var_type == "int32":
-                func = "setInt32"
-                off = 4
-            if var_type == "uint64":
-                func = "setBigUint64"
-                off = 8
-            if var_type == "int64":
-                func = "setBigInt64"
-                off = 8
-            if var_type == "float":
-                func = "setFloat32"
-                off = 4
-            if var_type == "double":
-                func = "setFloat64"
-                off = 8
-
-            if func != None:
-                return [
-                    f"dv.{func}(offset, {pref}{var_name}, true);",
-                    f"offset += {off};"
-                ]
-            if var_type == "byte":
-                return [
-                    f"dv.setUint8(offset, {pref}{var_name});",
-                    "offset += 1;"
-                ]
-            if var_type == "bool":
-                return [
-                    f"dv.setUint8(offset, {pref}{var_name} ? 1 : 0);",
-                    "offset += 1;"
-                ]
-        elif var_type == "string":
-            return [
-                f"const {var_name}Buffer = textEnc.encode({pref}{var_name});",
-                f"const {var_name}Arr = new Uint8Array(dv.buffer);",
-                f"dv.setUint32(offset, {var_name}Buffer.byteLength, true);",
-                "offset += 4;",
-                f"{var_name}Arr.set({var_name}Buffer, offset);",
-                f"offset += {var_name}Buffer.byteLength;",
-            ]
-        elif var_type in self.protocol.structs:
-            return [
-                f"offset = {pref}{var_name}.WriteBytes(dv, offset);"
-            ]
-        elif var_type[0] == "[" and var_type[-1] == "]":
-            interior = var_type[1:-1]
-            out = [
-                f"dv.setUint32(offset, {pref}{var_name}.length, true);",
-                "offset += 4;",
-                f"for (let {var_name}_i = 0; {var_name}_i < {pref}{var_name}.length; {var_name}_i++) {{",
-                self.tab + f"let el = {pref}{var_name}[{var_name}_i];",
-            ]
-            out += [self.tab + ser for ser in self.serializer(interior, "el", None)]
-            out += ["}"]
-            return out
-        else:
-            raise NotImplementedError(f"Type {var_type} not serializable yet.")
-
-    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
-
         accum = 0
-        if self.protocol.is_simple(s[0]):
-            lines.append(f"return {self.protocol.calculate_size(s[0])};")
+
+        if st.is_simple():
+            lines.append(f"return {self.protocol.get_size_of(st.name)};")
         else:
             size_init = "let size: number = 0;"
             lines.append(size_init)
 
-            for var_name, var_type in s[1]:
-                if self.protocol.is_simple(var_type):
-                    accum += self.protocol.calculate_size(var_type)
-                else:
-                    if var_type == "string":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"size += textEnc.encode({accessor_prefix}{var_name}).byteLength;")
-                    elif var_type == "[string]":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
-                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + textEnc.encode({accessor_prefix}{var_name}[{var_name}_i]).byteLength;")
+            for var in st.members:
+                if var.is_list:
+                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    if var.is_simple(True):
+                        lines.append(f"size += {accessor}{var.name}.length * {self.protocol.get_size_of(var.vartype)};")
+                    elif var.vartype == "string":
+                        lines.append(f"for (let {var.name}_i=0; {var.name}_i < {accessor}{var.name}.length; {var.name}_i++) {{")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + textEnc.encode({accessor}{var.name}[{var.name}_i]).byteLength;")
                         lines.append("}")
-                    elif var_type[0] == "[" and var_type[-1] == "]":
-                        listed_var_type = var_type[1:-1]
-                        if self.protocol.is_simple(listed_var_type):
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"size += {accessor_prefix}{var_name}.length * {self.protocol.calculate_size(listed_var_type)};")
-                        else:
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"for (let {var_name}_i=0; {var_name}_i < {accessor_prefix}{var_name}.length; {var_name}_i++) {{")
-                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"{accessor_prefix}{var_name}[{var_name}_i].")
-                            if clines[0] == size_init:
-                                clines = clines[1:]
-                            clines.append(f"size += {caccum};")
-                            lines += [f"{self.tab}{l}" for l in clines]
-                            lines.append("}")
                     else:
-                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
+                        lines.append(f"for (let {var_clean}_i=0; {var_clean}_i < {accessor}{var.name}.length; {var_clean}_i++) {{")
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}[{var_clean}_i].")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        clines.append(f"size += {caccum};")
+                        lines += [f"{self.tab}{l}" for l in clines]
+                        lines.append("}")
+                else:
+                    if var.is_simple():
+                        accum += self.protocol.get_size_of(var.vartype)
+                    elif var.vartype == "string":
+                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        lines.append(f"size += textEnc.encode({accessor}{var.name}).byteLength;")
+                    else:
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
                         if clines[0] == size_init:
                             clines = clines[1:]
                         lines += clines
                         accum += caccum
         return lines, accum
 
-    def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
-        is_message = s[0] in self.protocol.messages
-        if is_message:
-            self.write_line(f"export class {s[0]} implements Message {{")
+    def gen_struct(self, sname: str, sdata: Struct):
+        if sdata.is_message:
+            self.write_line("@staticImplements<MessageStatic>()")
+            self.write_line(f"export class {sname} implements Message {{")
         else:
-            self.write_line(f"export class {s[0]} {{")
+            self.write_line(f"export class {sname} {{")
         self.indent_level += 1
 
-        for var_name, var_type in s[1]:
-            if var_type[0] == "[" and var_type[-1] == "]":
-                self.write_line(f"{var_name}: {self.get_var(var_type[1:-1])}[] = [];")
+        for var in sdata.members:
+            if var.is_list:
+                self.write_line(f"{var.name}: {self.type_mapping[var.vartype]}[] = [];")
             else:
-                var_type = self.get_var(var_type)
                 default_value = "0"
-                if var_type == "bigint":
+                if self.type_mapping[var.vartype] == "bigint":
                     default_value = "0n"
-                elif var_type == "boolean":
+                elif self.type_mapping[var.vartype] == "boolean":
                     default_value = "false"
-                elif var_type == "string":
+                elif self.type_mapping[var.vartype] == "string":
                     default_value = "\"\""
-                elif var_type in self.protocol.structs:
+                elif var.vartype in self.protocol.structs:
                     default_value = None
-                self.write_line(f"{var_name}: {var_type}{f' = {default_value}' if default_value else ''};")
+                self.write_line(f"{var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''};")
         self.write_line()
 
-        if is_message:
-            self.write_line(f"GetMessageType() : MessageType {{ return MessageType.{s[0]}Type; }}")
+        if sdata.is_message:
+            self.write_line(f"GetMessageType() : MessageType {{ return MessageType.{sname}Type; }}")
             self.write_line()
+
             self.write_line("GetSizeInBytes(): number {")
             self.indent_level += 1
-            measure_lines, accumulator = self.gen_measurement(s, "this.")
+            measure_lines, accumulator = self.gen_measurement(sdata, "this.")
             [self.write_line(s) for s in measure_lines]
             if accumulator > 0:
                 self.write_line(f"size += {accumulator};")
@@ -273,35 +177,16 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-            self.write_line("WriteBytes(dv: DataView, tag: boolean, offset: number) : number {")
-            self.indent_level += 1
-            self.write_line("if (tag) {")
-            self.indent_level += 1
-            self.write_line(f"dv.setUint8(offset, MessageType.{s[0]}Type);")
-            self.write_line("offset += 1;")
-            self.indent_level -= 1
-            self.write_line("}")
-        else:
-            self.write_line("WriteBytes(dv: DataView, offset: number) : number {")
-            self.indent_level += 1
 
-        for var_name, var_type in s[1]:
-            [self.write_line(s) for s in self.serializer(var_type, var_name)]
-        self.write_line("return offset;")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        self.write_line(f"static FromBytes(dv: DataView, offset: number): {{val: {s[0]}, offset: number}} {{")
+        self.write_line(f"static FromBytes(dv: DataView, offset: number): {{val: {sname}, offset: number}} {{")
         self.indent_level += 1
-        if is_message:
+        if sdata.is_message:
             self.write_line("try {")
             self.indent_level += 1
-        self.write_line(f"const n{s[0]} = new {self.get_var(s[0])}();")
-        for var_name, var_type in s[1]:
-            [self.write_line(s) for s in self.deserializer(var_type, var_name, f"n{s[0]}")]
-        self.write_line(f"return {{val: n{s[0]}, offset: offset}};")
-        if is_message:
+        self.write_line(f"const n{sname} = new {self.type_mapping[sname]}();")
+        [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
+        self.write_line(f"return {{val: n{sname}, offset: offset}};")
+        if sdata.is_message:
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("catch (RangeError) {")
@@ -309,17 +194,30 @@ class TypeScriptWriter(Writer):
             self.write_line("return {val: null, offset: offset};")
             self.indent_level -= 1
             self.write_line("}")
-
         self.indent_level -= 1
         self.write_line("}")
 
+        if sdata.is_message:
+            self.write_line("WriteBytes(dv: DataView, tag: boolean, offset: number) : number {")
+            self.indent_level += 1
+            self.write_line("if (tag) {")
+            self.indent_level += 1
+            self.write_line(f"dv.setUint8(offset, MessageType.{sname}Type);")
+            self.write_line("offset += 1;")
+            self.indent_level -= 1
+            self.write_line("}")
+        else:
+            self.write_line("WriteBytes(dv: DataView, offset: number) : number {")
+            self.indent_level += 1
+        [self.serializer(mem, "this.") for mem in sdata.members]
+        self.write_line("return offset;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-    def gen_message(self, m: tuple[str, list[tuple[str,str]]]):
-        self.write_line("@staticImplements<MessageStatic>()")
-        self.gen_struct(m)
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
     def generate(self) -> str:
         self.output = []
@@ -331,6 +229,13 @@ class TypeScriptWriter(Writer):
 
         self.write_line("const textDec = new TextDecoder('utf-8');")
         self.write_line("const textEnc = new TextEncoder();")
+        self.write_line()
+
+        self.write_line("export enum MessageType {")
+        self.indent_level += 1
+        [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(self.protocol.messages)]
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line()
 
         self.write_line("export interface Message {")
@@ -353,15 +258,6 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        msg_types = [mt for mt in self.protocol.messages.keys()]
-
-        self.write_line("export enum MessageType {")
-        self.indent_level += 1
-        [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(msg_types)]
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
         self.write_line("export function ProcessRawBytes(dv: DataView, offset: number): {vals: Message[], offset: number} {")
         self.indent_level += 1
         self.write_line("const msgList: Message[] = [];")
@@ -372,7 +268,7 @@ class TypeScriptWriter(Writer):
         self.write_line("let msgRet: any = null;")
         self.write_line("switch (msgType) {")
         self.indent_level += 1
-        for msg_type in msg_types:
+        for msg_type in self.protocol.messages:
             self.write_line(f"case MessageType.{msg_type}Type:")
             self.indent_level += 1
             self.write_line(f"msgRet = {msg_type}.FromBytes(dv, offset);")
@@ -399,11 +295,11 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        for s in self.protocol.structs.items():
-            self.gen_struct(s)
+        for sname, sdata in self.protocol.structs.items():
+            self.gen_struct(sname, sdata)
 
-        for m in self.protocol.messages.items():
-            self.gen_message(m)
+        for mname, mdata in self.protocol.messages.items():
+            self.gen_struct(mname, mdata)
 
         self.write_line()
         assert self.indent_level == 0

@@ -1,7 +1,7 @@
 import os
 import re
 
-from .protocol import Protocol, COLLECTION_TYPES
+from .protocol import Protocol
 
 DEFAULT_INDENT = "    "
 
@@ -9,6 +9,14 @@ class TextUtil:
     def convert_to_lower_snake_case(s: str) -> str:
         s = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', s)
         return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s).lower()
+
+    def capitalize(s: str) -> str:
+        return s[:1].upper() + s[1:]
+
+    def replace(s: str, subs: list[tuple[str,str]]) -> str:
+        for sub in subs:
+            s = s.replace(sub[0], sub[1])
+        return s
 
 
 class Writer:
@@ -26,8 +34,7 @@ class Writer:
         self.tab: str = tab
 
         self.type_mapping: dict[str, str] = {}
-        for coll_type in COLLECTION_TYPES:
-            self.type_mapping[coll_type] = coll_type
+        self.type_mapping["string"] = "string"
         for struct_type in self.protocol.structs:
             self.type_mapping[struct_type] = struct_type
         for msg_type in self.protocol.messages:
@@ -63,8 +70,3 @@ class Writer:
     # return text with current indentation level
     def indent_string(self, text: str) -> str:
         return (self.tab * self.indent_level) + text
-
-    def get_var(self, var_type: str) -> str:
-        if var_type not in self.type_mapping:
-            raise NotImplementedError(f"No type called {var_type} implemented for <{type(self)}>.")
-        return self.type_mapping[var_type]

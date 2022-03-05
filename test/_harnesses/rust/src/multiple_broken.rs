@@ -54,9 +54,5 @@ fn main() {
         }
     }
 
-    if !checker.ok {
-        eprintln!("Failed assertions.");
-        std::process::exit(1);
-    }
-
+    checker.check();
 }

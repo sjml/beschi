@@ -11,6 +11,13 @@ impl Checker {
             self.ok = false;
         }
     }
+
+    pub fn check(&self) {
+        if !self.ok {
+            eprintln!("Failed assertions.");
+            std::process::exit(1);
+        }
+    }
 }
 
 pub fn arg_parse() -> HashMap<String, String> {

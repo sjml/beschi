@@ -1,5 +1,7 @@
-from ..protocol import Protocol, BASE_TYPE_SIZES
-from ..writer import Writer
+import re # two problems
+
+from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
+from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
 LANGUAGE_NAME = "C"
@@ -63,210 +65,192 @@ class CWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
 
-    def gen_default(self, members: list[tuple[str,str]]):
-        for mname, mtype in members:
-            if mtype in self.base_defaults:
-                self.write_line(f".{mname} = {self.base_defaults[mtype]},")
-            elif mtype == "string":
-                self.write_line(f".{mname} = (char*)\"\",")
-            elif mtype[0] == "[" and mtype[-1] == "]":
-                self.write_line(f".{mname} = NULL,")
+    def deserializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"err = {self.prefix}_ReadUInt32(r, &({accessor}{var.name}_len));")
+            self.err_check_return()
+            if var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
+                pref = ""
             else:
-                self.write_line(f".{mname} = {{")
-                self.indent_level += 1
-                self.gen_default(self.protocol.structs[mtype])
-                self.indent_level -= 1
-                self.write_line("},")
-
-    def gen_struct(self, sname: str, members: list[tuple[str,str]], is_message: bool = False):
-        self.write_line("typedef struct {")
-        self.indent_level += 1
-        if is_message:
-            self.write_line(f"{self.prefix}MessageType _mt;")
-        for member_name, member_type in members:
-            if member_type in BASE_TYPE_SIZES.keys():
-                self.write_line(f"{self.type_mapping[member_type]} {member_name};")
-            elif member_type == "string":
-                self.write_line(f"{self.type_mapping['uint32']} {member_name}_len;")
-                self.write_line(f"{self.type_mapping[member_type]} {member_name};")
-            elif member_type[0] == "[" and member_type[-1] == "]":
-                listed_type = member_type[1:-1]
-                self.write_line(f"{self.type_mapping['uint32']} {member_name}_len;")
-                if listed_type == "string":
-                    self.write_line(f"{self.type_mapping['uint32']}* {member_name}_els_len;")
-                if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
-                    self.write_line(f"{self.type_mapping[listed_type]}* {member_name};")
-                elif listed_type in self.protocol.structs:
-                    self.write_line(f"{self.prefix}{listed_type}* {member_name};")
-            elif member_type in self.protocol.structs:
-                self.write_line(f"{self.prefix}{member_type} {member_name};")
-
-        self.indent_level -= 1
-        self.write_line(f"}} {self.prefix}{sname};")
-        if is_message:
-            self.write_line(f"extern const {self.prefix}{sname} {self.prefix}{sname}_default;")
-            self.write_line(f"const {self.prefix}{sname} {self.prefix}{sname}_default = {{")
+                pref = self.prefix
+            self.write_line(f"{accessor}{var.name} = ({pref}{self.type_mapping[var.vartype]}*)malloc(sizeof({pref}{self.type_mapping[var.vartype]}) * {accessor}{var.name}_len);")
+            self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
+            if var.vartype == "string":
+                self.write_line(f"{accessor}{var.name}_els_len = ({self.type_mapping['uint32']}*)malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{var.name}_len);")
+                self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
+            idx = self.indent_level
+            self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
             self.indent_level += 1
-            self.write_line(f"._mt = {self.prefix}MessageType_{sname},")
-            self.gen_default(members)
-            self.indent_level -= 1
-            self.write_line("};")
-        self.write_line()
-        if is_message:
-            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag);")
-        else:
-            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src);")
-        self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst);")
-        if is_message:
-            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size);")
-            self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m);")
-
-        self.write_line()
-        self.write_line()
-
-    def deserializer(self, varname: str, vartype: str, accessor: str):
-        if vartype in BASE_TYPE_SIZES.keys():
-            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[vartype]}(r, &({accessor}{varname}));")
-            self.err_check_return()
-        elif vartype == "string":
-            self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{varname}), &({accessor}{varname}_len));")
-            self.err_check_return()
-        elif vartype[0] == "[" and vartype[-1] == "]":
-            listed_type = vartype[1:-1]
-            self.write_line(f"err = {self.prefix}_ReadUInt32(r, &({accessor}{varname}_len));")
-            self.err_check_return()
-            if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
-                self.write_line(f"{accessor}{varname} = ({self.type_mapping[listed_type]}*)malloc(sizeof({self.type_mapping[listed_type]}) * {accessor}{varname}_len);")
-                self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
-                if listed_type == "string":
-                    self.write_line(f"{accessor}{varname}_els_len = ({self.type_mapping['uint32']}*)malloc(sizeof({self.type_mapping['uint32']}) * {accessor}{varname}_len);")
-                    self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
-            else:
-                self.write_line(f"{accessor}{varname} = ({self.prefix}{listed_type}*)malloc(sizeof({self.prefix}{listed_type}) * {accessor}{varname}_len);")
-                self.write_line(f"if ({accessor}{varname} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
-            self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
-            self.indent_level += 1
-            if listed_type in BASE_TYPE_SIZES.keys():
-                self.write_line(f"err = {self.prefix}_Read{self.base_serializers[listed_type]}(r, &({accessor}{varname}[i]));")
-            elif listed_type == "string":
-                self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{varname}[i]), &({accessor}{varname}_els_len[i]));")
-            else:
-                self.write_line(f"err = {self.prefix}{listed_type}_FromBytes(r, &({accessor}{varname}[i]));")
-
-            self.err_check_return()
+            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+            self.deserializer(inner, accessor)
             self.indent_level -= 1
             self.write_line("}")
-        else:
-            self.write_line(f"err = {self.prefix}{vartype}_FromBytes(r, &({accessor}{varname}));")
-            self.err_check_return()
-
-    def serializer(self, varname: str, vartype: str, accessor: str):
-        if vartype in BASE_TYPE_SIZES.keys():
-            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[vartype]}(w, &({accessor}{varname}));")
-            self.err_check_return()
-        elif vartype == "string":
-            self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{varname}), &({accessor}{varname}_len));")
-            self.err_check_return()
-        elif vartype[0] == "[" and vartype[-1] == "]":
-            listed_type = vartype[1:-1]
-            self.write_line(f"err = {self.prefix}_WriteUInt32(w, &({accessor}{varname}_len));")
-            self.err_check_return()
-            self.write_line(f"for (uint32_t i = 0; i < {accessor}{varname}_len; i++) {{")
-            self.indent_level += 1
-            if listed_type in BASE_TYPE_SIZES.keys():
-                self.write_line(f"err = {self.prefix}_Write{self.base_serializers[listed_type]}(w, &({accessor}{varname}[i]));")
-            elif listed_type == "string":
-                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{varname}[i]), &({accessor}{varname}_els_len[i]));")
+        elif var.vartype == "string":
+            idx_search = re.match(r"(.*)\[(i\d+)\]$", var.name)
+            if idx_search != None:
+                name = idx_search.group(1)
+                idx = idx_search.group(2)
+                self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{name}_els_len[{idx}]));")
             else:
-                self.write_line(f"err = {self.prefix}{listed_type}_WriteBytes(w, &({accessor}{varname}[i]));")
+                self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{var.name}_len));")
+        elif var.vartype in NUMERIC_TYPE_SIZES:
+            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[var.vartype]}(r, &({accessor}{var.name}));")
+        else:
+            self.write_line(f"err = {self.prefix}{var.vartype}_FromBytes(r, &({accessor}{var.name}));")
+        self.err_check_return()
 
+    def serializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"err = {self.prefix}_WriteUInt32(w, &({accessor}{var.name}_len));")
             self.err_check_return()
+            idx = self.indent_level
+            self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+            self.indent_level += 1
+            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+            self.serializer(inner, accessor)
             self.indent_level -= 1
             self.write_line("}")
+        elif var.vartype == "string":
+            idx_search = re.match(r"(.*)\[(i\d+)\]$", var.name)
+            if idx_search != None:
+                name = idx_search.group(1)
+                idx = idx_search.group(2)
+                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), &({accessor}{name}_els_len[{idx}]));")
+            else:
+                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), &({accessor}{var.name}_len));")
+        elif var.vartype in NUMERIC_TYPE_SIZES:
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[var.vartype]}(w, &({accessor}{var.name}));")
         else:
-            self.write_line(f"err = {self.prefix}{vartype}_WriteBytes(w, &({accessor}{varname}));")
-            self.err_check_return()
+            self.write_line(f"err = {self.prefix}{var.vartype}_WriteBytes(w, &({accessor}{var.name}));")
+        self.err_check_return()
 
-    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
-
         accum = 0
-        if self.protocol.is_simple(s[0]):
-            lines.append(f"*size = {self.protocol.calculate_size(s[0])};")
+
+        if st.is_simple():
+            lines.append(f"*size = {self.protocol.get_size_of(st.name)};")
         else:
             size_init = "*size = 0;"
             lines.append(size_init)
 
-            for var_name, var_type in s[1]:
-                if self.protocol.is_simple(var_type):
-                    accum += self.protocol.calculate_size(var_type)
-                else:
-                    if var_type == "string":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"*size += {accessor_prefix}{var_name}_len;")
-                    elif var_type == "[string]":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"for (uint32_t i = 0; i < {accessor_prefix}{var_name}_len; i++) {{")
-                        lines.append(f"{self.tab}*size += {BASE_TYPE_SIZES['uint32']} + {accessor_prefix}{var_name}_els_len[i];")
+            for var in st.members:
+                if var.is_list:
+                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    if var.is_simple(True):
+                        lines.append(f"*size += {accessor}{var.name}_len * {self.protocol.get_size_of(var.vartype)};")
+                    elif var.vartype == "string":
+                        lines.append(f"for (uint32_t i = 0; i < {accessor}{var.name}_len; i++) {{")
+                        lines.append(f"{self.tab}*size += {NUMERIC_TYPE_SIZES['uint32']} + {accessor}{var.name}_els_len[i];")
                         lines.append("}")
-                    elif var_type[0] == "[" and var_type[-1] == "]":
-                        listed_var_type = var_type[1:-1]
-                        if self.protocol.is_simple(listed_var_type):
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"*size += {accessor_prefix}{var_name}_len * {self.protocol.calculate_size(listed_var_type)};")
-                        else:
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"for (uint32_t i = 0; i < {accessor_prefix}{var_name}_len; i++) {{")
-                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"{accessor_prefix}{var_name}[i].")
-                            if clines[0] == size_init:
-                                clines = clines[1:]
-                            clines.append(f"*size += {caccum};")
-                            lines += [f"{self.tab}{l}" for l in clines]
-                            lines.append("}")
                     else:
-                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        lines.append(f"for (uint32_t i = 0; i < {accessor}{var.name}_len; i++) {{")
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}[i].")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        clines.append(f"*size += {caccum};")
+                        lines += [f"{self.tab}{l}" for l in clines]
+                        lines.append("}")
+                else:
+                    if var.is_simple():
+                        accum += self.protocol.get_size_of(var.vartype)
+                    elif var.vartype == "string":
+                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        lines.append(f"*size += {accessor}{var.name}_len;")
+                    else:
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
                         if clines[0] == size_init:
                             clines = clines[1:]
                         lines += clines
                         accum += caccum
         return lines, accum
 
-    def gen_implementation(self, sname: str, members: list[tuple[str,str]], is_message: bool = False):
-        self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst) {{")
-        self.indent_level += 1
-        if is_message:
-            self.write_line(f"dst->_mt = {self.prefix}MessageType_{sname};")
-        if len(members) > 0:
-            self.write_line(f"{self.prefix}err_t err;")
-        [self.deserializer(v, t, "dst->") for v,t in members]
-        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
+    def gen_default(self, members: list[Variable]):
+        for var in members:
+            if var.is_list:
+                self.write_line(f".{var.name} = NULL,")
+            elif var.vartype in self.base_defaults:
+                self.write_line(f".{var.name} = {self.base_defaults[var.vartype]},")
+            elif var.vartype == "string":
+                self.write_line(f".{var.name} = (char*)\"\",")
+            else:
+                self.write_line(f".{var.name} = {{")
+                self.indent_level += 1
+                self.gen_default(self.protocol.structs[var.vartype].members)
+                self.indent_level -= 1
+                self.write_line("},")
 
-        if is_message:
-            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag) {{")
+    def destructor(self, var: Variable, accessor: str):
+        if var.is_simple():
+            return
+        if var.is_list:
+            if var.is_simple(True):
+                self.write_line(f"free({accessor}{var.name});")
+            else:
+                idx = self.indent_level
+                self.write_line(f"for (uint32_t i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+                self.indent_level += 1
+                inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+                self.destructor(inner, accessor)
+                self.indent_level -= 1
+                self.write_line("}")
+                if var.vartype == "string":
+                    self.write_line(f"free({accessor}{var.name}_els_len);")
+                self.write_line(f"free({accessor}{var.name});")
+        elif var.vartype == "string":
+            self.write_line(f"free({accessor}{var.name});")
         else:
-            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src) {{")
+            [self.destructor(mem, f"{accessor}{var.name}.") for mem in self.protocol.structs[var.vartype].members]
+
+    def gen_struct(self, sname: str, sdata: Struct):
+        self.write_line("typedef struct {")
         self.indent_level += 1
-        self.write_line(f"{self.prefix}err_t err;")
-        if is_message:
-            self.write_line("if (tag) {")
-            self.indent_level += 1
-            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t *)&(src->_mt));")
-            self.err_check_return()
-            self.indent_level -= 1
-            self.write_line("}")
-        [self.serializer(v, t, "src->") for v,t in members]
-        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        if sdata.is_message:
+            self.write_line(f"{self.prefix}MessageType _mt;")
+        for var in sdata.members:
+            if var.is_list:
+                self.write_line(f"{self.type_mapping['uint32']} {var.name}_len;")
+                if var.vartype == "string":
+                    self.write_line(f"{self.type_mapping['uint32']}* {var.name}_els_len;")
+                if var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
+                    self.write_line(f"{self.type_mapping[var.vartype]}* {var.name};")
+                elif var.vartype in self.protocol.structs:
+                    self.write_line(f"{self.prefix}{var.vartype}* {var.name};")
+            elif var.vartype == "string":
+                self.write_line(f"{self.type_mapping['uint32']} {var.name}_len;")
+                self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
+            elif var.vartype in NUMERIC_TYPE_SIZES:
+                self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
+            elif var.vartype in self.protocol.structs:
+                self.write_line(f"{self.prefix}{var.vartype} {var.name};")
         self.indent_level -= 1
-        self.write_line("}")
+        self.write_line(f"}} {self.prefix}{sname};")
+
+        if sdata.is_message:
+            self.write_line(f"extern const {self.prefix}{sname} {self.prefix}{sname}_default;")
+            self.write_line(f"const {self.prefix}{sname} {self.prefix}{sname}_default = {{")
+            self.indent_level += 1
+            self.write_line(f"._mt = {self.prefix}MessageType_{sname},")
+            self.gen_default(sdata.members)
+            self.indent_level -= 1
+            self.write_line("};")
+        self.write_line()
+        if sdata.is_message:
+            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag);")
+        else:
+            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst);")
+        if sdata.is_message:
+            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size);")
+            self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m);")
+        self.write_line()
         self.write_line()
 
-        if is_message:
+    def gen_implementation(self, sname: str, sdata: Struct):
+        if sdata.is_message:
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size) {{")
             self.indent_level += 1
-            measure_lines, accumulator = self.gen_measurement((sname, members), "m->")
+            measure_lines, accumulator = self.gen_measurement(sdata, "m->")
             [self.write_line(s) for s in measure_lines]
             if accumulator > 0:
                 self.write_line(f"*size += {accumulator};")
@@ -277,41 +261,42 @@ class CWriter(Writer):
 
             self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m) {{")
             self.indent_level += 1
-
-            def destroyer(vartype: str, varname: str):
-                if self.protocol.is_simple(vartype):
-                    return
-                if vartype == "string":
-                    self.write_line(f"free({varname});")
-                elif vartype == "[string]":
-                    self.write_line(f"for (uint32_t i = 0; i < {varname}_len; i++) {{")
-                    self.indent_level += 1
-                    self.write_line(f"free({varname}[i]);")
-                    self.indent_level -= 1
-                    self.write_line("}")
-                    self.write_line(f"free({varname}_els_len);")
-                    self.write_line(f"free({varname});")
-                elif vartype[0] == "[" and vartype[-1] == "]":
-                    listed_type = vartype[1:-1]
-                    if self.protocol.is_simple(listed_type):
-                        self.write_line(f"free({varname});")
-                    else:
-                        self.write_line(f"for (uint32_t i = 0; i < {varname}_len; i++) {{")
-                        self.indent_level += 1
-                        destroyer(listed_type, f"{varname}[i]")
-                        self.indent_level -= 1
-                        self.write_line("}")
-                        self.write_line(f"free({varname});")
-                else:
-                    [destroyer(t, f"{varname}.{n}") for (n,t) in self.protocol.structs[vartype]]
-
-            [destroyer(t, f"m->{n}") for (n,t) in members]
+            [self.destructor(mem, f"m->") for mem in sdata.members]
             self.write_line("free(m);")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
 
+        self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst) {{")
+        self.indent_level += 1
+        if sdata.is_message:
+            self.write_line(f"dst->_mt = {self.prefix}MessageType_{sname};")
+        if len(sdata.members) > 0:
+            self.write_line(f"{self.prefix}err_t err;")
+        [self.deserializer(mem, "dst->") for mem in sdata.members]
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
+        if sdata.is_message:
+            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag) {{")
+        else:
+            self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src) {{")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}err_t err;")
+        if sdata.is_message:
+            self.write_line("if (tag) {")
+            self.indent_level += 1
+            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t *)&(src->_mt));")
+            self.err_check_return()
+            self.indent_level -= 1
+            self.write_line("}")
+        [self.serializer(mem, "src->") for mem in sdata.members]
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
     def generate(self) -> str:
         self.output = []
@@ -334,11 +319,11 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len);")
         self.write_line()
 
-        for sname, smembers in self.protocol.structs.items():
-            self.gen_struct(sname, smembers)
+        for sname, sdata in self.protocol.structs.items():
+            self.gen_struct(sname, sdata)
 
-        for mname, mmembers in self.protocol.messages.items():
-            self.gen_struct(mname, mmembers, True)
+        for mname, mdata in self.protocol.messages.items():
+            self.gen_struct(mname, mdata)
 
         self.add_boilerplate(self.subs, 1)
 
@@ -365,7 +350,7 @@ class CWriter(Writer):
         self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
         self.write_line("break;")
         self.indent_level -= 1
-        for msg_type in self.protocol.messages.keys():
+        for msg_type in self.protocol.messages:
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"return {self.prefix}{msg_type}_GetSizeInBytes((const {self.prefix}{msg_type}*)m, len);")
@@ -399,7 +384,7 @@ class CWriter(Writer):
         self.write_line()
         self.write_line("void* out;")
         self.write_line("switch (msgType) {")
-        for msg_type in self.protocol.messages.keys():
+        for msg_type in self.protocol.messages:
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
@@ -428,7 +413,7 @@ class CWriter(Writer):
         self.indent_level += 1
         self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(msgList[i]);")
         self.write_line("switch (msgType) {")
-        for msg_type in self.protocol.messages.keys():
+        for msg_type in self.protocol.messages:
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"{self.prefix}{msg_type}_Destroy(({self.prefix}{msg_type}*)msgList[i]);")
@@ -447,11 +432,11 @@ class CWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        for sname, smembers in self.protocol.structs.items():
-            self.gen_implementation(sname, smembers)
+        for sname, sdata in self.protocol.structs.items():
+            self.gen_implementation(sname, sdata)
 
-        for mname, mmembers in self.protocol.messages.items():
-            self.gen_implementation(mname, mmembers, True)
+        for mname, mdata in self.protocol.messages.items():
+            self.gen_implementation(mname, mdata)
 
         self.add_boilerplate(self.subs, 2)
         return "\n".join(self.output)

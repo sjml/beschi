@@ -40,7 +40,7 @@ def generate_for(protocol: str, output_name: str, label: str):
     except Exception as e:
         if label in beschi.writers.experimental_writers:
             sys.stderr.write(f"Experimental writer {label} failed while trying to produce {output_name}.\n")
-            sys.stderr.write(f"Exception:\n{e.with_traceback()}")
+            sys.stderr.write(f"Exception:\n{e.with_traceback(None)}")
         else:
             raise e
 

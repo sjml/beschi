@@ -1,8 +1,5 @@
-import copy
-from collections import OrderedDict
-
-from ..protocol import Protocol, BASE_TYPE_SIZES, COLLECTION_TYPES
-from ..writer import Writer
+from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
+from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
 LANGUAGE_NAME = "Go"
@@ -13,31 +10,14 @@ class GoWriter(Writer):
     default_extension = ".go"
 
     def __init__(self, p: Protocol):
-        # because of how Go handles making methods/members public, we need to
-        #   do some rewriting on the protocol here
-        def publicize(s: str):
-            return s[:1].upper() + s[1:]
+        for _, s in p.structs.items():
+            for var in s.members:
+                var.name = TextUtil.capitalize(var.name)
+        for _, m in p.messages.items():
+            for var in m.members:
+                var.name = TextUtil.capitalize(var.name)
 
-        p2 = copy.deepcopy(p)
-        nstructs = OrderedDict()
-        for s in p2.structs:
-            k = publicize(s)
-            v = []
-            for vdata in p2.structs[s]:
-                v.append( (publicize(vdata[0]), vdata[1]) )
-            nstructs[k] = v
-        p2.structs = nstructs
-
-        nmessages = OrderedDict()
-        for m in p2.messages:
-            k = publicize(m)
-            v = []
-            for vdata in p2.messages[m]:
-                v.append( (publicize(vdata[0]), vdata[1]) )
-            nmessages[k] = v
-        p2.messages = nmessages
-
-        super().__init__(protocol=p2, tab="\t")
+        super().__init__(protocol=p, tab="\t")
 
         self.type_mapping["byte"] = "byte"
         self.type_mapping["bool"] = "bool"
@@ -50,127 +30,124 @@ class GoWriter(Writer):
         self.type_mapping["float"] = "float32"
         self.type_mapping["double"] = "float64"
 
+    def deserializer(self, var: Variable, accessor: str):
+        def err_panic():
+            self.write_line("if err != nil {")
+            self.write_line(f"{self.tab}panic(err)")
+            self.write_line("}")
 
-    def deserializer(self, var_type: str, var_name: str, parent: str = None) -> list[str]:
-        if parent == None:
-            pref = ""
-            this = var_name
+        if var.is_list:
+            self.write_line(f"var {var.name}_Len {self.type_mapping['uint32']}")
+            self.write_line(f"err = binary.Read(data, binary.LittleEndian, &{var.name}_Len)")
+            err_panic()
+            self.write_line(f"{accessor}.{var.name} = make([]{self.type_mapping[var.vartype]}, {var.name}_Len)")
+            idx = self.indent_level
+            self.write_line(f"for i{idx} := ({self.type_mapping['uint32']})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
+            self.indent_level += 1
+            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+            self.deserializer(inner, accessor)
+            self.indent_level -= 1
+            self.write_line("}")
+        elif var.vartype == "string":
+            self.write_line(f"err = readString(data, &{accessor}.{var.name})")
+            err_panic()
+        elif var.is_simple():
+            self.write_line(f"err = binary.Read(data, binary.LittleEndian, &{accessor}.{var.name})")
+            err_panic()
         else:
-            pref = f"{parent}."
-            this = f"{pref}{var_name}"
-        label = var_name
-        if label.endswith("[i]"):
-            label = "i"
+            self.write_line(f"{var.vartype}FromBytes(data, &{accessor}.{var.name})")
 
-        err_panic = [
-            "if err != nil {",
-            self.tab + "panic(err)",
-            "}",
-        ]
-
-        if self.protocol.is_simple(var_type):
-            return [
-                f"err = binary.Read(data, binary.LittleEndian, &{pref}{var_name})",
-                *err_panic
-            ]
-        elif var_type in self.protocol.structs or var_type in self.protocol.messages:
-            fields: list[tuple[str,str]] = None
-            if var_type in self.protocol.structs:
-                fields = self.protocol.structs[var_type]
-            elif var_type in self.protocol.messages:
-                fields = self.protocol.messages[var_type]
-            output: list[str] = []
-            for vn, vt in fields:
-                output += self.deserializer(vt, vn, this)
-            return output
-        elif var_type == "string":
-            return [
-                f"err = readString(data, &{pref}{var_name})",
-                "if err != nil {",
-                f"{self.tab}panic(err)",
-                "}",
-            ]
-        elif var_type[0] == "[" and var_type[-1] == "]":
-            interior = var_type[1:-1]
-            out = [
-                f"var {label}Len uint32",
-                f"err = binary.Read(data, binary.LittleEndian, &{label}Len)",
-                *err_panic,
-                f"{pref}{var_name} = make([]{interior}, {label}Len)",
-                f"for {var_name}_i := (uint32)(0); {var_name}_i < {label}Len; {var_name}_i++ {{"
-            ]
-            out += [
-                self.tab + deser for deser in self.deserializer(interior, f"{var_name}[{var_name}_i]", parent)
-            ]
-            out += ["}"]
-            return out
+    def serializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"{var.name}_Len := ({self.type_mapping['uint32']})(len({accessor}.{var.name}))")
+            self.write_line(f"binary.Write(data, binary.LittleEndian, {var.name}_Len)")
+            idx = self.indent_level
+            self.write_line(f"for i{idx} := ({self.type_mapping['uint32']})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
+            self.indent_level += 1
+            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+            self.serializer(inner, accessor)
+            self.indent_level -= 1
+            self.write_line("}")
+        elif var.vartype == "string":
+            self.write_line(f"writeString(data, &{accessor}.{var.name})")
+        elif var.is_simple():
+            self.write_line(f"binary.Write(data, binary.LittleEndian, &{accessor}.{var.name})")
         else:
-            raise NotImplementedError(f"Type {var_type} not deserializable yet.")
+            self.write_line(f"{accessor}.{var.name}.WriteBytes(data)")
 
+    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
+        lines: list[str] = []
+        accum = 0
 
-    def serializer(self, var_type: str, var_name: str, parent: str = None) -> list[str]:
-        if parent == None:
-            pref = ""
-            ptr = ""
-            this = "output"
+        if st.is_simple():
+            lines.append(f"return {self.protocol.get_size_of(st.name)}")
         else:
-            pref = f"{parent}."
-            ptr = "&"
-            this = f"{pref}{var_name}"
-        label = var_name
-        if label.endswith("[i]"):
-            label = "i"
+            size_init = "size := 0"
+            lines.append(size_init)
 
-        if self.protocol.is_simple(var_type):
-            return [f"binary.Write(data, binary.LittleEndian, {ptr}{pref}{var_name})"]
-        elif var_type in self.protocol.structs or var_type in self.protocol.messages:
-            fields: list[tuple[str,str]] = None
-            if var_type in self.protocol.structs:
-                fields = self.protocol.structs[var_type]
-            elif var_type in self.protocol.messages:
-                fields = self.protocol.messages[var_type]
-            output: list[str] = []
-            for vn, vt in fields:
-                output += self.serializer(vt, vn, this)
-            return output
-        elif var_type == "string":
-            return [f"writeString(data, {ptr}{pref}{var_name})"]
-        elif var_type[0] == "[" and var_type[-1] == "]":
-            interior = var_type[1:-1]
-            out = [
-                f"{label}Len := (uint32)(len({pref}{var_name}))",
-                f"binary.Write(data, binary.LittleEndian, {label}Len)",
-                f"for {var_name}_i := (uint32)(0); {var_name}_i < {label}Len; {var_name}_i++ {{",
-            ]
-            out += [
-                self.tab + deser for deser in self.serializer(interior, f"{var_name}[{var_name}_i]", parent)
-            ]
-            out += ["}"]
-            return out
-        else:
-            raise NotImplementedError(f"Type {var_type} not serializable yet.")
+            for var in st.members:
+                if var.is_list:
+                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    if var.is_simple(True):
+                        lines.append(f"size += len({accessor}{var.name}) * {self.protocol.get_size_of(var.vartype)}")
+                    elif var.vartype == "string":
+                        lines.append(f"for _, s := range {accessor}{var.name} {{")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + len(s)")
+                        lines.append("}")
+                    else:
+                        lines.append(f"for _, el := range {accessor}{var.name} {{")
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"el.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        clines.append(f"size += {caccum}")
+                        lines += [f"{self.tab}{l}" for l in clines]
+                        lines.append("}")
+                else:
+                    if var.is_simple():
+                        accum += self.protocol.get_size_of(var.vartype)
+                    elif var.vartype == "string":
+                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        lines.append(f"size += len({accessor}{var.name})")
+                    else:
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        lines += clines
+                        accum += caccum
+        return lines, accum
 
-
-    def gen_struct(self, s: tuple[str, list[tuple[str,str]]]):
-        is_message = False
-        if s[0] in self.protocol.messages:
-            is_message = True
-
-        self.write_line()
-        self.write_line(f"type {s[0]} struct {{")
+    def gen_struct(self, sname: str, sdata: Struct):
+        self.write_line(f"type {sname} struct {{")
         self.indent_level += 1
-
-        for var_name, var_type in s[1]:
-            if var_type[0] == "[" and var_type[-1] == "]":
-                self.write_line(f"{var_name} []{self.get_var(var_type[1:-1])}")
+        for var in sdata.members:
+            if var.is_list:
+                self.write_line(f"{var.name} []{var.vartype}")
             else:
-                self.write_line(f"{var_name} {self.get_var(var_type)}")
+                self.write_line(f"{var.name} {self.type_mapping[var.vartype]}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-        if is_message:
-            self.write_line(f"func {s[0]}FromBytes (data io.Reader) (msg *{s[0]}) {{")
+        if sdata.is_message:
+            self.write_line(f"func (output {sname}) GetMessageType() MessageType {{")
+            self.indent_level += 1
+            self.write_line(f"return {sname}Type")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+
+            self.write_line(f"func (output {sname}) GetSizeInBytes() int {{")
+            self.indent_level +=1
+            measure_lines, accumulator = self.gen_measurement(sdata, "output.")
+            [self.write_line(s) for s in measure_lines]
+            if accumulator > 0:
+                self.write_line(f"size += {accumulator}")
+            if len(measure_lines) > 1:
+                self.write_line(f"return size")
+            self.indent_level -=1
+            self.write_line("}")
+
+            self.write_line(f"func {sdata.name}FromBytes (data io.Reader) (msg *{sname}) {{")
             self.indent_level += 1
             self.write_line("defer func() {")
             self.indent_level += 1
@@ -181,102 +158,36 @@ class GoWriter(Writer):
             self.write_line("}")
             self.indent_level -= 1
             self.write_line("}()")
-            self.write_line("var err error")
-            self.write_line(f"ret := {s[0]}{{}}")
-            [self.write_line(s) for s in self.deserializer(s[0], "ret")]
+            if len(sdata.members) > 0:
+                self.write_line("var err error")
+            self.write_line(f"ret := {sname}{{}}")
+            [self.deserializer(mem, "ret") for mem in sdata.members]
             self.write_line()
             self.write_line("return &ret")
         else:
-            self.write_line(f"func {s[0]}FromBytes (data io.Reader, input *{s[0]}) {{")
+            self.write_line(f"func {sname}FromBytes (data io.Reader, input *{sname}) {{")
             self.indent_level += 1
             self.write_line("var err error")
-            [self.write_line(s) for s in self.deserializer(s[0], "input")]
+            [self.deserializer(mem, "input") for mem in sdata.members]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-        if is_message:
-            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer, tag bool) {{")
+        if sdata.is_message:
+            self.write_line(f"func (output {sname}) WriteBytes (data io.Writer, tag bool) {{")
             self.indent_level += 1
             self.write_line("if tag {")
             self.indent_level += 1
-            self.write_line(f"binary.Write(data, binary.LittleEndian, {s[0]}Type)")
+            self.write_line(f"binary.Write(data, binary.LittleEndian, {sname}Type)")
             self.indent_level -= 1
             self.write_line("}")
         else:
-            self.write_line(f"func (output {s[0]}) WriteBytes (data io.Writer) {{")
+            self.write_line(f"func (output {sname}) WriteBytes (data io.Writer) {{")
             self.indent_level += 1
-        [self.write_line(s) for s in self.serializer(s[0], "output")]
+        [self.serializer(mem, "output") for mem in sdata.members]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
-
-    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
-        lines: list[str] = []
-
-        accum = 0
-        if self.protocol.is_simple(s[0]):
-            lines.append(f"return {self.protocol.calculate_size(s[0])}")
-        else:
-            size_init = "size := 0"
-            lines.append(size_init)
-
-            for var_name, var_type in s[1]:
-                if self.protocol.is_simple(var_type):
-                    accum += self.protocol.calculate_size(var_type)
-                else:
-                    if var_type == "string":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"size += len({accessor_prefix}{var_name})")
-                    elif var_type == "[string]":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"for _, s := range {accessor_prefix}{var_name} {{")
-                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + len(s)")
-                        lines.append("}")
-                    elif var_type[0] == "[" and var_type[-1] == "]":
-                        listed_var_type = var_type[1:-1]
-                        if self.protocol.is_simple(listed_var_type):
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"size += len({accessor_prefix}{var_name}) * {self.protocol.calculate_size(listed_var_type)}")
-                        else:
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"for _, c := range {accessor_prefix}{var_name} {{")
-                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"c.")
-                            if clines[0] == size_init:
-                                clines = clines[1:]
-                            clines.append(f"size += {caccum}")
-                            lines += [f"{self.tab}{l}" for l in clines]
-                            lines.append("}")
-                    else:
-                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
-                        if clines[0] == size_init:
-                            clines = clines[1:]
-                        lines += clines
-                        accum += caccum
-        return lines, accum
-
-    def gen_message(self, m: tuple[str, list[tuple[str,str]]]):
-        self.gen_struct(m)
-
-        self.write_line(f"func (output {m[0]}) GetMessageType() MessageType {{")
-        self.indent_level += 1
-        self.write_line(f"return {m[0]}Type")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        self.write_line(f"func (output {m[0]}) GetSizeInBytes() int {{")
-        self.indent_level +=1
-        measure_lines, accumulator = self.gen_measurement(m, "output.")
-        [self.write_line(s) for s in measure_lines]
-        if accumulator > 0:
-            self.write_line(f"size += {accumulator}")
-        if len(measure_lines) > 1:
-            self.write_line(f"return size")
-        self.indent_level -=1
-        self.write_line("}")
-
-
 
     def generate(self) -> str:
         self.output = []
@@ -286,24 +197,17 @@ class GoWriter(Writer):
         self.write_line(f"// Do not edit directly.")
         self.write_line()
         if self.protocol.namespace:
-            self.write_line(f"package {self.protocol.namespace}")
+            subs = [("Beschi", self.protocol.namespace)]
         else:
-            self.write_line("package main")
-        self.write_line()
-        self.write_line("import (")
-        self.indent_level += 1
-        self.write_line("\"encoding/binary\"")
-        self.write_line("\"io\"")
-        self.indent_level -= 1
-        self.write_line(")")
-        self.write_line()
+            subs = []
 
-        msg_types = [mt for mt in self.protocol.messages.keys()]
+        self.add_boilerplate(subs)
+        self.write_line()
 
         self.write_line("type MessageType byte")
         self.write_line("const (")
         self.indent_level += 1
-        [self.write_line(f"{k}Type MessageType = {i+1}") for i, k in enumerate(msg_types)]
+        [self.write_line(f"{msg_name}Type MessageType = {i+1}") for i, msg_name in enumerate(self.protocol.messages)]
         self.indent_level -= 1
         self.write_line(")")
         self.write_line()
@@ -331,7 +235,7 @@ class GoWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("switch msgType {")
-        for msg_type in msg_types:
+        for msg_type in self.protocol.messages:
             self.write_line(f"case {msg_type}Type:")
             self.indent_level += 1
             self.write_line(f"msgList = append(msgList, {msg_type}FromBytes(data))")
@@ -353,37 +257,11 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func readString(data io.Reader, str *string) error {")
-        self.indent_level += 1
-        self.write_line("var len uint32")
-        self.write_line("binary.Read(data, binary.LittleEndian, &len)")
-        self.write_line("sbytes := make([]byte, len)")
-        self.write_line("err := binary.Read(data, binary.LittleEndian, &sbytes)")
-        self.write_line("if err != nil {")
-        self.indent_level += 1
-        self.write_line("panic(err)")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("*str = string(sbytes)")
-        self.write_line("return err")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
+        for sname, sdata in self.protocol.structs.items():
+            self.gen_struct(sname, sdata)
 
-        self.write_line("func writeString(data io.Writer, str *string) {")
-        self.indent_level += 1
-        self.write_line("strLen := (uint32)(len(*str))")
-        self.write_line("binary.Write(data, binary.LittleEndian, strLen)")
-        self.write_line("io.WriteString(data, *str)")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        for s in self.protocol.structs.items():
-            self.gen_struct(s)
-
-        for m in self.protocol.messages.items():
-            self.gen_message(m)
+        for mname, mdata in self.protocol.messages.items():
+            self.gen_struct(mname, mdata)
 
         self.write_line()
         assert self.indent_level == 0

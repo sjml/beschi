@@ -1,7 +1,4 @@
-import copy
-from collections import OrderedDict
-
-from ..protocol import Protocol, BASE_TYPE_SIZES
+from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -14,25 +11,14 @@ class RustWriter(Writer):
     in_progress = True
 
     def __init__(self, p: Protocol):
-        p2 = copy.deepcopy(p)
-        nstructs = OrderedDict()
-        nstructs = OrderedDict()
-        for s in p2.structs:
-            v = []
-            for vdata in p2.structs[s]:
-                v.append( (TextUtil.convert_to_lower_snake_case(vdata[0]), vdata[1]) )
-            nstructs[s] = v
-        p2.structs = nstructs
+        for _, s in p.structs.items():
+            for var in s.members:
+                var.name = TextUtil.convert_to_lower_snake_case(var.name)
+        for _, m in p.messages.items():
+            for var in m.members:
+                var.name = TextUtil.convert_to_lower_snake_case(var.name)
 
-        nmessages = OrderedDict()
-        for m in p2.messages:
-            v = []
-            for vdata in p2.messages[m]:
-                v.append( (TextUtil.convert_to_lower_snake_case(vdata[0]), vdata[1]) )
-            nmessages[m] = v
-        p2.messages = nmessages
-
-        super().__init__(protocol=p2, tab="    ")
+        super().__init__(protocol=p, tab="    ")
 
         self.type_mapping["byte"] = "u8"
         self.type_mapping["bool"] = "bool"
@@ -46,131 +32,118 @@ class RustWriter(Writer):
         self.type_mapping["double"] = "f64"
         self.type_mapping["string"] = "String"
 
-    def serializer(self, varname: str, vartype: str, accessor: str):
-        if vartype in BASE_TYPE_SIZES.keys():
-            if vartype == "byte":
-                self.write_line(f"writer.push({accessor}{varname});")
-            elif vartype == "bool":
-                self.write_line(f"writer.push({accessor}{varname} as u8);")
+    def deserializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"let {var.name}_len = reader.read_u32()?;")
+            if var.vartype in self.type_mapping:
+                self.write_line(f"let mut {var.name}: Vec<{self.type_mapping[var.vartype]}> = Vec::new();")
             else:
-                self.write_line(f"writer.extend({accessor}{varname}.to_le_bytes());")
-        elif vartype == "string":
-            self.write_line(f"writer.extend(({accessor}{varname}.len() as u32).to_le_bytes());")
-            self.write_line(f"writer.extend({accessor}{varname}.as_bytes());")
-        elif vartype[0] == "[" and vartype[-1] == "]":
-            listed_type = vartype[1:-1]
-            self.write_line(f"writer.extend(({accessor}{varname}.len() as u32).to_le_bytes());")
-            self.write_line(f"for el in &{accessor}{varname} {{")
+                self.write_line(f"let mut {var.name}: Vec<{var.vartype}> = Vec::new();")
+            self.write_line(f"for _ in 0..{var.name}_len {{")
             self.indent_level += 1
-            self.serializer("el", listed_type, "")
+            inner = Variable(self.protocol, "el", var.vartype)
+            self.deserializer(inner, "");
+            self.write_line(f"{var.name}.push(el);")
             self.indent_level -= 1
             self.write_line("}")
+        elif var.vartype in NUMERIC_TYPE_SIZES:
+            if var.vartype == "byte":
+                self.write_line(f"let {var.name} = reader.take_byte()?;")
+            elif var.vartype == "bool":
+                self.write_line(f"let {var.name} = reader.take_byte()? > 0;")
+            else:
+                self.write_line(f"let {var.name} = reader.read_{self.type_mapping[var.vartype]}()?;")
+        elif var.vartype == "string":
+            self.write_line(f"let {var.name} = reader.read_string()?;")
         else:
-            self.write_line(f"{accessor}{varname}.write_bytes(writer);")
+            self.write_line(f"let {var.name} = {var.vartype}::from_bytes(reader)?;")
 
-    def deserializer(self, varname: str, vartype: str, accessor: str):
-        if vartype in BASE_TYPE_SIZES.keys():
-            if vartype == "byte":
-                self.write_line(f"let {varname} = reader.take_byte()?;")
-            elif vartype == "bool":
-                self.write_line(f"let {varname} = reader.take_byte()? > 0;")
-            else:
-                self.write_line(f"let {varname} = reader.read_{self.type_mapping[vartype]}()?;")
-        elif vartype == "string":
-            self.write_line(f"let {varname} = reader.read_string()?;")
-        elif vartype[0] == "[" and vartype[-1] == "]":
-            listed_type = vartype[1:-1]
-            self.write_line(f"let {varname}_len = reader.read_u32()?;")
-            if listed_type in self.type_mapping.keys():
-                self.write_line(f"let mut {varname}: Vec<{self.type_mapping[listed_type]}> = Vec::new();")
-            else:
-                self.write_line(f"let mut {varname}: Vec<{listed_type}> = Vec::new();")
-            self.write_line(f"for _ in 0..{varname}_len {{")
+    def serializer(self, var: Variable, accessor: str):
+        if var.is_list:
+            self.write_line(f"writer.extend(({accessor}{var.name}.len() as u32).to_le_bytes());")
+            self.write_line(f"for el in &{accessor}{var.name} {{")
             self.indent_level += 1
-            self.deserializer("el", listed_type, "");
-            self.write_line(f"{varname}.push(el);")
+            inner = Variable(self.protocol, "el", var.vartype)
+            self.serializer(inner, "")
             self.indent_level -= 1
             self.write_line("}")
+        elif var.vartype in NUMERIC_TYPE_SIZES:
+            if var.vartype == "byte":
+                self.write_line(f"writer.push({accessor}{var.name});")
+            elif var.vartype == "bool":
+                self.write_line(f"writer.push(if {accessor}{var.name} {{1_u8}} else {{0_u8}});")
+            else:
+                self.write_line(f"writer.extend({accessor}{var.name}.to_le_bytes());")
+        elif var.vartype == "string":
+            self.write_line(f"writer.extend(({accessor}{var.name}.len() as u32).to_le_bytes());")
+            self.write_line(f"writer.extend({accessor}{var.name}.as_bytes());")
         else:
-            self.write_line(f"let {varname} = {vartype}::from_bytes(reader)?;")
+            self.write_line(f"{accessor}{var.name}.write_bytes(writer);")
 
-    def gen_measurement(self, s: tuple[str, list[tuple[str,str]]], accessor_prefix: str = "") -> tuple[list[str], int]:
+    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
         accum = 0
 
-        if self.protocol.is_simple(s[0]):
-            lines.append(f"{self.protocol.calculate_size(s[0])}")
+        if st.is_simple():
+            lines.append(f"{self.protocol.get_size_of(st.name)}")
         else:
             size_init = "let mut size: u32 = 0;"
             lines.append(size_init)
 
-            for var_name, var_type in s[1]:
-                if self.protocol.is_simple(var_type):
-                    accum += self.protocol.calculate_size(var_type)
-                else:
-                    if var_type == "string":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"size += {accessor_prefix}{var_name}.len() as u32;")
-                    elif var_type == "[string]":
-                        accum += BASE_TYPE_SIZES["uint32"]
-                        lines.append(f"for s in &{accessor_prefix}{var_name} {{")
-                        lines.append(f"{self.tab}size += {BASE_TYPE_SIZES['uint32']} + (s.len() as u32);")
+            for var in st.members:
+                if var.is_list:
+                    accum += NUMERIC_TYPE_SIZES["uint32"]
+                    if var.is_simple(True):
+                        lines.append(f"size += ({accessor}{var.name}.len() as u32) * {self.protocol.get_size_of(var.vartype)};")
+                    elif var.vartype == "string":
+                        lines.append(f"for s in &{accessor}{var.name} {{")
+                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES['uint32']} + (s.len() as u32);")
                         lines.append("}")
-                    elif var_type[0] == "[" and var_type[-1] == "]":
-                        listed_var_type = var_type[1:-1]
-                        if self.protocol.is_simple(listed_var_type):
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"size += ({accessor_prefix}{var_name}.len() as u32) * {self.protocol.calculate_size(listed_var_type)};")
-                        else:
-                            accum += BASE_TYPE_SIZES["uint32"]
-                            lines.append(f"for el in &{accessor_prefix}{var_name} {{")
-                            clines, caccum = self.gen_measurement((var_type, self.protocol.structs[listed_var_type]), f"el.")
-                            if clines[0] == size_init:
-                                clines = clines[1:]
-                            clines.append(f"size += {caccum};")
-                            lines += [f"{self.tab}{l}" for l in clines]
-                            lines.append("}")
                     else:
-                        clines, caccum = self.gen_measurement((var_type, self.protocol.structs[var_type]), f"{accessor_prefix}{var_name}.")
+                        lines.append(f"for el in &{accessor}{var.name} {{")
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"el.")
+                        if clines[0] == size_init:
+                            clines = clines[1:]
+                        clines.append(f"size += {caccum};")
+                        lines += [f"{self.tab}{l}" for l in clines]
+                        lines.append("}")
+                else:
+                    if var.is_simple():
+                        accum += self.protocol.get_size_of(var.vartype)
+                    elif var.vartype == "string":
+                        accum += NUMERIC_TYPE_SIZES["uint32"]
+                        lines.append(f"size += {accessor}{var.name}.len() as u32;")
+                    else:
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
                         if clines[0] == size_init:
                             clines = clines[1:]
                         lines += clines
                         accum += caccum
         return lines, accum
 
-    def gen_struct(self, sname: str, members: list[tuple[str,str]]):
+    def gen_struct(self, sname: str, sdata: Struct):
         self.write_line("#[derive(Default)]")
         self.write_line(f"pub struct {sname} {{")
         self.indent_level += 1
-        for member_name, member_type in members:
-            if member_type[0] == "[" and member_type[-1] == "]":
-                listed_type = member_type[1:-1]
-                if listed_type in BASE_TYPE_SIZES.keys() or listed_type == "string":
-                    self.write_line(f"pub {member_name}: Vec<{self.type_mapping[listed_type]}>,")
+        for var in sdata.members:
+            if var.is_list:
+                if var.vartype in self.type_mapping:
+                    self.write_line(f"pub {var.name}: Vec<{self.type_mapping[var.vartype]}>,")
                 else:
-                    self.write_line(f"pub {member_name}: Vec<{listed_type}>,")
-            elif member_type in self.type_mapping:
-                self.write_line(f"pub {member_name}: {self.type_mapping[member_type]},")
+                    self.write_line(f"pub {var.name}: Vec<{var.vartype}>,")
+            elif var.vartype in self.type_mapping:
+                self.write_line(f"pub {var.name}: {self.type_mapping[var.vartype]},")
             else:
-                self.write_line(f"{member_name}: {member_type},")
-
+                self.write_line(f"{var.name}: {var.vartype},")
         self.indent_level -= 1
         self.write_line("}")
 
         self.write_line(f"impl {sname} {{")
         self.indent_level += 1
-        self.write_line(f"pub fn from_bytes({'_' if len(members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
-        self.indent_level += 1
-        for member_name, member_type in members:
-            self.deserializer(member_name, member_type, "")
 
-        varnames = [mem[0] for mem in members]
-        self.write_line(f"Ok({sname} {{{', '.join(varnames)}}})")
-        self.indent_level -= 1
-        self.write_line("}")
         self.write_line("pub fn get_size_in_bytes(&self) -> u32 {")
         self.indent_level += 1
-        measure_lines, accumulator = self.gen_measurement((sname, members), "self.")
+        measure_lines, accumulator = self.gen_measurement(sdata, "self.")
         [self.write_line(s) for s in measure_lines]
         if accumulator > 0:
             self.write_line(f"size += {accumulator};")
@@ -179,7 +152,15 @@ class RustWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
 
-        if sname in self.protocol.messages:
+        self.write_line(f"pub fn from_bytes({'_' if len(sdata.members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
+        self.indent_level += 1
+        [self.deserializer(mem, "") for mem in sdata.members]
+        varnames = [mem.name for mem in sdata.members]
+        self.write_line(f"Ok({sname} {{{', '.join(varnames)}}})")
+        self.indent_level -= 1
+        self.write_line("}")
+
+        if sdata.is_message:
             self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")
             self.indent_level += 1
             self.write_line("if tag {")
@@ -191,11 +172,11 @@ class RustWriter(Writer):
         else:
             self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>) {")
             self.indent_level += 1
-        for member_name, member_type in members:
-            self.serializer(member_name, member_type, "self.")
+        [self.serializer(mem, "self.") for mem in sdata.members]
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1
+
         self.write_line("}")
         self.write_line()
 
@@ -212,14 +193,9 @@ class RustWriter(Writer):
             self.prefix = self.protocol.namespace
         self.add_boilerplate(substitutions=subs)
 
-        for sname, smembers in self.protocol.structs.items():
-            self.gen_struct(sname, smembers)
-        for mname, mmembers in self.protocol.messages.items():
-            self.gen_struct(mname, mmembers)
-
         self.write_line("pub enum Message {")
         self.indent_level += 1
-        for mname in self.protocol.messages.keys():
+        for mname in self.protocol.messages:
            self.write_line(f"{mname}({mname}),")
         self.indent_level -= 1
         self.write_line("}")
@@ -243,5 +219,11 @@ class RustWriter(Writer):
         self.write_line("Ok(msg_list)")
         self.indent_level -= 1
         self.write_line("}")
+
+        for sname, sdata in self.protocol.structs.items():
+            self.gen_struct(sname, sdata)
+
+        for mname, mdata in self.protocol.messages.items():
+            self.gen_struct(mname, mdata)
 
         return "\n".join(self.output)
