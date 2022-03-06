@@ -26,5 +26,5 @@ The base data types map to Rust accordingly:
 
 * Beschi does its best to generate code that feels at home in the target languages, which means the Rust version has some different semantics. 
 * Messages are defined as an enum with data, so instead of having to examine and cast them, you use Rust's usual pattern-matching to figure out what kind of message structure you're looking at. 
-* The generated code shouldn't generate warnings from the standard compiler... but `clippy` is another matter. Most of the warnings I've seen are things that can be changed by altering the protocol (for example, all members of an enum having the same suffix). So if you want `clippy` to be happy, be ready to either suppress some warnings or tinker with your protocol. 
+* The generated code shouldn't raise warnings from the standard compiler... but `clippy` is another matter. Most of the warnings I've seen are things that can be changed by altering the protocol (for example, all members of an enum having the same suffix). So if you want `clippy` to be happy, be ready to either suppress some warnings or tinker with your protocol. 
 * Data members are automatically renamed to snake_case because otherwise the Rust compiler will throw warnings. To suppress this renaming, pass `--rust-no-rename` on the command line.

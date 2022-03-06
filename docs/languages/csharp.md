@@ -26,4 +26,4 @@ If you describe a list in your protocol, it will be mapped to a `List<{type}>` o
 
 ## Caveats
 
-* No particular caveats, actually! Perhaps a side effect of C# being the first generator that was made for this Beschi is that its semantics match up pretty well. 
+* No particular caveats, actually! Perhaps a side effect of C# being the first generator that was made for Beschi is that its semantics match up pretty well. 
