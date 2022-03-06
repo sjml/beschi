@@ -5,6 +5,7 @@ This is a general introduction to Beschi as a whole. Once you're done reading th
 | [C](./languages/c.md) | [C#](./languages/csharp.md) | [Go](./languages/go.md) | [Rust](./languages/rust.md) | [Swift](./languages/swift.md) | [TypeScript](./languages/typescript.md) |
 |-|-|-|-|-|-|
 
+
 ## Do you even want to?
 
 If you're working on a program that has to share data, especially with other programs written in different languages, you have a few options for how to format that data. [JSON](https://en.wikipedia.org/wiki/JSON) is a very popular option, since it's simple, human-readable, well-supported, and in a convenient text format. It can be a little bulky, though, depending on your use case, and performance becomes a problem if the data gets very large. 
@@ -67,13 +68,14 @@ Each language works a little bit differently, but in general you should expect t
     * `FromBytes(buffer)`: a static function that returns a message of the class's type, or a null value if it could not be parsed. This is useful if you already know what kind of message you're expecting from a certain buffer and don't need to identify it beforehand. 
 
 Each namespace (or generated file) contains a function for handling a buffer containing multiple messages:
-    * `ProcessRawBytes(buffer)`: takes a buffer and returns a list/array of Message objects. The messages in the buffer need to be tagged with their identifiers. Note that if it encounters a stretch of memory that it cannot parse, it will append a nil value and stop processing, returning the set of messages parsed so far. 
+* `ProcessRawBytes(buffer)`: takes a buffer and returns a list/array of Message objects. The messages in the buffer need to be tagged with their identifiers. Note that if it encounters a stretch of memory that it cannot parse, it will append a nil value and stop processing, returning the set of messages parsed so far. 
+
 
 ## Caveats and Limitations
 
 Beschi is a little fast and loose with how it does does code generation. This allows for simpler generator code (each language writer is around just 300-400 lines of fairly readable imperative code without layers of templates) and necessitates fewer dependencies (only TOML so far!), but it does mean that there are some situations it can't handle. 
 
-* I make no claims that the generated code is optimal or necessarily even good. It passes a test suite, and I've used it "in production" for personal projects; it seems to work pretty well, but I'm not an expert programmer in all the target languages, so am very open to feedback if there's something that could be improved. 
+* I make no claims that the generated code is optimal or necessarily even good. It passes [a test suite](./../test/), and I've used it "in production" for personal projects; it seems to work pretty well, but I'm not an expert programmer in all the target languages, so am very open to feedback if there's something that could be improved. 
 * It makes efforts to follow the best practices of each language as much as possible, but the generated code probably won't win any awards from the linters. The test suite runs with warnings as high as possible, but there are a few very specific warnings in each language that it suppresses.
 * It always produces *valid* code (if it does not, that is a bug), but it may not be formatted to your (or `gofmt`'s) liking. If you have strong opinions on that sort of thing, consider running it through a code formatter program after generation.
 * Beschi makes no attempt to limit variable names other than disallowing whitespace and making sure the protocol is valid. That means you could name a data member something that is a reserved word in a target language and it would cause compilation problems. If you call a message member "int" or you probably won't be happy, so don't do that; stay happy.

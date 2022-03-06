@@ -16,13 +16,6 @@ This file is a rough todo list for the tool itself.
             - could even do checksums or something in here if needed
             - *then* the messages themselves
         - should be an associated PackMessages function that takes a list of messages and makes these bytes from it
-    - language-specific flags
-        - thoughts on renaming... priorities go as follows:
-            - creating code that works out of the box with no warnings in target language
-            - creating code that works out of the box in target language (so you should be able to access the data members of a message, for instance)
-            - THEN principle of least surprise (so only renaming things by default if they would cause warnings)
-            - otherwise, rename requires active request (--csharp-rename-members)
-            - automatic renames can be suppressed if people want (--rust-no-rename)
 
 * testing framework
     - comparison (size/perf) to flatbuffers/capnproto/etc?

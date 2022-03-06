@@ -28,6 +28,20 @@ Having made a bunch of these, my way of proceeding is thus:
 You could proceed to do an entire writer in your handwritten implementation, but this is usually the point at which I start building the generator. 
 
 
+## Generation Priorities
+
+Making automatically generated code is a tradeoff, and with Beschi I'm actively trying to get the code as close as possible to best practices in the target language, so there's even more tradeoffs than normal.
+
+So, the priorities go as follows:
+
+1. Creating code that compiles with no warnings in target language. 
+    - thus, data members are renamed to snake_case when generating Rust code. (Suppressible with `--rust-no-rename`)
+2. Creating code that works as expected in target language. 
+    - thus, data members are renamed to Uppercase when generating Go code to ensure that they are accessible to client code. (Suppressible with `--go-no-rename`)
+3. THEN principle of least surprise. 
+    - thus, data members are **not** renamed to UpperCamelCase in C#, because they do not trigger any warnings or have any semantic differences.
+
+
 ## Admonitions
 
 * All numbers are read and written as little-endian.

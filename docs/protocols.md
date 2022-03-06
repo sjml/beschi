@@ -2,6 +2,7 @@
 
 Protocols are described in [TOML](https://toml.io) files. In general, if a file describes a protocol that cannot be generated, it should fail before anything is output return an error code. If you construct a protocol that produces invalid output, please file a bug. 
 
+
 ## Meta section
 
 Example:
@@ -47,6 +48,7 @@ Structs help you organize your data. You specify them in the `[[structs]]` table
 
 Each struct needs to have a `_name` value that will be used to make native structures in the generated code. Every other entry in the table is a piece of data that is part of the struct. 
 
+
 ### Base Types
 
 The following are the base data types that everything else is built from: 
@@ -65,9 +67,11 @@ The following are the base data types that everything else is built from:
 | `double`           | A double precision [IEEE-754 floating point number](https://en.wikipedia.org/wiki/IEEE_754). Stored in eight bytes.
 | `string`           | A variable-length set of bytes representing [UTF-8 encoded](https://en.wikipedia.org/wiki/UTF-8) text. Stored as an integer (by default, a `uint32`) representing the length, and then the bytes themselves. |
 
+
 ### Lists
 
 You can specify that a data member is a list of values by enclosing the type in brackets like so: `[uint64]`. This will get translated to whatever list or array functionality the target language has. You can also have lists of structs like `[Color]` so there is a lot of room to express many different kinds of data. 
+
 
 ## Messages
 
@@ -100,8 +104,9 @@ Certain protocols will throw errors and not output any generated code. The rules
 * Structs and messages must always have a `_name` property.
 * Struct and message names must be unique. 
 * Struct names, message names, and data member names cannot be the same as any of the base types (or `list` or `string`). 
+* You cannot have circular references (struct A contains a list of struct B, which contains a struct A).
 * `list_size_type` and `string_size_type`, if specified, must refer to integral types. (One of `byte`, `uint16`, `int16`, `uint32`, `int32`, `uint64`, or `int64`)
-* Lists cannot be directly nested, so you can't create a list of floats with `[[float]]`, but you could create a struct that contains a single float and make a list of that. 
+* Lists cannot be directly nested, so you can't create a list of lists of floats with `[[float]]`, but you *could* create a struct that contains a single float and make a list of that. 
 * You cannot have more than 255 message types in a single protocol. 
 
 (This last point is because the MessageType identifier is represented with a single byte; in practice I have not found this to be a limitation, but it could be easily expanded if need be.)

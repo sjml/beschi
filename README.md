@@ -13,7 +13,8 @@ I go into more explanation for why this exists [in the documentation](https://gi
 * [Protocols](https://github.com/sjml/beschi/blob/main/docs/protocols.md)
 
 Language-Specific Documentation: 
-| [C](./docs/languages/c.md) | [C#](./docs/languages/csharp.md) | [Go](./docs/languages/go.md) | [Rust](./docs/languages/rust.md) | [Swift](./docs/languages/swift.md) | [TypeScript](./docs/languages/typescript.md) |
+
+| [C](https://github.com/sjml/beschi/blob/main/docs/languages/c.md) | [C#](https://github.com/sjml/beschi/blob/main/docs/languages/csharp.md) | [Go](https://github.com/sjml/beschi/blob/main/docs/languages/go.md) | [Rust](https://github.com/sjml/beschi/blob/main/docs/languages/rust.md) | [Swift](https://github.com/sjml/beschi/blob/main/docs/languages/swift.md) | [TypeScript](https://github.com/sjml/beschi/blob/main/docs/languages/typescript.md) |
 |-|-|-|-|-|-|
 
 * [Dev Notes](https://github.com/sjml/beschi/blob/main/docs/dev)
@@ -158,7 +159,9 @@ There are more extensive examples in [the test harnesses](https://github.com/sjm
 
 ## Future
 
-I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this system, though, and really wants to see a generator for Haskell or Lua or whatever, go for it. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
+Beschi makes code that I use "in production" on personal projects. It could probably stand to be better optimized, there are probably edge cases and bugs, etc. But for the most part, this is mature enough that I stopped thinking of it as a project in itself and now it's just a tool that I use. 
+
+I will admit that part of me wants to make new writers, but that's not likely to get done until I have a specific project motivating it. If someone loves this system, though, and really wants to see a generator for Haskell or Lua or whatever, go for it. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
 
 
 ## Beschi?

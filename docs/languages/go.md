@@ -28,4 +28,4 @@ The base data types map to Go accordingly:
 * The generated Go code uses the standard binary readers and writers, which allow for dealing with whole structures in one go. They seem to pack and unpack identically to the more detailed systems that the other languages need, but there might be some edge cases where packing becomes an issue. 
 * Go doesn't have static functions, so instead of `AppMessages.Vector3Message.FromBytes()`, you call `AppMessages.Vector3MessageFromBytes()`. (Note the missing `.` before `FromBytes`.)
 * The various `*FromBytes` functions *on structs* also take a pointer to a variable of the appropriate Message type, which will get filled in as it reads. (For messages, you just pass a buffer and it either returns a pointer to the correct type or `nil`.)
-* As mentioned above, generated Go code will have all the data members changed to start with an uppercase letter to match the language's export rules. 
+* Data members are automatically renamed to Uppercase because otherwise they will not be accessible to client code. To suppress this renaming, pass `--go-no-rename` on the command line.
