@@ -1,0 +1,37 @@
+# Making a New Beschi Writer
+
+## Prep
+
+Sync this repository, and then install it locally with development packages. 
+
+```
+pip install -e '.[dev]'
+```
+
+This will let you run the test suite as well as put `beschi` on your path. 
+
+
+## How-To
+
+The [existing writers](../../beschi/writers/) should serve as good starting points. It's not especially clever code, which means it's pretty amenable to just copy-pasting an existing writer that is similar to your language and changing the strings its outputs. 
+
+Having made a bunch of these, my way of proceeding is thus:
+1. Run the test suite so you have a bunch of premade messages in the `out/data` directory to use as your examples to read. (`pytest`)
+2. In the target language, write a program by hand which reads in one of the broken.*.msg files. That file contains just two `float`s, for a total of 8 bytes. Figure out the best way to parse that into a Vec2 structure native to the language. 
+3. Do whatever cleanup work needs to be done to make that system more scalable. 
+4. Add more types to the reading system. (Floats are generally among the trickiest, so you should be well on your way.)
+5. Keep adding types until you can read the first part of one of the `basic.*.msg` files (which come from the [`example.toml` protocol](../../test/_protocols/example.toml)). You should be able to get up to the part where there are lists. 
+6. Decided how best to translate the concept of "list" into your target language. In general I prefer to go with structures that are resizeable, if they exist. 
+7. At this point it should be clear how to do the rest of the reading in the target language. 
+8. THEN flip it around and start figuring out how to write. 
+
+You could proceed to do an entire writer in your handwritten implementation, but this is usually the point at which I start building the generator. 
+
+
+## Admonitions
+
+* All numbers are read and written as little-endian.
+* Text is encoded as UTF-8. 
+* When calculating the length of the string, make sure you are counting **bytes**, not characters. 
+* The string data should **not** include a null terminator and the calculated length should also not count it.
+* Feel free to ask for help. 😊

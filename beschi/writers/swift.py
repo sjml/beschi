@@ -12,6 +12,8 @@ class SwiftWriter(Writer):
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")
 
+        self.embed_protocol = extra_args["embed_protocol"]
+
         self.type_mapping["byte"] = "UInt8"
         self.type_mapping["bool"] = "Bool"
         self.type_mapping["uint16"] = "UInt16"
@@ -217,6 +219,17 @@ class SwiftWriter(Writer):
         self.write_line()
         self.write_line("import Foundation")
         self.write_line()
+
+        if self.embed_protocol:
+            self.write_line("/*")
+            self.write_line("DATA PROTOCOL")
+            self.write_line("-----------------")
+            [self.write_line(f"{l}") for l in self.protocol.protocol_string.splitlines()]
+            self.write_line("-----------------")
+            self.write_line("END DATA PROTOCOL")
+            self.write_line("*/")
+            self.write_line()
+            self.write_line()
 
         if self.protocol.namespace != None:
             self.write_line(f"public protocol {self.protocol.namespace}_Message {{")

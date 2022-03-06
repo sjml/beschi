@@ -14,6 +14,8 @@ class CWriter(Writer):
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")
 
+        self.embed_protocol = extra_args["embed_protocol"]
+
         self.type_mapping["byte"] = "uint8_t"
         self.type_mapping["bool"] = "bool"
         self.type_mapping["uint16"] = "uint16_t"
@@ -311,6 +313,18 @@ class CWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
+
+        if self.embed_protocol:
+            self.write_line("/*")
+            self.write_line("DATA PROTOCOL")
+            self.write_line("-----------------")
+            [self.write_line(f"{l}") for l in self.protocol.protocol_string.splitlines()]
+            self.write_line("-----------------")
+            self.write_line("END DATA PROTOCOL")
+            self.write_line("*/")
+            self.write_line()
+            self.write_line()
+
         self.add_boilerplate(self.subs + [
             ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type]),
             ("{# STRING_SIZE_TYPE_LOWER #}", self.base_serializers[self.protocol.string_size_type].lower()),

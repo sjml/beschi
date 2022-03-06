@@ -18,6 +18,8 @@ class TypeScriptWriter(Writer):
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="  ")
 
+        self.embed_protocol = extra_args["embed_protocol"]
+
         self.use_namespace = extra_args["typescript_use_namespace"]
 
         for var_type in NUMERIC_TYPE_SIZES:
@@ -233,6 +235,17 @@ class TypeScriptWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
+
+        if self.embed_protocol:
+            self.write_line("/*")
+            self.write_line("DATA PROTOCOL")
+            self.write_line("-----------------")
+            [self.write_line(f"{l}") for l in self.protocol.protocol_string.splitlines()]
+            self.write_line("-----------------")
+            self.write_line("END DATA PROTOCOL")
+            self.write_line("*/")
+            self.write_line()
+            self.write_line()
 
         if self.use_namespace:
             self.write_line(f"namespace {self.protocol.namespace} {{")

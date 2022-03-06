@@ -17,8 +17,15 @@ def main():
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
     argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
 
+    additional_arguments = []
+    extra_parser = argparser.add_argument_group("Extra")
+    extra_parser.add_argument("--embed-protocol", action="store_const", const=True, default=False, help="embed the text of the protocol as a comment at the top of the generated file")
+    additional_arguments.append("embed_protocol")
+
     for _, wclass in all_writers.items():
         wclass.get_additional_args(argparser)
+
+    argparser.epilog = "For more usage information, visit the development site: https://github.com/sjml/beschi"
 
     args = argparser.parse_args()
 
@@ -62,7 +69,7 @@ def main():
     except KeyError:
         writer_class = experimental_writers[args.lang]
 
-    extra_args = {flag: val for flag, val in args._get_kwargs() if flag.startswith(args.lang)}
+    extra_args = {flag: val for flag, val in args._get_kwargs() if flag.startswith(args.lang) or flag in additional_arguments}
     writer = writer_class(protocol, extra_args=extra_args)
     try:
         output = writer.generate()

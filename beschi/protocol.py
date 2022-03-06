@@ -69,7 +69,8 @@ class Protocol():
         if filename == None:
             return
 
-        protocol_data = toml.load(filename)
+        self.protocol_string = open(filename, "r", encoding="utf-8").read()
+        protocol_data = toml.loads(self.protocol_string)
 
         if "meta" in protocol_data:
             if "namespace" in protocol_data["meta"]:

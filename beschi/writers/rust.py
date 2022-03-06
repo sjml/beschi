@@ -28,6 +28,8 @@ class RustWriter(Writer):
 
         super().__init__(protocol=p, tab="    ")
 
+        self.embed_protocol = extra_args["embed_protocol"]
+
         self.type_mapping["byte"] = "u8"
         self.type_mapping["bool"] = "bool"
         self.type_mapping["uint16"] = "u16"
@@ -194,6 +196,18 @@ class RustWriter(Writer):
         self.write_line( "// <https://github.com/sjml/beschi>")
         self.write_line(f"// Do not edit directly.")
         self.write_line()
+
+        if self.embed_protocol:
+            self.write_line("/*")
+            self.write_line("DATA PROTOCOL")
+            self.write_line("-----------------")
+            [self.write_line(f"{l}") for l in self.protocol.protocol_string.splitlines()]
+            self.write_line("-----------------")
+            self.write_line("END DATA PROTOCOL")
+            self.write_line("*/")
+            self.write_line()
+            self.write_line()
+
         subs = [("{# STRING_SIZE_TYPE #}", self.get_native_string_size())]
         self.prefix = "Beschi"
         if self.protocol.namespace != None:
