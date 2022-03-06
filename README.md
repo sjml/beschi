@@ -2,7 +2,7 @@
 
 [![Verification Tests](https://github.com/sjml/beschi/actions/workflows/ci.yml/badge.svg)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
-This is a custom bit-packing and unpacking code generator for C#, Go, C, Rust, Swift, and TypeScript. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
+This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, and TypeScript. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
 I go into more explanation for why this exists [in the documenatation](https://github.com/sjml/beschi/blob/main/docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
 
@@ -13,7 +13,7 @@ I go into more explanation for why this exists [in the documenatation](https://g
 * [Protocols](https://github.com/sjml/beschi/blob/main/docs/protocols.md)
 
 Language-Specific Documentation: 
-| [C](./languages/c.md) | [C#](./languages/csharp.md) | [Go](./languages/go.md) | [Rust](./languages/rust.md) | [Swift](./languages/swift.md) | [TypeScript](./languages/typescript.md) |
+| [C](./docs/languages/c.md) | [C#](./docs/languages/csharp.md) | [Go](./docs/languages/go.md) | [Rust](./docs/languages/rust.md) | [Swift](./docs/languages/swift.md) | [TypeScript](./docs/languages/typescript.md) |
 |-|-|-|-|-|-|
 
 * [Dev Notes](https://github.com/sjml/beschi/blob/main/docs/dev)
@@ -99,19 +99,19 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Type | C#       | Go        | C          | Rust     | Swift     | TypeScript |
-|---------------|----------|-----------|------------|----------|-----------|------------|
-| `byte`        | `byte`   | `byte`    | `uint8_t`  | `u8`     | `UInt8`   | `number`   |
-| `bool`        | `bool`   | `bool`    | `bool`     | `bool`   | `Bool`    | `boolean`  |
-| `int16`       | `short`  | `int16`   | `uint16_t` | `i16`    | `Int16`   | `number`   |
-| `uint16`      | `ushort` | `uint16`  | `int16_t`  | `u16`    | `UInt16`  | `number`   |
-| `int32`       | `int`    | `int32`   | `uint32_t` | `i32`    | `Int32`   | `number`   |
-| `uint32`      | `uint`   | `uint32`  | `int32_t`  | `u32`    | `UInt32`  | `number`   |
-| `int64`       | `long`   | `int64`   | `uint64_t` | `i64`    | `Int64`   | `bigint`   |
-| `uint64`      | `ulong`  | `uint64`  | `int64_t`  | `u64`    | `UInt64`  | `bigint`   |
-| `float`       | `float`  | `float32` | `float`    | `f32`    | `Float32` | `number`   |
-| `double`      | `double` | `float64` | `double`   | `f64`    | `Float64` | `number`   |
-| `string`      | `string` | `string`  | `char*`    | `String` | `String`  | `string`   |
+| Protocol Type | C          | C#       | Go        | Rust     | Swift     | TypeScript |
+|---------------|------------|----------|-----------|----------|-----------|------------|
+| `byte`        | `uint8_t`  | `byte`   | `byte`    | `u8`     | `UInt8`   | `number`   |
+| `bool`        | `bool`     | `bool`   | `bool`    | `bool`   | `Bool`    | `boolean`  |
+| `int16`       | `uint16_t` | `short`  | `int16`   | `i16`    | `Int16`   | `number`   |
+| `uint16`      | `int16_t`  | `ushort` | `uint16`  | `u16`    | `UInt16`  | `number`   |
+| `int32`       | `uint32_t` | `int`    | `int32`   | `i32`    | `Int32`   | `number`   |
+| `uint32`      | `int32_t`  | `uint`   | `uint32`  | `u32`    | `UInt32`  | `number`   |
+| `int64`       | `uint64_t` | `long`   | `int64`   | `i64`    | `Int64`   | `bigint`   |
+| `uint64`      | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   |
+| `float`       | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   |
+| `double`      | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   |
+| `string`      | `char*`    | `string` | `string`  | `String` | `String`  | `string`   |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. 
 
@@ -121,7 +121,6 @@ All the numbers are stored as little-endian in the buffer, if that matters for y
 Beschi does not generate any code to handle writing or reading from disk, pushing data across a network, or anything like that — it will turn a message into bytes and read that same message back from the bytes, but you are responsible for what you do with them otherwise. 
 
 With the given protocol, though, you could create a message in C# and write it to a file:
-
 ```csharp
 var msg = new AppMessages.Vector3Message();
 msg.x = 1.0f;
@@ -133,7 +132,6 @@ msg.WriteBytes(bw, false);
 ```
 
 And then read it back in TypeScript:
-
 ```typescript
 const data = fs.readFileSync("./vec3.msg");
 const dv = new DataView(new Uint8Array(data).buffer);
@@ -144,7 +142,6 @@ if (msg.y == Math.fround(4096.1234)) {
 ```
 
 Or Go:
-
 ```golang
 dat, _ := os.Open("./vec3.msg")
 defer dat.Close()
@@ -160,9 +157,11 @@ There are more extensive examples in [the test harnesses](https://github.com/sjm
 
 
 ## Future
+
 I will admit that part of me wants to make new writers, but since I don't have a separate project motivating that at the moment, it's not likely to get done. If someone loves this system, though, and really wants to see a generator for Haskell or Lua or whatever, go for it. The existing writers should be decent starting points — they aren't terribly clever (no AST or interesting data structures), just iterating over the protocol and writing out serialization/deserialization code. 
 
 
 ## Beschi?
+
 [Constanzo Giuseppe Beschi](https://en.wikipedia.org/wiki/Constanzo_Beschi) was an Italian Jesuit who worked in southern India during the early 18th century. He was noted as a talented linguist, able to tie concepts from multiple languages into a single form. At the same time, he was adept at the Jesuit principle of "inculturation," where foreign concepts are adapted for a new culture and the foreigner attempting the adaptation also respectfully adopts habits and ways of proceeding from the host culture.
 
