@@ -4,7 +4,7 @@
 
 This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, and TypeScript. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
-I go into more explanation for why this exists [in the documenatation](https://github.com/sjml/beschi/blob/main/docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
+I go into more explanation for why this exists [in the documentation](https://github.com/sjml/beschi/blob/main/docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
 
 
 ## Documentation

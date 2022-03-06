@@ -22,7 +22,7 @@ This file is a rough todo list for the tool itself.
             - creating code that works out of the box in target language (so you should be able to access the data members of a message, for instance)
             - THEN principle of least surprise (so only renaming things by default if they would cause warnings)
             - otherwise, rename requires active request (--csharp-rename-members)
-            - automatic renames can be supressed if people want (--rust-no-rename)
+            - automatic renames can be suppressed if people want (--rust-no-rename)
 
 * testing framework
     - comparison (size/perf) to flatbuffers/capnproto/etc?
