@@ -171,15 +171,15 @@ class CWriter(Writer):
     def gen_default(self, members: list[Variable]):
         for var in members:
             if var.is_list:
-                self.write_line(f".{var.name} = NULL,")
                 self.write_line(f".{var.name}_len = 0,")
                 if var.vartype == "string":
                     self.write_line(f".{var.name}_els_len = NULL,")
+                self.write_line(f".{var.name} = NULL,")
             elif var.vartype in self.base_defaults:
                 self.write_line(f".{var.name} = {self.base_defaults[var.vartype]},")
             elif var.vartype == "string":
-                self.write_line(f".{var.name} = (char*)\"\",")
                 self.write_line(f".{var.name}_len = 0,")
+                self.write_line(f".{var.name} = (char*)\"\",")
             else:
                 self.write_line(f".{var.name} = {{")
                 self.indent_level += 1

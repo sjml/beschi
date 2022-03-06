@@ -23,7 +23,7 @@ class CSharpBuilder(builder_util.Builder):
         if builder_util.needs_build(self.intermediate_path, deps):
             subprocess.check_call([
                 "csc", "-nologo", "-target:exe",
-                "-warn:9999", "-warnaserror",
+                "-warn:4", "-warnaserror",
                 f"-out:{self.intermediate_path}",
                 *deps
             ])
