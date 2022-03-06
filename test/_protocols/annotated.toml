@@ -1,14 +1,19 @@
-# the "meta" section only has the namespace
-#  for now, but may have more later if needed
-#
-# the namespace is optional; not all languages
+[meta]
+# The namespace is optional; not all languages
 #  do something useful with it, but it's handy
 #  to have to help avoid clashes
-[meta]
 namespace = "AppMessages"
 
-# messages are defined by a name and their data
-#  members. this will become a class or struct in
+# The size types specify what kind of number to
+#  use when recording the length of lists and
+#  strings. If not specified, it defaults to
+#  uint32 (four bytes).
+list_size_type = "uint16"
+string_size_type = "byte"
+
+
+# Messages are defined by a name and their data
+#  members. This will become a class or struct in
 #  the target languages with these pieces of data
 #  as accessible members.
 [[messages]]
@@ -17,8 +22,8 @@ x = "float"
 y = "float"
 z = "float"
 
-# there are a variety of different data member
-#  types that can be defined
+# There are a variety of different data member
+#  types that can be defined.
 [[messages]]
 _name = "NewCharacterMessage"
 id = "uint64"
@@ -27,10 +32,10 @@ strength = "uint16"
 intelligence = "uint16"
 dexterity = "uint16"
 goldInWallet = "uint32"
-nicknames = "[string]" # the brackets indicate a list/array
+nicknames = "[string]" # brackets indicate a list/array
 
-# you can also define structs, collections of data
-#  that go together, but are not themselves a message
+# You can also define structs, collections of data
+#  that go together, but are not themselves a message.
 [[structs]]
 _name = "Color"
 red = "float"
@@ -38,13 +43,13 @@ green = "float"
 blue = "float"
 alpha = "float"
 
-# structs can contain other structs, and even lists of them
+# Structs can contain other structs, and even lists of them.
 [[structs]]
 _name = "Spectrum"
 defaultColor = "Color"
 colors = "[Color]"
 
-# structs can then be used in messages
+# Structs can then be used in messages.
 [[messages]]
 _name = "CharacterJoinedTeam"
 characterID = "uint64"

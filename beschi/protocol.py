@@ -97,7 +97,10 @@ class Protocol():
             for var_name, var_type in data.items():
                 if var_name.startswith("_"): continue
                 if var_type[0] == "[" and var_type[-1] == "]":
-                    var = Variable(self, var_name, var_type[1:-1], True)
+                    listed_type = var_type[1:-1]
+                    if listed_type[0] == "[" and listed_type[-1] == "]":
+                        raise ValueError(f"Cannot have list of lists")
+                    var = Variable(self, var_name, listed_type, True)
                 else:
                     var = Variable(self, var_name, var_type, False)
                 s.members.append(var)

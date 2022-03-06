@@ -86,3 +86,7 @@ def test_protocol_size_values():
         _ = Protocol("test/_protocols/intentionally_bad/bad_list_size_val.toml")
     with pytest.raises(ValueError):
         _ = Protocol("test/_protocols/intentionally_bad/bad_string_size_val.toml")
+
+def test_protocol_list_of_lists():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/list_of_lists.toml")

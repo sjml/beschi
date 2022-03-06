@@ -1,10 +1,12 @@
+This file is a rough todo list for the tool itself.
+
+
 * immediate todo
     - make multiple message stream a bit smarter (below)
-    - redo docs
-        - revamp readme, move separate language out to own files
-        - make note that getsizeinbytes returns whatever the language does for their equivalent of size_t
+    - docstrings in various languages
 
 * functionality
+    - can size limits on arrays be enforced? at least when writing?
     - open question: should the multiple message format (as read by ProcessRawBytes) be a little smarter?
         - right now is very minimal
         - but maybe could also have a little header: 

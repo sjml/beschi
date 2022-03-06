@@ -1,0 +1,10 @@
+[meta]
+namespace = "ListOfLists"
+
+[[structs]]
+_name = "TooManyLists"
+b = "[[float]]"
+
+[[messages]]
+_name = "Listings"
+a = "[[TooManyLists]]"
