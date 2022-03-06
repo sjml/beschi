@@ -37,16 +37,17 @@ class CSharpWriter(Writer):
         }
 
     def deserializer(self, var: Variable, accessor: str):
-        var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
+        var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_"), (" ", "_")])
         if var.is_list:
             self.write_line(f"{self.get_native_list_size()} {var_clean}_Length = br.{self.base_deserializers[self.protocol.list_size_type]}();")
-            self.write_line(f"{accessor}{var.name} = new {self.type_mapping[var.vartype]}[{var_clean}_Length];")
+            self.write_line(f"{accessor}{var.name} = new List<{self.type_mapping[var.vartype]}>();")
             idx = self.indent_level
             self.write_line(f"for (int i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++)")
             self.write_line("{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
-            self.deserializer(inner, accessor)
+            inner = Variable(self.protocol, f"{self.type_mapping[var.vartype]} el", var.vartype)
+            self.deserializer(inner, "")
+            self.write_line(f"{accessor}{var.name}.Add(el);")
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
@@ -60,7 +61,7 @@ class CSharpWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"bw.Write(({self.get_native_list_size()}){accessor}{var.name}.Length);")
+            self.write_line(f"bw.Write(({self.get_native_list_size()}){accessor}{var.name}.Count);")
             self.write_line(f"foreach ({self.type_mapping[var.vartype]} el in {accessor}{var.name})")
             self.write_line("{")
             self.indent_level += 1
@@ -91,20 +92,23 @@ class CSharpWriter(Writer):
                 if var.is_list:
                     accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                     if var.is_simple(True):
-                        lines.append(f"size += {accessor}{var.name}.Length * {self.protocol.get_size_of(var.vartype)};")
+                        lines.append(f"size += {accessor}{var.name}.Count * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
                         lines.append(f"foreach (string s in {accessor}{var.name})")
                         lines.append("{")
                         lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + System.Text.Encoding.UTF8.GetBytes(s).Length;")
                         lines.append("}")
                     else:
-                        lines.append(f"foreach ({self.type_mapping[var.vartype]} el in {accessor}{var.name})")
+                        idx = self.indent_level
+                        lines.append(f"foreach ({self.type_mapping[var.vartype]} el{idx} in {accessor}{var.name})")
                         lines.append("{")
-                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], "el.")
+                        self.indent_level += 1
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"el{idx}.")
                         if clines[0] == size_init:
                             clines = clines[1:]
                         clines.append(f"size += {caccum};")
                         lines += [f"{self.tab}{l}" for l in clines]
+                        self.indent_level -= 1
                         lines.append("}")
                 else:
                     if var.is_simple():
@@ -129,7 +133,15 @@ class CSharpWriter(Writer):
         self.indent_level += 1
 
         for var in sdata.members:
-            self.write_line(f"public {self.type_mapping[var.vartype]}{'[]' if var.is_list else ''} {var.name};")
+            if var.is_list:
+                self.write_line(f"public List<{self.type_mapping[var.vartype]}> {var.name} = new List<{self.type_mapping[var.vartype]}>();")
+            else:
+                default = None
+                if var.vartype == "string":
+                    default = '""'
+                elif var.vartype in self.protocol.structs:
+                    default = f"new {var.vartype}()"
+                self.write_line(f"public {self.type_mapping[var.vartype]} {var.name}{f' = {default}' if default else ''};")
 
         if sdata.is_message:
             self.write_line()

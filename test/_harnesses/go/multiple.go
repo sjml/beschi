@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"./src/Nested"
 	"./src/SmallMessages"
 )
 
@@ -19,6 +20,9 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
+	var nested Nested.DeepData
+	nested.Data.Data.Data.Data.Data.Data.Data.Data.Datums = make([]float32, 2)
+
 	var emptyMsg SmallMessages.EmptyMessage
 	var byteMsg SmallMessages.ByteMessage
 	byteMsg.ByteMember = 242

@@ -11,7 +11,7 @@ class SizedHarness: TestHarness {
 
         var shortList = new SizedMessage.TextContainer();
         shortList.label = "list that fits in a byte";
-        shortList.collection = new string[] {
+        shortList.collection = new List<string> {
             "Lorem", "ipsum", "dolor", "sit", "amet", "consectetur",
             "adipiscing", "elit", "sed", "do", "eiusmod", "tempor",
             "incididunt", "ut", "labore", "et", "dolore", "magna",
@@ -46,8 +46,8 @@ class SizedHarness: TestHarness {
             var input = SizedMessage.TextContainer.FromBytes(br);
 
             softAssert(input.label == shortList.label, "readback label comparison");
-            softAssert(input.collection.Length == shortList.collection.Length, "readback list length");
-            for (int i = 0; i < input.collection.Length; i++)
+            softAssert(input.collection.Count == shortList.collection.Count, "readback list length");
+            for (int i = 0; i < input.collection.Count; i++)
             {
                 softAssert(input.collection[i] == shortList.collection[i], "short list comparison");
             }

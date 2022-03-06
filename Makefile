@@ -2,7 +2,7 @@ BASE_DIR = $(shell pwd)
 
 .PHONY: test
 test:
-	pytest -x
+	pytest
 
 clean:
 	rm -rf $(BASE_DIR)/out/*

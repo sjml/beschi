@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Collections.Generic;
 
 using ComprehensiveMessage;
 
@@ -8,108 +7,6 @@ class BasicHarness: TestHarness {
 
     static void Main(string[] args) {
         var example = new ComprehensiveMessage.TestingMessage();
-        example.b = 250;
-        example.tf = true;
-        example.i16 = -32000;
-        example.ui16 = 65000;
-        example.i32 = -2000000000;
-        example.ui32 = 4000000000;
-        example.i64 = -9000000000000000000;
-        example.ui64 = 18000000000000000000;
-        example.f = 3.1415927410125732421875f;
-        example.d = 2.718281828459045090795598298427648842334747314453125;
-        example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-        example.v2 = new ComprehensiveMessage.Vec2();
-        example.v2.x = 256.512f;
-        example.v2.y = 1024.768f;
-        example.v3 = new ComprehensiveMessage.Vec3();
-        example.v3.x = 128.64f;
-        example.v3.y = 2048.4096f;
-        example.v3.z = 16.32f;
-        example.c = new ComprehensiveMessage.Color();
-        example.c.r = 255;
-        example.c.g = 128;
-        example.c.b = 0;
-        example.il = new List<short> { -1000, 500, 0, 750, 2000 };
-        example.sl = new List<string> {
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-            "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
-            "Vivamus pellentesque turpis aliquet pretium tincidunt.",
-            "Nulla facilisi.",
-            "🐼❤️✝️",
-            "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
-            "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
-        };
-        var v21 = new ComprehensiveMessage.Vec2();
-        v21.x = 10.0f;
-        v21.y = 15.0f;
-        var v22 = new ComprehensiveMessage.Vec2();
-        v22.x = 20.0f;
-        v22.y = 25.0f;
-        var v23 = new ComprehensiveMessage.Vec2();
-        v23.x = 30.0f;
-        v23.y = 35.0f;
-        var v24 = new ComprehensiveMessage.Vec2();
-        v24.x = 40.0f;
-        v24.y = 45.0f;
-        example.v2l = new List<ComprehensiveMessage.Vec2> {
-            v21, v22, v23, v24
-        };
-        var v31 = new ComprehensiveMessage.Vec3();
-        v31.x = 10.0f;
-        v31.y = 15.0f;
-        v31.z = 17.5f;
-        var v32 = new ComprehensiveMessage.Vec3();
-        v32.x = 20.0f;
-        v32.y = 25.0f;
-        v32.z = 27.5f;
-        var v33 = new ComprehensiveMessage.Vec3();
-        v33.x = 30.0f;
-        v33.y = 35.0f;
-        v33.z = 37.5f;
-        var v34 = new ComprehensiveMessage.Vec3();
-        v34.x = 40.0f;
-        v34.y = 45.0f;
-        v34.z = 47.5f;
-        example.v3l = new List<ComprehensiveMessage.Vec3> {
-            v31, v32, v33, v34
-        };
-        var c1 = new ComprehensiveMessage.Color();
-        c1.r = 255;
-        c1.g = 0;
-        c1.b = 0;
-        var c2 = new ComprehensiveMessage.Color();
-        c2.r = 0;
-        c2.g = 255;
-        c2.b = 0;
-        var c3 = new ComprehensiveMessage.Color();
-        c3.r = 0;
-        c3.g = 0;
-        c3.b = 255;
-        example.cl = new List<ComprehensiveMessage.Color> {
-            c1, c2, c3
-        };
-        example.cx = new ComprehensiveMessage.ComplexData();
-        example.cx.identifier = 127;
-        example.cx.label = "ComplexDataObject";
-        example.cx.backgroundColor = c1;
-        example.cx.textColor = c2;
-        example.cx.spectrum = new List<ComprehensiveMessage.Color> {
-            c3, c2, c1
-        };
-        var cx1 = new ComprehensiveMessage.ComplexData();
-        cx1.identifier = 255;
-        cx1.label = "Complex1";
-        cx1.backgroundColor = c3;
-        cx1.textColor = c1;
-        cx1.spectrum = new List<ComprehensiveMessage.Color> {c3, c2, c1, c2, c3};
-        var cx2 = new ComprehensiveMessage.ComplexData();
-        cx2.identifier = 63;
-        cx2.label = "Complex2";
-        cx2.backgroundColor = c1;
-        cx2.textColor = c3;
-        cx2.spectrum = new List<ComprehensiveMessage.Color> {c1, c2, c3, c2, c1};
-        example.cxl = new List<ComprehensiveMessage.ComplexData> {cx1, cx2};
 
         var parsedArgs = parseArguments(args);
 
@@ -121,9 +18,6 @@ class BasicHarness: TestHarness {
             FileStream f = new FileStream(outPath, FileMode.Create);
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw, false);
-
-            softAssert(example.GetSizeInBytes() == 913, "size calculation check");
-            softAssert(example.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
         {
@@ -151,11 +45,6 @@ class BasicHarness: TestHarness {
             softAssert(input.c.r == example.c.r, "Color");
             softAssert(input.c.g == example.c.g, "Color");
             softAssert(input.c.b == example.c.b, "Color");
-            softAssert(input.il.Count == example.il.Count, "[int16].length");
-            for (int i = 0; i < input.il.Count; i++)
-            {
-                softAssert(input.il[i] == example.il[i], "[int16]");
-            }
             softAssert(input.sl.Count == example.sl.Count, "[string].length");
             for (int i = 0; i < input.sl.Count; i++)
             {

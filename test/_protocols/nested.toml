@@ -1,0 +1,40 @@
+[meta]
+namespace = "Nested"
+
+[[structs]]
+_name = "ActualData"
+datums = "[float]"
+
+[[structs]]
+_name = "ContainerA"
+data = "ActualData"
+
+[[structs]]
+_name = "ContainerB"
+data = "ContainerA"
+
+[[structs]]
+_name = "ContainerC"
+data = "ContainerB"
+
+[[structs]]
+_name = "ContainerD"
+data = "ContainerC"
+datums = "[ContainerC]"
+
+[[structs]]
+_name = "ContainerE"
+data = "ContainerD"
+
+[[structs]]
+_name = "ContainerF"
+data = "ContainerE"
+datums = "[ContainerE]"
+
+[[structs]]
+_name = "ContainerG"
+data = "ContainerF"
+
+[[messages]]
+_name = "DeepData"
+data = "ContainerG"

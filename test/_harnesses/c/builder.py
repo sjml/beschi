@@ -91,17 +91,17 @@ class CBuilder(builder_util.Builder):
 
         build_flags = FLAGS
         if platform.system() == "Windows":
-            build_flags += [f"/I{os.path.dirname(self.gen_file)}"]
+            build_flags += [f"/I{self.generated_code_dir}"]
             c_out_flags = [f"/Fe:{self.intermediate_path}", f"/Fo:{self.intermediate_path[:-4]}.obj"]
             cpp_out_flags = [f"/Fe:{self.intermediate_path_cpp}", f"/Fo:{self.intermediate_path_cpp[:-4]}.obj"]
         else:
-            build_flags += [f"-I{os.path.dirname(self.gen_file)}"]
+            build_flags += [f"-I{self.generated_code_dir}"]
             if platform.system() == "Darwin":
                 build_flags += ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"]
             c_out_flags = ["-o", self.intermediate_path]
             cpp_out_flags = ["-o", self.intermediate_path_cpp]
 
-        deps = [self.srcfile, self.gen_file, "util.h"]
+        deps = [self.srcfile, *self.gen_files, "util.h"]
         if builder_util.needs_build(self.intermediate_path, deps):
             subprocess.check_call([
                 CC, *build_flags,

@@ -26,6 +26,9 @@ for arg in CommandLine.arguments[1...] {
 }
 
 
+var nested = Nested.DeepData()
+
+
 var emptyMsg = SmallMessages.EmptyMessage()
 var byteMsg = SmallMessages.ByteMessage()
 byteMsg.byteMember = 242

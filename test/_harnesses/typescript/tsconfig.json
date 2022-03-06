@@ -2,11 +2,18 @@
   "compilerOptions": {
     "module": "umd",
     "target": "es2020",
-    "allowSyntheticDefaultImports": true,
     "moduleResolution": "node",
-    "noImplicitAny": true,
     "experimentalDecorators": true,
-    "types": ["node"]
+    "types": ["node"],
+
+    "noImplicitAny": true,
+    "noEmitOnError": true,
+    "noErrorTruncation": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
   },
   "include": [
     "/**/*.ts"

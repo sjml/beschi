@@ -44,7 +44,7 @@ def generate_for(protocol: str, output_name: str, label: str):
         else:
             raise e
 
-def build_for(language: str, srcfile: str, libfile: str):
+def build_for(language: str, srcfile: str, libfiles: list[str]):
     try:
         writer_class = beschi.writers.all_writers[language]
     except KeyError:
@@ -52,10 +52,14 @@ def build_for(language: str, srcfile: str, libfile: str):
     if not os.path.exists(HARNESS_BIN_DIR):
         os.makedirs(HARNESS_BIN_DIR)
     harness_path = os.path.join(HARNESS_SRC_DIR, language)
+    libfile_flags = []
+    for lf in libfiles:
+        libfile_flags.append("--libfile")
+        libfile_flags.append(f"{lf}{writer_class.default_extension}")
     invoke_build = [
         "python", f"{harness_path}/builder.py",
         "--srcfile", f"{srcfile}{writer_class.default_extension}",
-        "--libfile", f"{libfile}{writer_class.default_extension}",
+        *libfile_flags
     ]
     subprocess.check_call(invoke_build + ["--clean"])
     subprocess.check_call(invoke_build)

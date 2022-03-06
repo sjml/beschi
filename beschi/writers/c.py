@@ -137,15 +137,18 @@ class CWriter(Writer):
             for var in st.members:
                 if var.is_list:
                     accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
+                    idx = self.indent_level
                     if var.is_simple(True):
                         lines.append(f"*size += {accessor}{var.name}_len * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
-                        lines.append(f"for ({self.get_native_list_size()} i = 0; i < {accessor}{var.name}_len; i++) {{")
-                        lines.append(f"{self.tab}*size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + {accessor}{var.name}_els_len[i];")
+                        lines.append(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+                        lines.append(f"{self.tab}*size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + {accessor}{var.name}_els_len[i{idx}];")
                         lines.append("}")
                     else:
-                        lines.append(f"for ({self.get_native_list_size()} i = 0; i < {accessor}{var.name}_len; i++) {{")
-                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}[i].")
+                        lines.append(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
+                        self.indent_level += 1
+                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}[i{idx}].")
+                        self.indent_level -= 1
                         if clines[0] == size_init:
                             clines = clines[1:]
                         clines.append(f"*size += {caccum};")
@@ -169,10 +172,14 @@ class CWriter(Writer):
         for var in members:
             if var.is_list:
                 self.write_line(f".{var.name} = NULL,")
+                self.write_line(f".{var.name}_len = 0,")
+                if var.vartype == "string":
+                    self.write_line(f".{var.name}_els_len = NULL,")
             elif var.vartype in self.base_defaults:
                 self.write_line(f".{var.name} = {self.base_defaults[var.vartype]},")
             elif var.vartype == "string":
                 self.write_line(f".{var.name} = (char*)\"\",")
+                self.write_line(f".{var.name}_len = 0,")
             else:
                 self.write_line(f".{var.name} = {{")
                 self.indent_level += 1

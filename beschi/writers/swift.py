@@ -161,19 +161,19 @@ class SwiftWriter(Writer):
             self.write_line()
             self.write_line(f"static func FromBytes(dataReader: DataReader) -> {sname}? {{")
             self.indent_level += 1
-            if len(sname) > 0:
+            if len(sdata.members) > 0:
                 self.write_line("do {")
                 self.indent_level += 1
         else:
             self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {sname} {{")
             self.indent_level += 1
         decl = "var"
-        if len(sname) == 0:
+        if len(sdata.members) == 0:
             decl = "let"
         self.write_line(f"{decl} n{sname} = {self.type_mapping[sname]}()")
         [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
         self.write_line(f"return n{sname}")
-        if sdata.is_message and len(sname) > 0:
+        if sdata.is_message and len(sdata.members) > 0:
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("catch {")

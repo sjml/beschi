@@ -1,7 +1,7 @@
 import test_util
 
 def test_basic_harness_compilation(generator_label):
-    test_util.build_for(generator_label, "basic", "ComprehensiveMessage")
+    test_util.build_for(generator_label, "basic", ["ComprehensiveMessage"])
 
 def test_writing_and_reading(generator_label):
     test_util.run_for(generator_label, "basic")

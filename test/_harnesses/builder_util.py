@@ -33,7 +33,7 @@ class Builder:
     def __init__(self, language_name="") -> None:
         argparser = argparse.ArgumentParser()
         argparser.add_argument("--srcfile", type=str, required=True,  help="name of test harness file, relative to test/_harnesses/{language}")
-        argparser.add_argument("--libfile", type=str, required=True,  help="name of generated message file, relative to out/generated/{language}")
+        argparser.add_argument("--libfile", type=str, action="append", required=True,  help="name of generated message file, relative to out/generated/{language}")
         argparser.add_argument("--exename", type=str, required=False, help="name of executable, defaults to {srcfile_basename_lower}_{language_name}")
         argparser.add_argument("--clean",   dest="clean", action="store_true")
         argparser.set_defaults(clean=False)
@@ -42,8 +42,8 @@ class Builder:
         self.should_clean = args.clean
 
         self.language_name = language_name
-        self.libfile = args.libfile
-        self.libname = os.path.splitext(self.libfile)[0]
+        self.libfiles = args.libfile
+        self.libnames = [os.path.splitext(lf)[0] for lf in self.libfiles]
         self.srcfile = args.srcfile
         self.srcname = os.path.splitext(os.path.basename(self.srcfile))[0]
         self.exename = args.exename
@@ -52,7 +52,7 @@ class Builder:
         self.exepath = os.path.join(OUTPUT_BIN_DIR, self.exename)
 
         self.generated_code_dir = os.path.join(OUTPUT_DIR, "generated", self.language_name)
-        self.gen_file = os.path.join(self.generated_code_dir, self.libfile)
+        self.gen_files = [os.path.join(self.generated_code_dir, lf) for lf in self.libfiles]
 
 
     def build(self):

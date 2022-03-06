@@ -2,6 +2,13 @@ import { getDataView, writeBuffer, runTest } from "./util";
 
 import * as SmallMessages from '../../../out/generated/typescript/SmallMessages';
 
+// including here to check that namespacing works
+import * as Nested from '../../../out/generated/typescript/Nested';
+
+var nested = new Nested.DeepData();
+nested.data.data.data.data.data.data.data.data.datums = [];
+
+
 var emptyMsg = new SmallMessages.EmptyMessage();
 var byteMsg = new SmallMessages.ByteMessage();
 byteMsg.byteMember = 242;

@@ -138,9 +138,9 @@ class TypeScriptWriter(Writer):
                 elif self.type_mapping[var.vartype] == "boolean":
                     default_value = "false"
                 elif self.type_mapping[var.vartype] == "string":
-                    default_value = "\"\""
+                    default_value = '""'
                 elif var.vartype in self.protocol.structs:
-                    default_value = None
+                    default_value = f"new {var.vartype}()"
                 self.write_line(f"{var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''};")
         self.write_line()
 
@@ -291,7 +291,7 @@ class TypeScriptWriter(Writer):
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line("if (msgList.at(-1) == null) {")
+        self.write_line("if (msgList[msgList.length - 1] == null) {")
         self.indent_level += 1
         self.write_line("break;")
         self.indent_level -= 1

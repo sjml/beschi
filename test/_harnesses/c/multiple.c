@@ -7,6 +7,10 @@
 #define SMALLMESSAGES_IMPLEMENTATION
 #include "SmallMessages.h"
 
+// including here to check that namespacing works
+#define NESTED_IMPLEMENTATION
+#include "Nested.h"
+
 #ifdef _MSC_VER
     // don't care about deprecations in the test harness code
     #pragma warning(disable : 4996)

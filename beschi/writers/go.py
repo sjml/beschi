@@ -130,7 +130,7 @@ class GoWriter(Writer):
         self.indent_level += 1
         for var in sdata.members:
             if var.is_list:
-                self.write_line(f"{var.name} []{var.vartype}")
+                self.write_line(f"{var.name} []{self.type_mapping[var.vartype]}")
             else:
                 self.write_line(f"{var.name} {self.type_mapping[var.vartype]}")
         self.indent_level -= 1
@@ -169,15 +169,28 @@ class GoWriter(Writer):
             self.write_line("}()")
             if len(sdata.members) > 0:
                 self.write_line("var err error")
+                self.write_line("err = nil")
             self.write_line(f"ret := {sname}{{}}")
             [self.deserializer(mem, "ret") for mem in sdata.members]
+            if len(sdata.members) > 0:
+                self.write_line("if err != nil {")
+                self.indent_level += 1
+                self.write_line(f"panic(err)")
+                self.indent_level -= 1
+                self.write_line("}")
             self.write_line()
             self.write_line("return &ret")
         else:
             self.write_line(f"func {sname}FromBytes (data io.Reader, input *{sname}) {{")
             self.indent_level += 1
             self.write_line("var err error")
+            self.write_line("err = nil")
             [self.deserializer(mem, "input") for mem in sdata.members]
+            self.write_line("if err != nil {")
+            self.indent_level += 1
+            self.write_line(f"panic(err)")
+            self.indent_level -= 1
+            self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

@@ -9,6 +9,7 @@ PROTOCOLS_OUTPUTS = [
     ("./test/_protocols/small_messages.toml", "SmallMessages"),
     ("./test/_protocols/annotated.toml", "AppMessages"),
     ("./test/_protocols/sized.toml", "SizedMessage"),
+    ("./test/_protocols/nested.toml", "Nested"),
 ]
 
 # generate each given file for the example protocol

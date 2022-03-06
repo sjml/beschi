@@ -18,93 +18,11 @@ fn main() {
 
     #[allow(clippy::approx_constant)]
     #[allow(clippy::excessive_precision)]
-    let example = TestingMessage {
-        b: 250,
-        tf: true,
-        i16: -32000,
-        ui16: 65000,
-        i32: -2000000000,
-        ui32: 4000000000,
-        i64: -9000000000000000000,
-        ui64: 18000000000000000000,
-        f: 3.1415927410125732421875,
-        d: 2.718281828459045090795598298427648842334747314453125,
-        s: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.".to_string(),
-        v2: Vec2 {x: 256.512, y: 1024.768},
-        v3: Vec3 {x: 128.64, y: 2048.4096, z: 16.32},
-        c: Color {r: 255, g: 128, b: 0},
-        il: vec![-1000, 500, 0, 750, 2000],
-        sl: vec![
-            "Lorem ipsum dolor sit amet, consectetur adipiscing elit.".to_string(),
-            "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.".to_string(),
-            "Vivamus pellentesque turpis aliquet pretium tincidunt.".to_string(),
-            "Nulla facilisi.".to_string(),
-            "🐼❤️✝️".to_string(),
-            "用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。".to_string(),
-            "لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات".to_string(),
-        ],
-        v2l: vec![
-            Vec2 {x: 10.0, y: 15.0},
-            Vec2 {x: 20.0, y: 25.0},
-            Vec2 {x: 30.0, y: 35.0},
-            Vec2 {x: 40.0, y: 45.0},
-        ],
-        v3l: vec![
-            Vec3 {x: 10.0, y: 15.0, z: 17.5},
-            Vec3 {x: 20.0, y: 25.0, z: 27.5},
-            Vec3 {x: 30.0, y: 35.0, z: 37.5},
-            Vec3 {x: 40.0, y: 45.0, z: 47.5},
-        ],
-        cl: vec![
-            Color {r: 255, g: 0, b: 0},
-            Color {r: 0, g: 255, b: 0},
-            Color {r: 0, g: 0, b: 255},
-        ],
-        cx: ComplexData {
-            identifier: 127,
-            label: "ComplexDataObject".to_string(),
-            background_color: Color {r: 255, g: 0, b: 0},
-            text_color: Color {r: 0, g: 255, b: 0},
-            spectrum: vec![
-                Color {r: 0, g: 0, b: 255},
-                Color {r: 0, g: 255, b: 0},
-                Color {r: 255, g: 0, b: 0},
-            ]
-        },
-        cxl: vec![
-            ComplexData {
-                identifier: 255,
-                label: "Complex1".to_string(),
-                background_color: Color {r: 0, g: 0, b: 255},
-                text_color: Color {r: 255, g: 0, b: 0},
-                spectrum: vec![
-                    Color {r: 0, g: 0, b: 255},
-                    Color {r: 0, g: 255, b: 0},
-                    Color {r: 255, g: 0, b: 0},
-                    Color {r: 0, g: 255, b: 0},
-                    Color {r: 0, g: 0, b: 255},
-                ]
-            },
-            ComplexData {
-                identifier: 63,
-                label: "Complex2".to_string(),
-                background_color: Color {r: 255, g: 0, b: 0},
-                text_color: Color {r: 0, g: 0, b: 255},
-                spectrum: vec![
-                    Color {r: 255, g: 0, b: 0},
-                    Color {r: 0, g: 255, b: 0},
-                    Color {r: 0, g: 0, b: 255},
-                    Color {r: 0, g: 255, b: 0},
-                    Color {r: 255, g: 0, b: 0},
-                ]
-            },
-        ]
-    };
+    let example: TestingMessage = Default::default();
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
         example.write_bytes(&mut writer, false);
-        checker.soft_assert(writer.len() == 913, "size calculation check");
 
         let filename = args.get("generate").unwrap();
         fs::write(filename, writer).unwrap();
@@ -133,10 +51,6 @@ fn main() {
         checker.soft_assert(input.c.r == example.c.r, "Color");
         checker.soft_assert(input.c.g == example.c.g, "Color");
         checker.soft_assert(input.c.b == example.c.b, "Color");
-        checker.soft_assert(input.il.len() == example.il.len(), "[int16].length");
-        for i in 0..input.il.len() {
-            checker.soft_assert(input.il[i] == example.il[i], "[int16]");
-        }
         checker.soft_assert(input.sl.len() == example.sl.len(), "[string].length");
         for i in 0..input.sl.len() {
             checker.soft_assert(input.sl[i] == example.sl[i], "[string]");

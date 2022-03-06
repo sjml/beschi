@@ -25,7 +25,7 @@ class TypeScriptBuilder(builder_util.Builder):
                 "npm", "install"
             ])
 
-        deps = [self.srcfile, self.gen_file, self.node_libs]
+        deps = [self.srcfile, *self.gen_files, self.node_libs]
         if builder_util.needs_build(self.intermediate_path, deps):
             # will build everything, but s'ok
             subprocess.check_call([
@@ -46,7 +46,7 @@ class TypeScriptBuilder(builder_util.Builder):
             subprocess.check_call([
                 "npx", "tsc", "--build", "--clean"
             ])
-        builder_util.cleanup([self.node_libs, "package-lock.json"])
+        # builder_util.cleanup([self.node_libs, "package-lock.json"])
 
 
 

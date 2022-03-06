@@ -2,6 +2,7 @@ using System;
 using System.IO;
 
 using SmallMessages;
+using Nested;
 
 class MultipleHarness: TestHarness {
 
@@ -57,7 +58,7 @@ class MultipleHarness: TestHarness {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
 
-            Message[] msgList = SmallMessages.Message.ProcessRawBytes(br);
+            SmallMessages.Message[] msgList = SmallMessages.Message.ProcessRawBytes(br);
 
             softAssert(msgList.Length == 12, "reading multiple messages length");
 

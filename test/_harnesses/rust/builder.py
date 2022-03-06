@@ -13,7 +13,7 @@ class RustBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("rust")
         self.srcfile = f"src/{self.srcfile}"
-        self.local_libfile = f"src/{self.libfile}"
+        self.local_libfiles = [f"src/{lf}" for lf in self.libfiles]
 
 
 
@@ -21,15 +21,19 @@ class RustBuilder(builder_util.Builder):
         super().build()
 
         # copy the generated file in, since Rust is kinda picky about include paths
-        if builder_util.needs_build(self.local_libfile, [self.gen_file]):
-            shutil.copy(self.gen_file, self.local_libfile)
+        for llf, gf in zip(self.local_libfiles, self.gen_files):
+            if builder_util.needs_build(llf, [gf]):
+                shutil.copy(gf, llf)
 
         # build the thing
-        if builder_util.needs_build(self.exepath, [self.local_libfile, self.srcfile]):
+        if builder_util.needs_build(self.exepath, [*self.local_libfiles, self.srcfile]):
+            env_copy = os.environ.copy()
+            env_copy["RUSTFLAGS"] = "-Dwarnings" # not a good idea in general, since it
+                                                 # also breaks on dependencies, but we have none
             subprocess.check_call([
                 "cargo", "build",
                 "--bin", self.srcname,
-            ])
+            ], env=env_copy)
             shutil.copy(
                 os.path.join("target", "debug", self.srcname),
                 self.exepath
@@ -37,7 +41,7 @@ class RustBuilder(builder_util.Builder):
 
     def clean(self):
         super().clean()
-        builder_util.cleanup([self.local_libfile])
+        builder_util.cleanup([*self.local_libfiles])
 
 
 

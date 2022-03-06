@@ -17,7 +17,7 @@ class SwiftBuilder(builder_util.Builder):
         self.srcfile = f"Sources/{self.srcname}/main.swift"
         self.intermediate_path = f".build/debug/{self.srcname}"
         self.lib_src_dir = "Sources/GeneratedMessages"
-        self.local_libfile = os.path.join(self.lib_src_dir, self.libfile)
+        self.local_libfiles = [os.path.join(self.lib_src_dir, lf) for lf in self.libfiles]
 
 
     def build(self):
@@ -26,12 +26,18 @@ class SwiftBuilder(builder_util.Builder):
         if not os.path.exists(self.lib_src_dir):
             os.makedirs(self.lib_src_dir)
 
-        if builder_util.needs_build(self.local_libfile, [self.gen_file]):
-            shutil.copy(self.gen_file, self.local_libfile)
+        for llf, gf in zip(self.local_libfiles, self.gen_files):
+            if builder_util.needs_build(llf, [gf]):
+                shutil.copy(gf, llf)
 
-        if builder_util.needs_build(self.intermediate_path, [self.local_libfile, self.srcfile]):
+        if builder_util.needs_build(self.intermediate_path, [*self.local_libfiles, self.srcfile]):
             subprocess.check_call([
-                "swift", "build", "--product", self.srcname
+                "swift",
+                "build",
+                "-Xswiftc", "-warnings-as-errors",
+                # "-Xswiftc", "-warn-concurrency",
+                "-Xswiftc", "-warn-implicit-overrides",
+                "--product", self.srcname,
             ])
 
         if builder_util.needs_build(self.exepath, [self.intermediate_path]):

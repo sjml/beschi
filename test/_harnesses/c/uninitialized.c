@@ -18,108 +18,6 @@ int main(int argc, char** argv) {
     parseArgs(argc, argv, &genPath, &readPath);
 
     ComprehensiveMessage_TestingMessage example = ComprehensiveMessage_TestingMessage_default;
-    example.b = 250;
-    example.tf = true;
-    example.i16 = -32000;
-    example.ui16 = 65000;
-    example.i32 = -2000000000;
-    example.ui32 = 4000000000;
-    example.i64 = -9000000000000000000L;
-    example.ui64 = 18000000000000000000UL;
-    example.f = 3.1415927410125732421875f;
-    example.d = 2.718281828459045090795598298427648842334747314453125;
-    example.s = (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
-    example.s_len = (uint32_t)strlen(example.s);
-    example.v2.x = 256.512f;
-    example.v2.y = 1024.768f;
-    example.v3.x = 128.64f;
-    example.v3.y = 2048.4096f;
-    example.v3.z = 16.32f;
-    example.c.r = 255;
-    example.c.g = 128;
-    example.c.b = 0;
-    example.il_len = 5;
-    short il[5] = { -1000, 500, 0, 750, 2000 };
-    example.il = il;
-    example.sl_len = 7;
-    char* sl[7] = {
-        (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-        (char*)"Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
-        (char*)"Vivamus pellentesque turpis aliquet pretium tincidunt.",
-        (char*)"Nulla facilisi.",
-        (char*)"🐼❤️✝️",
-        (char*)"用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
-        (char*)"لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
-    };
-    example.sl = sl;
-    uint32_t sampleTextLengths[7] = {
-        (uint32_t)strlen(sl[0]),
-        (uint32_t)strlen(sl[1]),
-        (uint32_t)strlen(sl[2]),
-        (uint32_t)strlen(sl[3]),
-        (uint32_t)strlen(sl[4]),
-        (uint32_t)strlen(sl[5]),
-        (uint32_t)strlen(sl[6]),
-    };
-    example.sl_els_len = sampleTextLengths;
-
-    example.v2l_len = 4;
-    ComprehensiveMessage_Vec2 v21 = { .x = 10.0f, .y = 15.0f };
-    ComprehensiveMessage_Vec2 v22 = { .x = 20.0f, .y = 25.0f };
-    ComprehensiveMessage_Vec2 v23 = { .x = 30.0f, .y = 35.0f };
-    ComprehensiveMessage_Vec2 v24 = { .x = 40.0f, .y = 45.0f };
-    ComprehensiveMessage_Vec2 v2l[4] = { v21, v22, v23, v24 };
-    example.v2l = v2l;
-
-    example.v3l_len = 4;
-    ComprehensiveMessage_Vec3 v31 = { .x = 10.0f, .y = 15.0f, .z = 17.5f };
-    ComprehensiveMessage_Vec3 v32 = { .x = 20.0f, .y = 25.0f, .z = 27.5f };
-    ComprehensiveMessage_Vec3 v33 = { .x = 30.0f, .y = 35.0f, .z = 37.5f };
-    ComprehensiveMessage_Vec3 v34 = { .x = 40.0f, .y = 45.0f, .z = 47.5f };
-    ComprehensiveMessage_Vec3 v3l[4] = { v31, v32, v33, v34 };
-    example.v3l = v3l;
-
-    example.cl_len = 3;
-    ComprehensiveMessage_Color c1 = { .r = 255, .g = 0, .b = 0 };
-    ComprehensiveMessage_Color c2 = { .r = 0, .g = 255, .b = 0 };
-    ComprehensiveMessage_Color c3 = { .r = 0, .g = 0, .b = 255 };
-    ComprehensiveMessage_Color cl[3] = { c1, c2, c3 };
-    example.cl = cl;
-
-    ComprehensiveMessage_ComplexData cx;
-    cx.identifier = 127;
-    cx.label = (char*)"ComplexDataObject";
-    cx.label_len = (uint32_t)strlen(cx.label);
-    cx.backgroundColor = c1;
-    cx.textColor = c2;
-    cx.spectrum_len = 3;
-    ComprehensiveMessage_Color cx_spectrum[3] = {c3, c2, c1};
-    cx.spectrum = cx_spectrum;
-    example.cx = cx;
-
-    ComprehensiveMessage_ComplexData cx1;
-    cx1.identifier = 255;
-    cx1.label = (char*)"Complex1";
-    cx1.label_len = (uint32_t)strlen(cx1.label);
-    cx1.backgroundColor = c3;
-    cx1.textColor = c1;
-    cx1.spectrum_len = 5;
-    ComprehensiveMessage_Color cx1_spectrum[5] = { c3, c2, c1, c2, c3 };
-    cx1.spectrum = cx1_spectrum;
-
-    ComprehensiveMessage_ComplexData cx2;
-    cx2.identifier = 63;
-    cx2.label = (char*)"Complex2";
-    cx2.label_len = (uint32_t)strlen(cx2.label);
-    cx2.backgroundColor = c1;
-    cx2.textColor = c3;
-    cx2.spectrum_len = 5;
-    ComprehensiveMessage_Color cx2_spectrum[5] = { c1, c2, c3, c2, c1 };
-    cx2.spectrum = cx2_spectrum;
-
-    ComprehensiveMessage_ComplexData cxl[2] = { cx1, cx2 };
-    example.cxl_len = 2;
-    example.cxl = cxl;
 
 
     size_t bufferSize;
@@ -197,10 +95,6 @@ int main(int argc, char** argv) {
         softAssert(input->c.r == example.c.r, "Color");
         softAssert(input->c.g == example.c.g, "Color");
         softAssert(input->c.b == example.c.b, "Color");
-        softAssert(input->il_len == example.il_len, "[int16].length");
-        for (uint32_t i = 0; i < input->il_len; i++) {
-            softAssert(input->il[i] == example.il[i], "[int16]");
-        }
         softAssert(input->sl_len == example.sl_len, "[string].length");
         for (uint32_t i  = 0; i < input->sl_len; i++) {
             softAssert(input->sl_els_len[i] == example.sl_els_len[i], "[string].length");

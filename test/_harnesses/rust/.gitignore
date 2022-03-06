@@ -6,4 +6,5 @@ src/BrokenMessages.rs
 src/SmallMessages.rs
 src/SizedMessage.rs
 src/AppMessages.rs
+src/Nested.rs
 src/Empty.rs

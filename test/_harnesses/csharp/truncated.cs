@@ -10,7 +10,7 @@ class TruncatedHarness: TestHarness {
         Dictionary<string, string> parsedArgs = parseArguments(args);
 
         var lmsg = new BrokenMessages.ListMessage();
-        lmsg.ints = new short[]{1, 2, 32767, 4, 5};
+        lmsg.ints = new List<short> {1, 2, 32767, 4, 5};
 
         if (parsedArgs.ContainsKey("generate"))
         {

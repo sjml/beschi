@@ -19,10 +19,11 @@ class CSharpBuilder(builder_util.Builder):
     def build(self):
         super().build()
 
-        deps = [self.srcfile, self.gen_file, "harness.cs"]
+        deps = [self.srcfile, *self.gen_files, "harness.cs"]
         if builder_util.needs_build(self.intermediate_path, deps):
             subprocess.check_call([
                 "csc", "-nologo", "-target:exe",
+                "-warn:9999", "-warnaserror",
                 f"-out:{self.intermediate_path}",
                 *deps
             ])

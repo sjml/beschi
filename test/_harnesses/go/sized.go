@@ -20,7 +20,7 @@ func softAssert(condition bool, label string) {
 
 func main() {
 	var shortList SizedMessage.TextContainer
-	shortList.Label = "lsit that fits in a byte"
+	shortList.Label = "list that fits in a byte"
 	shortList.Collection = []string{
 		"Lorem", "ipsum", "dolor", "sit", "amet", "consectetur",
 		"adipiscing", "elit", "sed", "do", "eiusmod", "tempor",

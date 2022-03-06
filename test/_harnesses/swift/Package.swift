@@ -13,6 +13,7 @@ let package = Package(
         .executable(name: "multiple", targets: ["multiple"]),
         .executable(name: "multiple_broken", targets: ["multiple_broken"]),
         .executable(name: "sized", targets: ["sized"]),
+        .executable(name: "uninitialized", targets: ["uninitialized"]),
     ],
     dependencies: [],
     targets: [
@@ -23,5 +24,6 @@ let package = Package(
         .executableTarget(name: "multiple", dependencies: ["GeneratedMessages"]),
         .executableTarget(name: "multiple_broken", dependencies: ["GeneratedMessages"]),
         .executableTarget(name: "sized", dependencies: ["GeneratedMessages"]),
+        .executableTarget(name: "uninitialized", dependencies: ["GeneratedMessages"]),
     ]
 )

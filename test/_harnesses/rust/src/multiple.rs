@@ -8,7 +8,9 @@ use std::fs;
 //   than all the other files.
 #[allow(non_snake_case)]
 mod SmallMessages;
-use SmallMessages::*;
+
+#[allow(non_snake_case)]
+mod Nested;
 
 mod util;
 
@@ -55,60 +57,60 @@ fn main() {
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
-        let mut reader = BufferReader::new(buffer);
+        let mut reader = SmallMessages::BufferReader::new(buffer);
         let msg_list = SmallMessages::process_raw_bytes(&mut reader).unwrap();
         checker.soft_assert(msg_list.len() == 12, "reading multiple messages length");
 
         match &msg_list[0] {
-            Message::ByteMessage(bm) => checker.soft_assert(bm.byte_member == byte_msg.byte_member, "msg 0 content"),
+            SmallMessages::Message::ByteMessage(bm) => checker.soft_assert(bm.byte_member == byte_msg.byte_member, "msg 0 content"),
             _ => checker.soft_assert(false, "msg 0 type"),
         }
         match &msg_list[1] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),
             _ => checker.soft_assert(false, "msg 1 type"),
         }
         match &msg_list[1] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),
             _ => checker.soft_assert(false, "msg 1 type"),
         }
         match &msg_list[2] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 2 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 2 content"),
             _ => checker.soft_assert(false, "msg 2 type"),
         }
         match &msg_list[3] {
-            Message::EmptyMessage(_em) => {},
+            SmallMessages::Message::EmptyMessage(_em) => {},
             _ => checker.soft_assert(false, "msg 3 type"),
         }
         match &msg_list[4] {
-            Message::LongMessage(lm) => checker.soft_assert(lm.int_member == long_msg.int_member, "msg 4 content"),
+            SmallMessages::Message::LongMessage(lm) => checker.soft_assert(lm.int_member == long_msg.int_member, "msg 4 content"),
             _ => checker.soft_assert(false, "msg 4 type"),
         }
         match &msg_list[5] {
-            Message::FloatMessage(fm) => checker.soft_assert(fm.float_member == float_msg.float_member, "msg 5 content"),
+            SmallMessages::Message::FloatMessage(fm) => checker.soft_assert(fm.float_member == float_msg.float_member, "msg 5 content"),
             _ => checker.soft_assert(false, "msg 5 type"),
         }
         match &msg_list[6] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 6 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 6 content"),
             _ => checker.soft_assert(false, "msg 6 type"),
         }
         match &msg_list[7] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 7 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 7 content"),
             _ => checker.soft_assert(false, "msg 7 type"),
         }
         match &msg_list[8] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 8 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 8 content"),
             _ => checker.soft_assert(false, "msg 8 type"),
         }
         match &msg_list[9] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 9 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_b.int_member, "msg 9 content"),
             _ => checker.soft_assert(false, "msg 9 type"),
         }
         match &msg_list[10] {
-            Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 9 content"),
+            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 9 content"),
             _ => checker.soft_assert(false, "msg 9 type"),
         }
         match &msg_list[11] {
-            Message::EmptyMessage(_em) => {},
+            SmallMessages::Message::EmptyMessage(_em) => {},
             _ => checker.soft_assert(false, "msg 11 type"),
         }
     }
