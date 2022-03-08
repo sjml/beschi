@@ -6,7 +6,6 @@
 from __future__ import annotations
 import struct
 
-msg_file = "../../../out/data/basic.c.msg"
 
 class _DataReader:
     def __init__(self, buffer: bytes|bytearray):
@@ -33,6 +32,8 @@ class _DataReader:
         self.current_position += amount
         return ret
 
+#### above here would be "boilerplate"
+#### below here is generated
 
 class Color:
     def __init__(self):
@@ -40,6 +41,8 @@ class Color:
         self.g: int = 0
         self.b: int = 0
 
+    # generator wouldn't have to emit the __str__ and __repr__ functions;
+    #    just for convenience while building/debugging
     def __str__(self) -> str:
         return f"{{ r: {self.r}, g: {self.g}, b: {self.b} }}"
 
@@ -228,7 +231,10 @@ class TestingMessage:
         finally:
             del dr
 
+###### end "generated" code
+###### testing code below here
 
+msg_file = "../../../out/data/basic.c.msg"
 buffer = open(msg_file, "rb").read()
 tm = TestingMessage.from_bytes(buffer)
 
