@@ -8,6 +8,32 @@ import struct
 
 msg_file = "../../../out/data/basic.c.msg"
 
+class _DataReader:
+    def __init__(self, buffer: bytes|bytearray):
+        # using a memoryview keeps the buffer from copying
+        #   every time we take a slice
+        self.mv = memoryview(buffer)
+        self.current_position = 0
+
+    def __del__(self):
+        self.mv.release() # this is likely redundant?
+
+    def is_finished(self) -> bool:
+        return self.current_position >= len(self.mv)
+
+    def has_remaining(self, size: int) -> bool:
+        if self.current_position + size > len(self.mv):
+            return False
+        return True
+
+    def take(self, amount: int):
+        if not self.has_remaining(amount):
+            raise IndexError("end of file reached prematurely")
+        ret = self.mv[self.current_position:self.current_position+amount]
+        self.current_position += amount
+        return ret
+
+
 class Color:
     def __init__(self):
         self.r: int = 0
@@ -20,13 +46,10 @@ class Color:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_bytes(buffer: bytes) -> Color | None:
+    def from_bytes(dr: _DataReader) -> Color:
         ret = Color()
-        try:
-            ret.r, ret.g, ret.b = struct.unpack("BBB", buffer)
-            return ret
-        except struct.error:
-            return None
+        ret.r, ret.g, ret.b = struct.unpack("BBB", dr.take(3))
+        return ret
 
 class Vec2:
     def __init__(self):
@@ -39,13 +62,10 @@ class Vec2:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_bytes(buffer: bytes) -> Vec2 | None:
+    def from_bytes(dr: _DataReader) -> Vec2:
         ret = Vec2()
-        try:
-            ret.x, ret.y = struct.unpack("<ff", buffer)
-            return ret
-        except struct.error:
-            return None
+        ret.x, ret.y = struct.unpack("<ff", dr.take(8))
+        return ret
 
 class Vec3:
     def __init__(self):
@@ -59,13 +79,44 @@ class Vec3:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def from_bytes(buffer: bytes) -> Vec3 | None:
+    def from_bytes(dr: _DataReader) -> Vec3:
         ret = Vec3()
-        try:
-            ret.x, ret.y, ret.z = struct.unpack("<fff", buffer)
-            return ret
-        except struct.error:
-            return None
+        ret.x, ret.y, ret.z = struct.unpack("<fff", dr.take(12))
+        return ret
+
+class ComplexData:
+    def __init__(self):
+        self.identifier: int = 0
+        self.label: str = ""
+        self.textColor: Color = Color()
+        self.backgroundColor: Color = Color()
+        self.spectrum: list[Color] = []
+
+    def __str__(self) -> str:
+        return f"{{ id: {self.identifier}, label: \"{self.label}\", textColor: {self.textColor}, backgroundColor: {self.backgroundColor}, spectrum: {self.spectrum} }}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def from_bytes(dr: _DataReader) -> ComplexData:
+        ret = ComplexData()
+        (ret.identifier, label_len) = struct.unpack("<BI", dr.take(5))
+        (
+            ret.label,
+            ret.textColor.r,
+            ret.textColor.g,
+            ret.textColor.b,
+            ret.backgroundColor.r,
+            ret.backgroundColor.g,
+            ret.backgroundColor.b,
+            spectrum_len
+        ) = struct.unpack(f"<{label_len}sBBBBBBI", dr.take(label_len + 10))
+        ret.label = ret.label.decode('utf-8')
+        for _ in range(spectrum_len):
+            el = Color()
+            el.r, el.g, el.b = struct.unpack("<BBB", dr.take(3))
+            ret.spectrum.append(el)
+        return ret
 
 
 class TestingMessage:
@@ -89,21 +140,20 @@ class TestingMessage:
         self.v2l: list[Vec2] = []
         self.v3l: list[Vec3] = []
         self.cl: list[Color] = []
+        self.cx: ComplexData = ComplexData()
+        self.cxl: list[ComplexData] = []
 
     # imagining the generator marching through the members
-    #    building up a of things to unpack into, along with a format string
+    #    building up a list of things to unpack into, along with a format string
     #    once it hits a non-simple member, it calls an unpack
     # this is kinda cute, but is it worth having such a different
     #    approach from the other languages?
     # eh, what good is using a scripting language if you can't
     #    have a little fun with it?
     def from_bytes(buffer: bytes) -> TestingMessage | None:
-        ret = TestingMessage()
+        dr = _DataReader(buffer)
         try:
-            # using the memoryview keeps the buffer from copying
-            #   every time we take a slice
-            view = memoryview(buffer)
-            pos = 0
+            ret = TestingMessage()
             (
                 ret.b,
                 ret.tf,
@@ -116,10 +166,16 @@ class TestingMessage:
                 ret.f,
                 ret.d,
                 s_len,
-            ) = struct.unpack("<B?hHiIqQfdI", view[:46])
-            pos += 46
+            ) = struct.unpack("<B?hHiIqQfdI", dr.take(46))
             (
                 ret.s,
+
+                # note that simple structs like Vec2/Vec3/Color can just be
+                #   inlined here instead of calling out to their from_bytes methods
+                # do those methods need to be generated at all?
+                #   (same question for other languages -- dead code usually
+                #    isn't a problem since compilers just remove it, but
+                #    worth thinking about. [rust warns, for example])
                 ret.v2.x,
                 ret.v2.y,
                 ret.v3.x,
@@ -129,44 +185,48 @@ class TestingMessage:
                 ret.c.g,
                 ret.c.g,
                 il_len,
-            ) = struct.unpack(f"<{s_len}sfffffBBBI", view[pos : pos + s_len + 27])
-            pos += s_len + 27
+            ) = struct.unpack(f"<{s_len}sfffffBBBI", dr.take(s_len + 27))
             ret.s = ret.s.decode('utf-8')
-            ret.il = list(struct.unpack(f"<{il_len}h", view[pos : pos + (il_len * 2)]))
-            pos += il_len * 2
-            sl_len = struct.unpack(f"<I", view[pos:pos+4])[0]
-            pos += 4
+            ret.il = list(struct.unpack(f"<{il_len}h", dr.take(il_len * 2)))
+
+            # question: is unpack efficient when taking just a single value?
+            #   memoryview also has a "cast" function
+            #   https://docs.python.org/3/library/stdtypes.html#memoryview.cast
+            # probably not worth introducing another generator path; as written
+            #   here it is consistent with the other methods
+            sl_len, = struct.unpack(f"<I", dr.take(4))
             for _ in range(sl_len):
-                s_len = struct.unpack(f"<I", view[pos:pos+4])[0]
-                pos += 4
-                ret.sl.append(struct.unpack(f"<{s_len}s", view[pos:pos+s_len])[0].decode('utf-8'))
-                pos += s_len
-            v2l_len = struct.unpack(f"<I", view[pos:pos+4])[0]
-            pos += 4
+                (el_len, ) = struct.unpack(f"<I", dr.take(4))
+                (el, ) = struct.unpack(f"<{el_len}s", dr.take(el_len))
+                el = el.decode('utf-8')
+                ret.sl.append(el)
+            v2l_len, = struct.unpack(f"<I", dr.take(4))
             for _ in range(v2l_len):
-                v2 = Vec2()
-                v2.x, v2.y = struct.unpack("<ff", view[pos:pos+8])
-                ret.v2l.append(v2)
-                pos += 8
-            v3l_len = struct.unpack(f"<I", view[pos:pos+4])[0]
-            pos += 4
+                el = Vec2()
+                (el.x, el.y) = struct.unpack("<ff", dr.take(8))
+                ret.v2l.append(el)
+            v3l_len, = struct.unpack(f"<I", dr.take(4))
             for _ in range(v3l_len):
-                v3 = Vec3()
-                v3.x, v3.y, v3.z = struct.unpack("<fff", view[pos:pos+12])
-                ret.v3l.append(v3)
-                pos += 12
-            cl_len = struct.unpack(f"<I", view[pos:pos+4])[0]
-            pos += 4
+                el = Vec3()
+                el.x, el.y, el.z = struct.unpack("<fff", dr.take(12))
+                ret.v3l.append(el)
+            cl_len, = struct.unpack(f"<I", dr.take(4))
             for _ in range(cl_len):
-                c = Color()
-                c.r, c.g, c.b = struct.unpack("<BBB", view[pos:pos+3])
-                ret.cl.append(c)
-                pos += 3
+                el = Color()
+                el.r, el.g, el.b = struct.unpack("<BBB", dr.take(3))
+                ret.cl.append(el)
+            ret.cx = ComplexData.from_bytes(dr)
+            cxl_len, = struct.unpack(f"<I", dr.take(4))
+            for _ in range(cxl_len):
+                el = ComplexData.from_bytes(dr)
+                ret.cxl.append(el)
 
             return ret
-        except struct.error as e:
-            print(e)
+        except Exception as e:
+            # raise e
             return None
+        finally:
+            del dr
 
 
 buffer = open(msg_file, "rb").read()
@@ -192,4 +252,5 @@ if tm:
     print(tm.v2l)
     print(tm.v3l)
     print(tm.cl)
-
+    print(tm.cx)
+    print(tm.cxl)
