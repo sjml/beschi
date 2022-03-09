@@ -40,7 +40,7 @@ if platform.system() != "Windows":
 
     CPPFLAGS = [
         "-x", "c++",        # explicitly compile C files as C++
-        "-std=c++11",       # c++11 is baseline
+        "-std=c++20",       # c++20 needed for designated initializers
     ]
     CPPSILENCE_WARNINGS = [
         # since this code is meant to be usable from C primarily,
