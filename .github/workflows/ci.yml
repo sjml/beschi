@@ -37,13 +37,13 @@ jobs:
     - name: Install Beschi and Python Prerequisites
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install -e '.[dev]'
     - name: Run Tests (Non-C)
       run: pytest --skip c
     - name: Run C Tests (clang)
       run: CC=clang CXX=clang++ pytest --only c
     - name: Run C Tests (gcc)
-      run: CC=gcc CXX=g++ pytest --only c
+      run: CC=gcc-9 CXX=g++-9 pytest --only c
   ci-windows:
     runs-on: windows-latest
 
@@ -56,7 +56,7 @@ jobs:
     - name: Install Beschi and Python Prerequisites
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install -e '.[dev]'
     - name: Setup MSVC
       uses: ilammy/msvc-dev-cmd@v1
     - name: Run Tests
@@ -76,7 +76,7 @@ jobs:
     - name: Install Prerequisites
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[publish]
+        pip install -e '.[publish]'
     - name: Check Version
       run: |
         version=$(beschi --version | awk '{print $NF}')
