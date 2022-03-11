@@ -10,12 +10,19 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import builder_util
 
 if platform.system() != "Windows":
-    CC = "clang"
-    CXX = "clang++"
+    CC = os.environ.get("CC", "clang")
+    CXX = os.environ.get("CXX", "clang++")
 
     FLAGS = [
         "-pedantic-errors", # complain if compiler extensions come into play
-        "-Weverything",     # actually, complain about everything
+    ]
+    # actually, complain about everything
+    if CC == "clang":
+        FLAGS += ["-Weverything"]
+    else:
+        # assuming that non-clang is GCC
+        FLAGS += ["-Wall"]
+    FLAGS += [
         "-Werror",          # loudly
         "-O0", "-g",        # have as much debug info as we can
     ]
@@ -34,8 +41,18 @@ if platform.system() != "Windows":
 
     CPPFLAGS = [
         "-x", "c++",        # explicitly compile C files as C++
-        "-std=c++11",       # c++11 is the baseline
     ]
+    if CXX == "clang++":
+        major_version = int(subprocess.getoutput(f"{CXX} -dumpversion").split(".")[0])
+    else:
+        # assuming that non-clang is GCC
+        major_version = int(subprocess.getoutput(f"{CXX} -dumpversion"))
+
+        # C++ 20 is needed to use designated initializers, but flags to indicate that shift
+        if major_version <= 9:
+            CPPFLAGS += ["-std=c++2a"]
+        else:
+            CPPFLAGS += ["-std=c++20"]
     CPPSILENCE_WARNINGS = [
         # since this code is meant to be usable from C primarily,
         #   need to silence some warnings that demand more modern C++
