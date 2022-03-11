@@ -27,6 +27,11 @@ Having made a bunch of these, my way of proceeding is thus:
 
 You could proceed to do an entire writer in your handwritten implementation, but this is usually the point at which I start building the generator. 
 
+For testing:
+* Running `pytest` from the root directory will run the full test suite. (`pytest -x` to stop at the first failure.)
+* Note that you can set a class variable of `in_progress = True` on the builder so it will be skipped by default (unless you pass `--experimental` to pytest). 
+* You can also pass `--only {my_new_language}` to pytest so it will skip the other languages and save you time. This will need to be combined with `--experimental` if you have set it as `in_progress`. 
+
 
 ## Generation Priorities
 
@@ -35,11 +40,11 @@ Making automatically generated code is a tradeoff, and with Beschi I'm actively 
 So, the priorities go as follows:
 
 1. Creating code that compiles with no warnings in target language. 
-    - thus, data members are renamed to snake_case when generating Rust code. (Suppressible with `--rust-no-rename`)
+    - thus, all data members are renamed to snake_case when generating Rust code. (Suppressible with `--rust-no-rename`)
 2. Creating code that works as expected in target language. 
-    - thus, data members are renamed to Uppercase when generating Go code to ensure that they are accessible to client code. (Suppressible with `--go-no-rename`)
+    - thus, all data members are renamed to Uppercase when generating Go code to ensure that they are accessible to client code. (Suppressible with `--go-no-rename`)
 3. THEN principle of least surprise. 
-    - thus, data members are **not** renamed to UpperCamelCase in C#, because they do not trigger any warnings or have any semantic differences.
+    - thus, data members are **not** renamed to UpperCamelCase in C#, even though it is a strong convention there, because not following the convention does not trigger any warnings or have any semantic differences.
 
 
 ## Admonitions
