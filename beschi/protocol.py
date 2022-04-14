@@ -17,6 +17,17 @@ NUMERIC_TYPE_SIZES: dict[str, int] = {
     "double": 8,
 }
 
+NUMERIC_TYPE_RANGES: dict[str, tuple[int,int]] = {
+    "byte":   (                         0,                        255),
+    "int16":  (                   -32_768,                     32_767),
+    "uint16": (                         0,                     65_535),
+    "int32":  (            -2_147_483_648,              2_147_483_647),
+    "uint32": (                         0,              4_294_967_295),
+    "int64":  (-9_223_372_036_854_775_808,  9_223_372_036_854_775_807),
+    "uint64": (                         0, 18_446_744_073_709_551_615),
+}
+
+
 RESERVED_WORDS: list[str] = list(NUMERIC_TYPE_SIZES.keys()) + ["string", "list"]
 
 def _contains_whitespace(s: str) -> bool:

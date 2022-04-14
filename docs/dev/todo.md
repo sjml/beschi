@@ -4,6 +4,10 @@ This file is a rough todo list for the tool itself.
 * immediate todo
     - make multiple message stream a bit smarter (below)
     - docstrings in various languages
+    - add "IsValid" function to languages where it makes sense:
+        - check that numbers are in the appropriate range (like JavaScript where everything is everything)
+            - in languages with strong types enforced by a compiler, skip
+        - check that strings and lists are <= their max defined length
 
 * functionality
     - can size limits on arrays be enforced? at least when writing?

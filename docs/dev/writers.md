@@ -13,7 +13,7 @@ This will let you run the test suite as well as put `beschi` on your path.
 
 ## How-To
 
-The [existing writers](../../beschi/writers/) should serve as good starting points. It's not especially clever code, which means it's pretty amenable to just copy-pasting an existing writer that is similar to your language and changing the strings its outputs. 
+The [existing writers](../../beschi/writers/) should serve as good starting points. It's not especially clever code, which means it's pretty amenable to just copy-pasting an existing writer that is similar to your language and changing the strings it outputs. 
 
 Having made a bunch of these, my way of proceeding is thus:
 1. Run the test suite so you have a bunch of premade messages in the `out/data` directory to use as your examples to read. (`pytest`)

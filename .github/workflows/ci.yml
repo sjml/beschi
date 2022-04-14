@@ -44,6 +44,8 @@ jobs:
       run: CC=clang CXX=clang++ pytest --only c
     - name: Run C Tests (gcc)
       run: CC=gcc-9 CXX=g++-9 pytest --only c
+
+
   ci-windows:
     runs-on: windows-latest
 
