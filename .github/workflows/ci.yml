@@ -27,9 +27,7 @@ jobs:
     #   with:
     #     swift-version: '5.5'
     - name: Setup Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: 'stable'
+      uses: dtolnay/rust-toolchain@stable
     - name: Install System Prerequisites
       run: |
         sudo apt-get update
@@ -66,7 +64,7 @@ jobs:
 
 
   publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [ci-linux, ci-windows]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
