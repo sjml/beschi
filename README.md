@@ -1,6 +1,6 @@
 # Beschi
 
-[![PyPI](https://img.shields.io/pypi/v/beschi)](https://pypi.org/project/beschi/) [![GitHub Workflow Status](https://img.shields.io/github/workflow/status/sjml/beschi/Verification%20Tests)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/beschi)](https://pypi.org/project/beschi/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/sjml/beschi/ci.yml)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
 This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, and TypeScript. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
