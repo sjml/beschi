@@ -20,9 +20,15 @@ Language-Specific Documentation:
 * [Dev Notes](https://github.com/sjml/beschi/blob/main/docs/dev)
 
 
-## How to use
+## Installation
 
-You can install from [PyPI](https://pypi.org/project/beschi/): 
+If you use [Homebrew](https://brew.sh), you can install it directly and simply: 
+
+```
+brew install sjml/sjml/beschi
+```
+
+Otherwise, you need a Python setup and can then install from [PyPI](https://pypi.org/project/beschi/): 
 
 ```
 pip install beschi
@@ -34,6 +40,8 @@ Example:
 ```
 beschi --lang csharp --protocol ./messages.toml
 ```
+
+## Basic Usage
 
 By default, it prints to standard output, but you can also write to a file with an output flag like `--output ./Messages.cs`.
 
