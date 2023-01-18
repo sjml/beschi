@@ -24,7 +24,7 @@ The base data types map to Swift accordingly:
 
 ## Caveats
 
-* It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example allow unaligned reads in the loading. 
+* It's difficult to deal with bytes directly in Swift, so there are some tricky/unsafe things going on to, for example, allow unaligned reads in the loading. 
 * There might be some extraneous memory copies happening, particularly during writing a message to a buffer. It's actually a little hard to track, but maybe it's ok? Anyway, something to keep awareness of. 
 * Swift doesn't have namespaces, and the accepted community practice seems to be wrapping everything in an empty enum. For the most part this makes the code look similar to the other languages, but there is some small weirdness like the `Message` base protocol being prepended with `{namespace}_` rather than being actually inside of it. 
 * Reading and writing messages is wrapped in custom `DataReader` and `DataWriter` classes that track position in one of the built-in `Data` objects. You can either construct it yourself if you want to, for instance, do multiple passes of writing to the same buffer. If you pass a `Data` to a function that expects a `Data{Reader|Writer}`, the latter will be used internally but not returned to you. 
