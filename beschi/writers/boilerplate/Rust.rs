@@ -1,10 +1,14 @@
 use std::fmt;
+use std::error::Error;
 
 #[derive(Debug)]
 pub enum BeschiError {
     EndOfFile,
     InvalidData,
 }
+
+impl Error for BeschiError {}
+
 impl fmt::Display for BeschiError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {

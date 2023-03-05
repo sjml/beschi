@@ -1,6 +1,6 @@
 # Beschi Protocols
 
-Protocols are described in [TOML](https://toml.io) files. In general, if a file describes a protocol that cannot be generated, it should fail before anything is output return an error code. If you construct a protocol that produces invalid output, please file a bug. 
+Protocols are described in [TOML](https://toml.io) files. In general, if a file describes a protocol that cannot be generated, it should fail before anything is output and return an error code. If you manage to construct a protocol that produces invalid output, please file a bug. 
 
 
 ## Meta section
