@@ -21,7 +21,7 @@ Having made a bunch of these, my way of proceeding is thus:
 3. Do whatever cleanup work needs to be done to make that system more scalable. 
 4. Add more types to the reading system. (Floats are generally among the trickiest, so you should be well on your way.)
 5. Keep adding types until you can read the first part of one of the `basic.*.msg` files (which come from the [`example.toml` protocol](../../test/_protocols/example.toml)). You should be able to get up to the part where there are lists. 
-6. Decided how best to translate the concept of "list" into your target language. In general I prefer to go with structures that are resizeable, if they exist. 
+6. Decide how best to translate the concept of "list" into your target language. In general I prefer to go with the given language's standard library containers that are resizeable, if they exist. 
 7. At this point it should be clear how to do the rest of the reading in the target language. 
 8. THEN flip it around and start figuring out how to write. 
 
