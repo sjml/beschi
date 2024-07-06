@@ -9,3 +9,7 @@ __pycache__
 /.vscode
 
 !/**/.gitkeep
+venv/
+
+notebooks/
+
