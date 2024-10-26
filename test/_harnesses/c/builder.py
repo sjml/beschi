@@ -36,6 +36,7 @@ if platform.system() != "Windows":
         "-std=c99",         # c99 is the baseline
     ]
     CSILENCE_WARNINGS = [
+        "declaration-after-statement", # should not be a problem with > c99, but both LLVM and GCC still warn on it
     ]
     [CFLAGS.append(f"-Wno-{sw}") for sw in CSILENCE_WARNINGS]
 
