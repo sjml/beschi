@@ -59,10 +59,15 @@ if parsed["generate"] != nil {
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
 
-    let msgList = BrokenMessages.ProcessRawBytes(data)
+    var caught: BrokenMessages.DataReaderError? = nil
+    do {
+        let _ = try BrokenMessages.ProcessRawBytes(data)
+    }
+    catch BrokenMessages.DataReaderError.InvalidData {
+        caught = BrokenMessages.DataReaderError.InvalidData
+    }
 
-    softAssert(msgList.count == 5, "read broken stream length")
-    softAssert(msgList[4] == nil, "read broken stream null sentinel")
+    softAssert(caught == BrokenMessages.DataReaderError.InvalidData, "read broken stream")
 }
 
 

@@ -48,9 +48,15 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let input = BrokenMessages.ListMessage.FromBytes(data)
+    var caught: BrokenMessages.DataReaderError? = nil
+    do {
+        let _ = try BrokenMessages.ListMessage.FromBytes(data)
+    }
+    catch BrokenMessages.DataReaderError.EOF {
+        caught = BrokenMessages.DataReaderError.EOF
+    }
 
-    softAssert(input == nil, "reading truncated message")
+    softAssert(caught == BrokenMessages.DataReaderError.EOF, "reading truncated message")
 }
 
 

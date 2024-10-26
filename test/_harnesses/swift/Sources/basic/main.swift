@@ -143,10 +143,9 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let inputOpt = ComprehensiveMessage.TestingMessage.FromBytes(data)
-    softAssert(inputOpt != nil, "parsing test message")
+    let input = try ComprehensiveMessage.TestingMessage.FromBytes(data)
+    softAssert(true, "parsing test message") // :)
 
-    let input = inputOpt!
     softAssert(input.b == example.b, "byte");
     softAssert(input.tf == example.tf, "bool")
     softAssert(input.i16 == example.i16, "i16")

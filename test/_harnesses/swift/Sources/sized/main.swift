@@ -58,7 +58,7 @@ if parsed["generate"] != nil {
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
-    let input = SizedMessage.TextContainer.FromBytes(data)!
+    let input = try SizedMessage.TextContainer.FromBytes(data)
 
     softAssert(input.label == shortList.label, "readback label comparison")
     softAssert(input.collection.count == shortList.collection.count, "readback list length")

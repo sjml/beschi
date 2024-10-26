@@ -154,18 +154,15 @@ class SwiftWriter(Writer):
             self.write_line("}")
             self.write_line()
 
-            self.write_line(f"public static func FromBytes(_ fromData: Data) -> {sname}? {{")
+            self.write_line(f"public static func FromBytes(_ fromData: Data) throws -> {sname} {{")
             self.indent_level += 1
             self.write_line("let dr = DataReader(fromData: fromData)")
-            self.write_line("return FromBytes(dataReader: dr)")
+            self.write_line("return try FromBytes(dataReader: dr)")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-            self.write_line(f"static func FromBytes(dataReader: DataReader) -> {sname}? {{")
+            self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {sname} {{")
             self.indent_level += 1
-            if len(sdata.members) > 0:
-                self.write_line("do {")
-                self.indent_level += 1
         else:
             self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {sname} {{")
             self.indent_level += 1
@@ -175,14 +172,6 @@ class SwiftWriter(Writer):
         self.write_line(f"{decl} n{sname} = {self.type_mapping[sname]}()")
         [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
         self.write_line(f"return n{sname}")
-        if sdata.is_message and len(sdata.members) > 0:
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line("catch {")
-            self.indent_level += 1
-            self.write_line("return nil")
-            self.indent_level -= 1
-            self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
 
@@ -263,17 +252,15 @@ class SwiftWriter(Writer):
         self.write_line()
 
         if self.protocol.namespace != None:
-            self.write_line(f"public static func ProcessRawBytes(_ data: Data) -> [{self.protocol.namespace}_Message?] {{")
+            self.write_line(f"public static func ProcessRawBytes(_ data: Data) throws -> [{self.protocol.namespace}_Message] {{")
             self.indent_level += 1
-            self.write_line(f"var msgList: [{self.protocol.namespace}_Message?] = []")
+            self.write_line(f"var msgList: [{self.protocol.namespace}_Message] = []")
         else:
-            self.write_line(f"public func ProcessRawBytes(_ data: Data) -> [Message?] {{")
+            self.write_line(f"public func ProcessRawBytes(_ data: Data) throws -> [Message] {{")
             self.indent_level += 1
-            self.write_line("var msgList: [Message?] = []")
+            self.write_line("var msgList: [Message] = []")
         self.write_line("let dr = DataReader(fromData: data)")
         self.write_line("while !dr.IsFinished() {")
-        self.indent_level += 1
-        self.write_line("do {")
         self.indent_level += 1
         accessor = ""
         if self.protocol.namespace != None:
@@ -282,7 +269,7 @@ class SwiftWriter(Writer):
         self.write_line(f"guard let msgType = {accessor}MessageType(rawValue: msgTypeByte)")
         self.write_line("else {")
         self.indent_level += 1
-        self.write_line("throw DataReader.DataReaderError.InvalidData")
+        self.write_line("throw DataReaderError.InvalidData")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("switch msgType {")
@@ -290,25 +277,13 @@ class SwiftWriter(Writer):
         for msg_type in self.protocol.messages:
             self.write_line(f"case {accessor}MessageType.{msg_type}Type:")
             self.indent_level += 1
-            self.write_line(f"msgList.append({msg_type}.FromBytes(dataReader: dr))")
+            self.write_line(f"msgList.append(try {msg_type}.FromBytes(dataReader: dr))")
             self.indent_level -= 1
         if len(self.protocol.messages) == 0:
             self.write_line(f"case {accessor}MessageType.__NullMessage:")
             self.indent_level += 1
             self.write_line(f"break")
             self.indent_level -= 1
-        self.indent_level -= 1
-        self.write_line("}")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("catch {")
-        self.indent_level += 1
-        self.write_line("msgList.append(nil)")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("if msgList.last! == nil {")
-        self.indent_level += 1
-        self.write_line("break")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1

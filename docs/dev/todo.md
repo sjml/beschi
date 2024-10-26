@@ -1,14 +1,14 @@
 This file is a rough todo list for the tool itself.
 
 * dustoff notes
-  + broken messages are a problem -- on platforms that have exceptions/errors, they should throw instead of returning null
-    - this is a breaking change, so incrementing minor version number
-    - change for: Swift
-    - check documentation afterwards to make sure it's not promising to be exception-free 
+  - check documentation to make sure it's not promising to be exception-free 
+
+* Zig writer 
+  - <sigh> buckle up
 
 * "immediate" todo
     - make multiple message stream a bit smarter (below)
-    - docstrings in various languages
+    - docstrings in various languages?
     - add "IsValid" function to languages where it makes sense:
         - check that numbers are in the appropriate range (like JavaScript where everything is everything)
             - in languages with strong types enforced by a compiler, skip

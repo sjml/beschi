@@ -1,9 +1,9 @@
-class DataReader {
-    enum DataReaderError: Error {
-        case EOF
-        case InvalidData
-    }
+public enum DataReaderError: Error {
+    case EOF
+    case InvalidData
+}
 
+class DataReader {
     let data: Data
     var currentOffset: Int = 0
     init(fromData data: Data) {
