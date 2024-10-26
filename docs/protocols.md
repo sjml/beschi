@@ -72,6 +72,8 @@ The following are the base data types that everything else is built from:
 
 You can specify that a data member is a list of values by enclosing the type in brackets like so: `[uint64]`. This will get translated to whatever list or array functionality the target language has. You can also have lists of structs like `[Color]` so there is a lot of room to express many different kinds of data. 
 
+(Note that a `[bool]` does not do any packing and still uses a single byte per element. Use an integer and bitwise operations like your programming forebears.)
+
 
 ## Messages
 

@@ -1,7 +1,27 @@
 This file is a rough todo list for the tool itself.
 
+* dustoff notes
+  + linter complaints
+    - Go writer:
+      - adding extra nil check when reading struct; compiles but the linter is unhappy
+    - TypeScript writer:
+      - ProcessRawBytes tries to push null to the message list if it encounters an unexpected MessageType
+      - FromBytes 
+        - should not set `da` to null initially
+        - should not return null
+      - WriteBytes
+        - should not set `da` to null initially
+  + testing
+    - go: ✅
+    - csharp: ✅
+    - rust: ✅
+    - swift: ✅
+    - typescript: ✅
+    - c (both gcc and clang): ❌
+      - 8 failed, 39 passed
+      - complaints about mixing declarations and code; shouldn't be a problem post C99?
 
-* immediate todo
+* "immediate" todo
     - make multiple message stream a bit smarter (below)
     - docstrings in various languages
     - add "IsValid" function to languages where it makes sense:

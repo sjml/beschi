@@ -41,7 +41,7 @@ BinaryWriter bw = new BinaryWriter(m);
 pos.WriteBytes(bw, true);
 ```
 
-The code that handles creating the buffer and making a writable stream from it are particular to the .NET system libraries that C# uses, but every language that Beschi targets has some similar kind of functionality. The important thing is that final call, where the data is written into the buffer. Once you have that buffer, you can do whatever you want with it -- send it across a network, write it to disk, etc. 
+The code that handles creating the buffer and making a writable stream from it is particular to the .NET system libraries that C# uses, but every language that Beschi targets has some similar kind of functionality. The important thing is that final call, where the data is written into the buffer. Once you have that buffer, you can do whatever you want with it -- send it across a network, write it to disk, etc. 
 
 You can create more complicated data types and messages, too; this was a very simplified example. For more information, look at the [protocol documentation](./protocols.md).
 
