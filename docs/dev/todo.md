@@ -3,7 +3,7 @@ This file is a rough todo list for the tool itself.
 * dustoff notes
   + broken messages are a problem -- on platforms that have exceptions/errors, they should throw instead of returning null
     - this is a breaking change, so incrementing minor version number
-    - change for: Rust, Swift
+    - change for: Swift
     - check documentation afterwards to make sure it's not promising to be exception-free 
 
 * "immediate" todo
