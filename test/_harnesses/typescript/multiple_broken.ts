@@ -42,11 +42,15 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
+    let errMsg: string;
+    try {
+        const msgList = BrokenMessages.ProcessRawBytes(dv);
+    }
+    catch (e) {
+        errMsg = e.message;
+    }
 
-    const msgList = BrokenMessages.ProcessRawBytes(dv);
-
-    softAssert(msgList.length == 5, "read broken stream length");
-    softAssert(msgList[4] == null, "read broken stream null sentinel");
+    softAssert(errMsg === "Invalid message type found: 63", "read broken stream");
 }
 
 runTest(generate, read);

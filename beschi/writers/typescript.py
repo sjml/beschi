@@ -165,7 +165,7 @@ class TypeScriptWriter(Writer):
         if sdata.is_message:
             self.write_line(f"static FromBytes(data: DataView|DataAccess): {sname} {{")
             self.indent_level += 1
-            self.write_line("let da: DataAccess = null;")
+            self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
             self.indent_level += 1
             self.write_line("da = new DataAccess(data);")
@@ -190,7 +190,7 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
             self.write_line("catch (RangeError) {")
             self.indent_level += 1
-            self.write_line("return null;")
+            self.write_line(f"throw new Error(`Could not read {sname} from offset ${{da.currentOffset}}`);")
             self.indent_level -= 1
             self.write_line("}")
         self.indent_level -= 1
@@ -200,7 +200,7 @@ class TypeScriptWriter(Writer):
         if sdata.is_message:
             self.write_line("WriteBytes(data: DataView|DataAccess, tag: boolean): void {")
             self.indent_level += 1
-            self.write_line("let da: DataAccess = null;")
+            self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
             self.indent_level += 1
             self.write_line("da = new DataAccess(data);")
@@ -299,8 +299,7 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("msgList.push(null);")
-        self.write_line("break;")
+        self.write_line("throw new Error(`Invalid message type found: ${msgType}`);")
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")

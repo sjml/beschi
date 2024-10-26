@@ -19,9 +19,15 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = BrokenMessages.ListMessage.FromBytes(dv);
+    let errMsg: string;
+    try {
+        const input = BrokenMessages.ListMessage.FromBytes(dv);
+    }
+    catch (e) {
+        errMsg = e.message;
+    }
 
-    softAssert(input == null, "reading truncated message");
+    softAssert(errMsg === "Could not read ListMessage from offset 14", "reading truncated message");
 }
 
 

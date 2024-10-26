@@ -1,14 +1,10 @@
 This file is a rough todo list for the tool itself.
 
 * dustoff notes
-  + linter complaints
-    - TypeScript writer:
-      - ProcessRawBytes tries to push null to the message list if it encounters an unexpected MessageType
-      - FromBytes 
-        - should not set `da` to null initially
-        - should not return null
-      - WriteBytes
-        - should not set `da` to null initially
+  + broken messages are a problem -- on platforms that have exceptions/errors, they should throw instead of returning null
+    - this is a breaking change, so incrementing minor version number
+    - change for: C#, Go, Rust, Swift, and TypeScript
+    - check documentation afterwards to make sure it's not promising to be exception-free
 
 * "immediate" todo
     - make multiple message stream a bit smarter (below)

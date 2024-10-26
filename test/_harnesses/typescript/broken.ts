@@ -18,9 +18,15 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = BrokenMessages.FullMessage.FromBytes(dv);
+    let errMsg: string;
+    try {
+        const input = BrokenMessages.FullMessage.FromBytes(dv);
+    }
+    catch (e) {
+        errMsg = e.message;
+    }
 
-    softAssert(input == null, "reading broken message");
+    softAssert(errMsg === "Could not read FullMessage from offset 8", "reading broken message");
 }
 
 
