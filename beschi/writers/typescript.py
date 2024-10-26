@@ -299,7 +299,7 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("throw new Error(`Invalid message type found: ${msgType}`);")
+        self.write_line("throw new Error(`Unknown message type: ${msgType}`);")
         self.indent_level -= 1
         self.indent_level -= 1
         self.write_line("}")

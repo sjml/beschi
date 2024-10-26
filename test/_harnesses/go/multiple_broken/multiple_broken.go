@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/BrokenMessages"
+	"messages/BrokenMessages"
 )
 
 var ok bool = true
@@ -67,10 +67,9 @@ func main() {
 		}
 		defer dat.Close()
 
-		msgList := BrokenMessages.ProcessRawBytes(dat)
-
-		softAssert(len(msgList) == 5, "read broken stream length")
-		softAssert(msgList[4] == nil, "read broken stream null sentinel")
+		_, err = BrokenMessages.ProcessRawBytes(dat)
+		softAssert(err != nil, "read broken stream")
+		softAssert(err.Error() == "Unknown message type: 63", "broken stream error message")
 	}
 
 	if !ok {

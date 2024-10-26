@@ -50,7 +50,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         errMsg = e.message;
     }
 
-    softAssert(errMsg === "Invalid message type found: 63", "read broken stream");
+    softAssert(errMsg === "Unknown message type: 63", "read broken stream");
 }
 
 runTest(generate, read);

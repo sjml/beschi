@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/SizedMessage"
+	"messages/SizedMessage"
 )
 
 var ok bool = true
@@ -60,7 +60,8 @@ func main() {
 		}
 		defer dat.Close()
 
-		input := SizedMessage.TextContainerFromBytes(dat)
+		input, err := SizedMessage.TextContainerFromBytes(dat)
+		softAssert(err == nil, "reading sized message")
 
 		softAssert(input.Label == shortList.Label, "readback label comparison")
 		softAssert(len(input.Collection) == len(shortList.Collection), "readback list length")

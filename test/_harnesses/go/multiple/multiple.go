@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/Nested"
-	"./src/SmallMessages"
+	"messages/Nested"
+	"messages/SmallMessages"
 )
 
 var ok bool = true
@@ -78,7 +78,8 @@ func main() {
 		}
 		defer dat.Close()
 
-		msgList := SmallMessages.ProcessRawBytes(dat)
+		msgList, err := SmallMessages.ProcessRawBytes(dat)
+		softAssert(err == nil, "reading multiple messages")
 
 		softAssert(len(msgList) == 12, "reading multiple messages length")
 

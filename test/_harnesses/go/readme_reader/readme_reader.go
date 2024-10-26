@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"./src/AppMessages"
+	"messages/AppMessages"
 )
 
 func main() {

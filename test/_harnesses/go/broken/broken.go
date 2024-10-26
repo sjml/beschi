@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/BrokenMessages"
+	"messages/BrokenMessages"
 )
 
 var ok bool = true
@@ -46,9 +46,10 @@ func main() {
 		}
 		defer dat.Close()
 
-		input := BrokenMessages.FullMessageFromBytes(dat)
+		_, err = BrokenMessages.FullMessageFromBytes(dat)
 
-		softAssert(input == nil, "reading broken message")
+		softAssert(err != nil, "reading broken message")
+		softAssert(err.Error() == "Could not read msg.Z at offset 8 (EOF)", "broken error message")
 	}
 
 	if !ok {

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/BrokenMessages"
+	"messages/BrokenMessages"
 )
 
 var ok bool = true
@@ -54,9 +54,10 @@ func main() {
 		}
 		defer dat.Close()
 
-		input := BrokenMessages.ListMessageFromBytes(dat)
+		_, err = BrokenMessages.ListMessageFromBytes(dat)
 
-		softAssert(input == nil, "reading truncated message")
+		softAssert(err != nil, "reading truncated message")
+		softAssert(err.Error() == "Could not read msg.Ints[i1] at offset 14 (EOF)", "truncated error message")
 	}
 
 	if !ok {

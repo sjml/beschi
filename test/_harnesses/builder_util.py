@@ -6,7 +6,8 @@ import os
 import argparse
 import shutil
 
-OUTPUT_DIR = "../../../out"
+HARNESS_DIR = os.path.dirname(os.path.realpath(__file__))
+OUTPUT_DIR = os.path.join(HARNESS_DIR, "../../out")
 OUTPUT_BIN_DIR = os.path.join(OUTPUT_DIR, "executables")
 INTERMEDIATE_DIR = os.path.join(OUTPUT_DIR, "intermediate")
 

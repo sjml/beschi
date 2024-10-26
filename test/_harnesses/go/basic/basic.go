@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"./src/ComprehensiveMessage"
+	"messages/ComprehensiveMessage"
 )
 
 var ok bool = true
@@ -135,8 +135,8 @@ func main() {
 		}
 		defer dat.Close()
 
-		input := ComprehensiveMessage.TestingMessageFromBytes(dat)
-		softAssert(input != nil, "parsing test message")
+		input, err := ComprehensiveMessage.TestingMessageFromBytes(dat)
+		softAssert(err == nil, "parsing test message")
 
 		softAssert(input.B == example.B, "byte")
 		softAssert(input.Tf == example.Tf, "bool")

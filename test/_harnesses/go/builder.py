@@ -12,7 +12,7 @@ import builder_util
 class GoBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("go")
-        self.lib_src_dirs = [f"src/{ln}" for ln in self.libnames]
+        self.lib_src_dirs = [f"messages/{ln}" for ln in self.libnames]
         self.local_libfiles = [os.path.join(lsd, lf) for lsd, lf in zip(self.lib_src_dirs, self.libfiles)]
 
 
@@ -31,12 +31,11 @@ class GoBuilder(builder_util.Builder):
         # build the thing
         if builder_util.needs_build(self.exepath, [*self.local_libfiles, self.srcfile]):
             env_copy = os.environ.copy()
-            env_copy["GO111MODULE"] = "off"
+            # env_copy["GO111MODULE"] = "off"
             subprocess.check_call([
                 "go", "build",
                 "-o", self.exepath,
-                self.srcfile,
-            ], env=env_copy)
+            ], env=env_copy, cwd=self.srcname)
 
     def clean(self):
         super().clean()
