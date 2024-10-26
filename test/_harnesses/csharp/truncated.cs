@@ -34,8 +34,16 @@ class TruncatedHarness: TestHarness {
         {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
-            BrokenMessages.ListMessage input = BrokenMessages.ListMessage.FromBytes(br);
-            softAssert(input == null, "reading truncated message");
+            string errMsg = "";
+            try
+            {
+                BrokenMessages.ListMessage input = BrokenMessages.ListMessage.FromBytes(br);
+            }
+            catch (BrokenMessages.DataReadErrorException e)
+            {
+                errMsg = e.Message;
+            }
+            softAssert(errMsg == "Could not read ListMessage from offset 14", "reading truncated message");
         }
 
 

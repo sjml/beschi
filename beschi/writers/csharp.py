@@ -178,7 +178,7 @@ class CSharpWriter(Writer):
             self.write_line("catch (System.IO.EndOfStreamException)")
             self.write_line("{")
             self.indent_level += 1
-            self.write_line("return null;")
+            self.write_line(f"throw new DataReadErrorException(String.Format(\"Could not read {sname} from offset {{0}}\", br.BaseStream.Position));")
             self.indent_level -= 1
             self.write_line("}")
         self.indent_level -= 1
@@ -245,7 +245,40 @@ class CSharpWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("public abstract class Message {")
+        wrapped_exceptions = ["DataReadError", "UnknownMessageType"]
+        for wrapped in wrapped_exceptions:
+            self.write_line(f"public class {wrapped}Exception : Exception")
+            self.write_line("{")
+            self.indent_level += 1
+            self.write_line(f"public {wrapped}Exception()")
+            self.write_line("{")
+            self.indent_level += 1
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+            self.write_line(f"public {wrapped}Exception(string msg)")
+            self.indent_level += 1
+            self.write_line(": base(msg)")
+            self.indent_level -= 1
+            self.write_line("{")
+            self.indent_level += 1
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+            self.write_line(f"public {wrapped}Exception(string msg, Exception inner)")
+            self.indent_level += 1
+            self.write_line(": base(msg, inner)")
+            self.indent_level -= 1
+            self.write_line("{")
+            self.indent_level += 1
+            self.indent_level -= 1
+            self.write_line("}")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+
+        self.write_line("public abstract class Message")
+        self.write_line("{")
         self.indent_level += 1
         self.write_line("abstract public MessageType GetMessageType();")
         self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool tag);")
@@ -271,14 +304,8 @@ class CSharpWriter(Writer):
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line("msgList.Add(null);")
-        self.write_line("break;")
+        self.write_line("throw new UnknownMessageTypeException(String.Format(\"Unknown message type: {0}\", msgType));")
         self.indent_level -= 1
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("if (msgList[msgList.Count-1] == null) {")
-        self.indent_level += 1
-        self.write_line("break;")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1

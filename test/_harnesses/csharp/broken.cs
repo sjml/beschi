@@ -28,8 +28,16 @@ class BrokenHarness: TestHarness {
         {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
-            var input = BrokenMessages.FullMessage.FromBytes(br);
-            softAssert(input == null, "reading broken message");
+            string errMsg = "";
+            try
+            {
+                var input = BrokenMessages.FullMessage.FromBytes(br);
+            }
+            catch (BrokenMessages.DataReadErrorException e)
+            {
+                errMsg = e.Message;
+            }
+            softAssert(errMsg == "Could not read FullMessage from offset 8", "reading broken message");
         }
 
 

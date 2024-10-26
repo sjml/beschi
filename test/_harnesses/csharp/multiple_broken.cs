@@ -49,10 +49,17 @@ class MultipleBrokenHarness: TestHarness {
             FileStream f = File.OpenRead(parsedArgs["read"]);
             BinaryReader br = new BinaryReader(f);
 
-            Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br);
+            string errMsg = "";
+            try
+            {
+                Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br);
+            }
+            catch (BrokenMessages.UnknownMessageTypeException e)
+            {
+                errMsg = e.Message;
+            }
 
-            softAssert(msgList.Length == 5, "read broken stream length");
-            softAssert(msgList[4] == null, "read broken stream null sentinel");
+            softAssert(errMsg == "Unknown message type: 63", "read broken stream");
         }
 
 
