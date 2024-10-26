@@ -42,31 +42,47 @@ class GoWriter(Writer):
         self.type_mapping["double"] = "float64"
 
     def deserializer(self, var: Variable, accessor: str):
+        checked_err = False
+        local_lines = []
+        local_indent = 0
+
+        def append(s: str):
+            local_lines.append(f"{self.tab * local_indent}{s}")
+
         def err_panic():
-            self.write_line("if err != nil {")
-            self.write_line(f"{self.tab}panic(err)")
-            self.write_line("}")
+            nonlocal checked_err
+            checked_err = True
+            append("if err != nil {")
+            append(f"{self.tab}panic(err)")
+            append("}")
 
         if var.is_list:
-            self.write_line(f"var {var.name}_Len {self.get_native_list_size()}")
-            self.write_line(f"err = binary.Read(data, binary.LittleEndian, &{var.name}_Len)")
+            append(f"var {var.name}_Len {self.get_native_list_size()}")
+            append(f"err = binary.Read(data, binary.LittleEndian, &{var.name}_Len)")
             err_panic()
-            self.write_line(f"{accessor}.{var.name} = make([]{self.type_mapping[var.vartype]}, {var.name}_Len)")
+            append(f"{accessor}.{var.name} = make([]{self.type_mapping[var.vartype]}, {var.name}_Len)")
             idx = self.indent_level
-            self.write_line(f"for i{idx} := ({self.get_native_list_size()})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
+            append(f"for i{idx} := ({self.get_native_list_size()})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
             self.indent_level += 1
+            local_indent += 1
             inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
-            self.deserializer(inner, accessor)
+            err, sublines = self.deserializer(inner, accessor)
+            if err:
+                checked_err = True
+            [append(l) for l in sublines]
+            local_indent -= 1
             self.indent_level -= 1
-            self.write_line("}")
+            append("}")
         elif var.vartype == "string":
-            self.write_line(f"err = readString(data, &{accessor}.{var.name})")
+            append(f"err = readString(data, &{accessor}.{var.name})")
             err_panic()
         elif var.is_simple():
-            self.write_line(f"err = binary.Read(data, binary.LittleEndian, &{accessor}.{var.name})")
+            append(f"err = binary.Read(data, binary.LittleEndian, &{accessor}.{var.name})")
             err_panic()
         else:
-            self.write_line(f"{var.vartype}FromBytes(data, &{accessor}.{var.name})")
+            append(f"{var.vartype}FromBytes(data, &{accessor}.{var.name})")
+
+        return checked_err, local_lines
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
@@ -169,30 +185,34 @@ class GoWriter(Writer):
             self.write_line("}")
             self.indent_level -= 1
             self.write_line("}()")
-            if len(sdata.members) > 0:
+            errcheck = False
+            local_lines = []
+            for mem in sdata.members:
+                err, lines = self.deserializer(mem, "ret")
+                if err:
+                    errcheck = True
+                local_lines.extend(lines)
+            if errcheck:
                 self.write_line("var err error")
                 self.write_line("err = nil")
             self.write_line(f"ret := {sname}{{}}")
-            [self.deserializer(mem, "ret") for mem in sdata.members]
-            if len(sdata.members) > 0:
-                self.write_line("if err != nil {")
-                self.indent_level += 1
-                self.write_line(f"panic(err)")
-                self.indent_level -= 1
-                self.write_line("}")
+            [self.write_line(l) for l in local_lines]
             self.write_line()
             self.write_line("return &ret")
         else:
             self.write_line(f"func {sname}FromBytes (data io.Reader, input *{sname}) {{")
             self.indent_level += 1
-            self.write_line("var err error")
-            self.write_line("err = nil")
-            [self.deserializer(mem, "input") for mem in sdata.members]
-            self.write_line("if err != nil {")
-            self.indent_level += 1
-            self.write_line(f"panic(err)")
-            self.indent_level -= 1
-            self.write_line("}")
+            errcheck = False
+            local_lines = []
+            for mem in sdata.members:
+                err, lines = self.deserializer(mem, "input")
+                if err:
+                    errcheck = True
+                local_lines.extend(lines)
+            if errcheck:
+                self.write_line("var err error")
+                self.write_line("err = nil")
+            [self.write_line(l) for l in local_lines]
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
