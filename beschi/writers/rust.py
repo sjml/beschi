@@ -96,39 +96,40 @@ class RustWriter(Writer):
 
         if st.is_simple():
             lines.append(f"{self.protocol.get_size_of(st.name)}")
-        else:
-            size_init = "let mut size: u32 = 0;"
-            lines.append(size_init)
+            return lines, accum
 
-            for var in st.members:
-                if var.is_list:
-                    accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
-                    if var.is_simple(True):
-                        lines.append(f"size += ({accessor}{var.name}.len() as u32) * {self.protocol.get_size_of(var.vartype)};")
-                    elif var.vartype == "string":
-                        lines.append(f"for s in &{accessor}{var.name} {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + (s.len() as u32);")
-                        lines.append("}")
-                    else:
-                        lines.append(f"for el in &{accessor}{var.name} {{")
-                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"el.")
-                        if clines[0] == size_init:
-                            clines = clines[1:]
-                        clines.append(f"size += {caccum};")
-                        lines += [f"{self.tab}{l}" for l in clines]
-                        lines.append("}")
+        size_init = "let mut size: u32 = 0;"
+        lines.append(size_init)
+
+        for var in st.members:
+            if var.is_list:
+                accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
+                if var.is_simple(True):
+                    lines.append(f"size += ({accessor}{var.name}.len() as u32) * {self.protocol.get_size_of(var.vartype)};")
+                elif var.vartype == "string":
+                    lines.append(f"for s in &{accessor}{var.name} {{")
+                    lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + (s.len() as u32);")
+                    lines.append("}")
                 else:
-                    if var.is_simple():
-                        accum += self.protocol.get_size_of(var.vartype)
-                    elif var.vartype == "string":
-                        accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
-                        lines.append(f"size += {accessor}{var.name}.len() as u32;")
-                    else:
-                        clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
-                        if clines[0] == size_init:
-                            clines = clines[1:]
-                        lines += clines
-                        accum += caccum
+                    lines.append(f"for el in &{accessor}{var.name} {{")
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], "el.")
+                    if clines[0] == size_init:
+                        clines = clines[1:]
+                    clines.append(f"size += {caccum};")
+                    lines += [f"{self.tab}{l}" for l in clines]
+                    lines.append("}")
+            else:
+                if var.is_simple():
+                    accum += self.protocol.get_size_of(var.vartype)
+                elif var.vartype == "string":
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
+                    lines.append(f"size += {accessor}{var.name}.len() as u32;")
+                else:
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
+                    if clines[0] == size_init:
+                        clines = clines[1:]
+                    lines += clines
+                    accum += caccum
         return lines, accum
 
     def gen_struct(self, sname: str, sdata: Struct):
@@ -161,6 +162,7 @@ class RustWriter(Writer):
             self.write_line("size")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         self.write_line(f"pub fn from_bytes({'_' if len(sdata.members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
         self.indent_level += 1
@@ -169,6 +171,7 @@ class RustWriter(Writer):
         self.write_line(f"Ok({sname} {{{', '.join(varnames)}}})")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         if sdata.is_message:
             self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")

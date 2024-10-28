@@ -174,6 +174,7 @@ class SwiftWriter(Writer):
         self.write_line(f"return n{sname}")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         if sdata.is_message:
             self.write_line("public func WriteBytes(data: inout Data, tag: Bool) -> Void {")
@@ -193,7 +194,6 @@ class SwiftWriter(Writer):
             self.write_line("data = dataWriter.data")
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line()
 
         self.indent_level -= 1
         self.write_line("}")
