@@ -49,3 +49,4 @@ Note that this requires the `stdint.h` and `stdbool.h` header files, which are s
 * Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions will allocate memory if there are lists or strings in the structure. They will need to be `free`-ed or will leak. 
     - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
 * `ProcessRawBytes` fills an array of pointers to `void` (`void**`), so you need to pass it a *pointer* to such an array, a `void***`. I know, I know. Anyway, once it's filled, you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. (There is also a `{namespace}_DestroyMessageList` to help with cleaning that up when you're done.)
+    - Note that each of the messages in the resulting list has been allocated, so will need to be freed. 

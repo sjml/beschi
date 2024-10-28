@@ -2,9 +2,12 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - check documentation to make sure it's not promising to be exception-free 
+- is `list_size_type` actually implemented?
 
 ## Zig writer 
 - <sigh> buckle up
+- fix "this was auto created" to not use format strings if needed
+- test with a protocol that has no simple structs/messages
 
 ## protocol features:
 - static values, so you can, say, version a message and it will be automatically written to every instance of it
@@ -19,10 +22,9 @@ This file is a rough todo list for the tool itself.
         # ..."
         ```
     - proposal:
-        - statics are allowed for numeric types and strings only; no lists, no structs
+        - statics are allowed for numeric types (and lists of numeric types) only
         - statics cannot be set from target language; will be overwritten with static value when put into the buffer
             - note that this might lead to leaked memory or trashed pointers if you're not careful in C
-            - (perhaps a reason to only allow numeric types, but strings are just _so_ useful)
 - inline string and array length types so they don't have to be protocol-wide like they are now
     - not pressing, but worth thinking of
         ```toml
@@ -31,8 +33,12 @@ This file is a rough todo list for the tool itself.
         shorty = "string[u8]"
         medium = "string[u16]"
         gargantuan = "string[u64]"
+        regular = "string[]" # will use the default
+        regular2 = "string" # will also use the default
         smallList = "[f32][u8]"
-        universe = "[f64][f64]"
+        universe = "[f64][u64]"
+        regList = "[DataType][]" # default
+        regList2 = "[DataType]" # default
         ```
 
 ## "immediate" todo

@@ -1,5 +1,6 @@
 import sys
 import argparse
+import traceback
 
 from .protocol import Protocol
 from .writers import all_writers, experimental_writers
@@ -74,7 +75,7 @@ def main():
     try:
         output = writer.generate()
     except NotImplementedError as nie:
-        sys.stderr.write(f"{nie}\n")
+        sys.stderr.write(f"{traceback.format_exc()}\n")
         sys.exit(1)
 
     if args.output == None:
