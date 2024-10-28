@@ -54,7 +54,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
             local_offset += list_read.bytes_read;
         } else {
             switch (T) {
-                []u8 => {
+                []u8, []const u8 => {
                     const list_read = try readString(allocator, local_offset, buffer);
                     list[i] = list_read.value;
                     local_offset += list_read.bytes_read;
@@ -94,7 +94,7 @@ pub fn writeNumber(comptime T: type, offset: usize, buffer: []u8, value: T) usiz
     return @sizeOf(T);
 }
 
-pub fn writeString(offset: usize, buffer: []u8, value: []u8) usize {
+pub fn writeString(offset: usize, buffer: []u8, value: []const u8) usize {
     _ = writeNumber({# LIST_SIZE_TYPE #}, offset, buffer, @intCast(value.len));
     std.mem.copyForwards(u8, buffer[offset+@sizeOf({# LIST_SIZE_TYPE #})..][0..value.len], value);
     return @sizeOf({# LIST_SIZE_TYPE #}) + value.len;
@@ -110,7 +110,7 @@ pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usiz
         }
         else {
             switch(T) {
-                []u8 => {
+                []u8, []const u8 => {
                     local_offset += writeString(local_offset, buffer, item);
                 },
                 else => {

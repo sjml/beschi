@@ -27,7 +27,7 @@ class ZigWriter(Writer):
         self.type_mapping["int64"] = "i64"
         self.type_mapping["float"] = "f32"
         self.type_mapping["double"] = "f64"
-        self.type_mapping["string"] = "[]u8"
+        self.type_mapping["string"] = "[]const u8"
 
         self.base_defaults: dict[str,str] = {
             "byte": "0",
@@ -40,7 +40,6 @@ class ZigWriter(Writer):
             "int64": "0",
             "float": "0.0",
             "double": "0.0",
-            "string": '""',
         }
 
     def deserializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
@@ -166,7 +165,7 @@ class ZigWriter(Writer):
                     self.write_line(f"{var.name}: {self.type_mapping[var.vartype]},")
         self.write_line()
 
-        self.write_line(f"pub fn getSizeInBytes(self: *{sname}) usize {{")
+        self.write_line(f"pub fn getSizeInBytes(self: *const {sname}) usize {{")
         self.indent_level += 1
         if sdata.is_simple():
             self.write_line("_ = self;")

@@ -6,8 +6,8 @@ This file is a rough todo list for the tool itself.
 
 ## Zig writer 
 - <sigh> buckle up
-- fix "this was auto created" to not use format strings if needed
 - test with a protocol that has no simple structs/messages
+- documentation and example file
 
 ## protocol features:
 - static values, so you can, say, version a message and it will be automatically written to every instance of it
