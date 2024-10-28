@@ -1,7 +1,7 @@
 import argparse
 
 from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
-from ..writer import Writer, TextUtil
+from ..writer import Writer
 from .. import LIB_NAME, LIB_VERSION
 
 LANGUAGE_NAME = "Zig"
@@ -45,9 +45,7 @@ class ZigWriter(Writer):
 
     def deserializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
         if parent_is_simple: # also means that *var* is simple because recursion!
-            if var.vartype == "bool":
-                self.write_line(f"const {accessor}_{var.name} = readNumber(u8, offset + {simple_offset}, buffer).value != 0;")
-            elif var.vartype in NUMERIC_TYPE_SIZES.keys():
+            if var.vartype in NUMERIC_TYPE_SIZES.keys():
                 self.write_line(f"const {accessor}_{var.name} = readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer).value;")
             else:
                 self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes({simple_offset}, buffer);")
@@ -56,10 +54,6 @@ class ZigWriter(Writer):
             if var.is_list:
                 self.write_line(f"const {accessor}_{var.name}_read = try readList({self.type_mapping[var.vartype]}, allocator, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
-                self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
-            elif var.vartype == "bool":
-                self.write_line(f"const {accessor}_{var.name}_read = readNumber(u8, local_offset, buffer);")
-                self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value != 0;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
             elif var.vartype in NUMERIC_TYPE_SIZES.keys():
                 self.write_line(f"const {accessor}_{var.name}_read = readNumber({self.type_mapping[var.vartype]}, local_offset, buffer);")
@@ -75,6 +69,65 @@ class ZigWriter(Writer):
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
 
             self.write_line()
+
+    def serializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
+        if parent_is_simple:
+            if var.vartype in NUMERIC_TYPE_SIZES.keys():
+                self.write_line(f"_ = writeNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer, {accessor}{var.name});")
+        else:
+            if var.is_list:
+                self.write_line(f"local_offset += writeList({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
+            elif var.vartype in NUMERIC_TYPE_SIZES.keys():
+                self.write_line(f"local_offset += writeNumber({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
+            elif var.vartype == "string":
+                self.write_line(f"local_offset += writeString(local_offset, buffer, {accessor}{var.name});")
+            else:
+                self.write_line(f"local_offset += {accessor}{var.name}.writeBytes(local_offset, buffer);")
+
+
+
+
+    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
+        lines: list[str] = []
+        accum = 0
+
+        if st.is_simple():
+            lines.append(f"return {self.protocol.get_size_of(st.name)};")
+            return lines, accum
+
+        size_init = "var size: usize = 0;"
+        lines.append(size_init)
+
+        for var in st.members:
+            if var.is_list:
+                accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
+                if var.is_simple(True):
+                    lines.append(f"size += {accessor}{var.name}.len * {self.protocol.get_size_of(var.vartype)};")
+                elif var.vartype == "string":
+                    lines.append(f"for ({accessor}{var.name}) |s| {{")
+                    lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + s.len;")
+                    lines.append("}")
+                else:
+                    lines.append(f"for ({accessor}{var.name}) |el| {{")
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], "el.")
+                    if clines[0] == size_init:
+                        clines = clines[1:]
+                    clines.append(f"size += {caccum};")
+                    lines += [f"{self.tab}{l}" for l in clines]
+                    lines.append("}")
+            else:
+                if var.is_simple():
+                    accum += self.protocol.get_size_of(var.vartype)
+                elif var.vartype == "string":
+                    accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
+                    lines.append(f"size += {accessor}{var.name}.len;")
+                else:
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
+                    if clines[0] == size_init:
+                        clines = clines[1:]
+                    lines += clines
+                    accum += caccum
+        return lines, accum
 
     def destructor(self, var: Variable, accessor: str):
         if var.is_simple():
@@ -94,7 +147,6 @@ class ZigWriter(Writer):
         else:
             self.write_line(f"{accessor}{var.name}.deinit(allocator);")
 
-
     def gen_struct(self, sname: str, sdata: Struct):
         self.write_line(f"pub const {sname} = struct {{")
         self.indent_level += 1
@@ -112,6 +164,21 @@ class ZigWriter(Writer):
                     self.write_line(f"{var.name}: {self.type_mapping[var.vartype]} = {default_value},")
                 else:
                     self.write_line(f"{var.name}: {self.type_mapping[var.vartype]},")
+        self.write_line()
+
+        self.write_line(f"pub fn getSizeInBytes(self: *{sname}) usize {{")
+        self.indent_level += 1
+        if sdata.is_simple():
+            self.write_line("_ = self;")
+            self.write_line(f"return {self.protocol.get_size_of(sname)};")
+        else:
+            measure_lines, accumulator = self.gen_measurement(sdata, "self.")
+            [self.write_line(s) for s in measure_lines]
+            if accumulator > 0:
+                self.write_line(f"size += {accumulator};")
+            self.write_line("return size;")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line()
 
         self.write_line(f"pub fn fromBytes({'' if sdata.is_simple() else 'allocator: std.mem.Allocator, '}offset: usize, buffer: []u8) !struct {{ value: {sname}, bytes_read: usize }} {{")
@@ -137,6 +204,39 @@ class ZigWriter(Writer):
             self.write_line(f"}}, .bytes_read = local_offset - offset }};")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
+
+        if sdata.is_message:
+            self.write_line(f"pub fn writeBytes(self: *const {sname}, offset: usize, buffer: []u8, tag: bool) usize {{")
+            self.indent_level += 1
+        else:
+            self.write_line(f"pub fn writeBytes(self: *const {sname}, offset: usize, buffer: []u8) usize {{")
+            self.indent_level += 1
+        simple_offset = -1
+        if sdata.is_simple():
+            simple_offset = 0
+        else:
+            self.write_line("var local_offset = offset;")
+            if sdata.is_message:
+                self.write_line("if (tag) {")
+                self.indent_level += 1
+                msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
+                self.write_line(f"local_offset += writeNumber(u8, local_offset, buffer, {msg_type_id});")
+                self.indent_level -= 1
+                self.write_line("}")
+            self.write_line()
+        for mem in sdata.members:
+            self.serializer(mem, "self.", sdata.is_simple(), simple_offset)
+            if sdata.is_simple():
+                simple_offset += self.protocol.get_size_of(mem.vartype)
+        if sdata.is_simple():
+            self.write_line(f"return {simple_offset};")
+        else:
+            self.write_line()
+            self.write_line(f"return local_offset - offset;")
+
+        self.indent_level -= 1
+        self.write_line("}")
 
         if not sdata.is_simple():
             self.write_line()
@@ -146,10 +246,12 @@ class ZigWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
 
-
         self.indent_level -= 1
         self.write_line("};")
         self.write_line()
+
+
+
 
     def generate(self) -> str:
         self.output = []

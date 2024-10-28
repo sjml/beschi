@@ -48,6 +48,15 @@ This file is a rough todo list for the tool itself.
     - check that numbers are in the appropriate range (like JavaScript where everything is everything)
         - in languages with strong types enforced by a compiler, skip
     - check that strings and lists are <= their max defined length
+- add optional bounds checking on buffer access
+  - zig: 
+    ```zig
+    if (config.bounds_checking) {
+        if (offset + @sizeOf(T) >= buffer.len) {
+            @panic(std.fmt.comptimePrint("Writing {s} outside of buffer bounds", .{@typeName(T)}));
+        }
+    }
+    ```
 
 ## functionality
 - can size limits on arrays be enforced? at least when writing?

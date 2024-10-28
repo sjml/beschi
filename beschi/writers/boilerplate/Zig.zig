@@ -1,5 +1,6 @@
 fn _numberTypeIsValid(comptime T: type) bool {
     const validNumericTypes = [_]type{
+        bool,
         u8,  i8,
         u16, i16,
         u32, i32,
@@ -24,6 +25,7 @@ pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) struct { value:
     switch (T) {
         f32 => return .{ .value = @bitCast(std.mem.readInt(u32, buffer[offset..][0..@sizeOf(T)], .little)), .bytes_read = @sizeOf(T) },
         f64 => return .{ .value = @bitCast(std.mem.readInt(u64, buffer[offset..][0..@sizeOf(T)], .little)), .bytes_read = @sizeOf(T) },
+        bool => return .{ .value = std.mem.readInt(u8, buffer[offset..][0..@sizeOf(T)], .little) != 0, .bytes_read = @sizeOf(T) },
         else => return .{ .value = std.mem.readInt(T, buffer[offset..][0..@sizeOf(T)], .little), .bytes_read = @sizeOf(T) },
     }
 }
@@ -73,4 +75,49 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
         }
     }
     return .{ .value = list, .bytes_read = local_offset - offset };
+}
+
+pub fn writeNumber(comptime T: type, offset: usize, buffer: []u8, value: T) usize {
+    comptime {
+        if (!_numberTypeIsValid(T)) {
+            @compileError("Invalid number type");
+        }
+    }
+
+    const slice = buffer[offset..][0..@sizeOf(T)];
+    switch (T) {
+        f32 => std.mem.writeInt(u32, @constCast(slice), @bitCast(value), .little),
+        f64 => std.mem.writeInt(u64, @constCast(slice), @bitCast(value), .little),
+        bool => std.mem.writeInt(u8, @constCast(slice), @intFromBool(value), .little),
+        else => std.mem.writeInt(T, @constCast(slice), value, .little),
+    }
+    return @sizeOf(T);
+}
+
+pub fn writeString(offset: usize, buffer: []u8, value: []u8) usize {
+    _ = writeNumber({# LIST_SIZE_TYPE #}, offset, buffer, @intCast(value.len));
+    std.mem.copyForwards(u8, buffer[offset+@sizeOf({# LIST_SIZE_TYPE #})..][0..value.len], value);
+    return @sizeOf({# LIST_SIZE_TYPE #}) + value.len;
+}
+
+pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usize {
+    var local_offset = offset;
+    local_offset += writeNumber({# LIST_SIZE_TYPE #}, local_offset, buffer, @intCast(value.len));
+
+    for (value) |item| {
+        if (comptime _numberTypeIsValid(T)) {
+            local_offset += writeNumber(T, local_offset, buffer, item);
+        }
+        else {
+            switch(T) {
+                []u8 => {
+                    local_offset += writeString(local_offset, buffer, item);
+                },
+                else => {
+                    local_offset += item.writeBytes(local_offset, buffer);
+                }
+            }
+        }
+    }
+    return local_offset - offset;
 }
