@@ -86,7 +86,7 @@ class ZigWriter(Writer):
 
 
 
-    def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
+    def gen_measurement(self, st: Struct, accessor: str, depth: int) -> tuple[list[str], int]:
         lines: list[str] = []
         accum = 0
 
@@ -107,8 +107,8 @@ class ZigWriter(Writer):
                     lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + s.len;")
                     lines.append("}")
                 else:
-                    lines.append(f"for ({accessor}{var.name}) |el| {{")
-                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], "el.")
+                    lines.append(f"for ({accessor}{var.name}) |el{depth}| {{")
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"el{depth}.", depth + 1)
                     if clines[0] == size_init:
                         clines = clines[1:]
                     clines.append(f"size += {caccum};")
@@ -121,7 +121,7 @@ class ZigWriter(Writer):
                     accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
                     lines.append(f"size += {accessor}{var.name}.len;")
                 else:
-                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
+                    clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.", depth + 1)
                     if clines[0] == size_init:
                         clines = clines[1:]
                     lines += clines
@@ -171,7 +171,7 @@ class ZigWriter(Writer):
             self.write_line("_ = self;")
             self.write_line(f"return {self.protocol.get_size_of(sname)};")
         else:
-            measure_lines, accumulator = self.gen_measurement(sdata, "self.")
+            measure_lines, accumulator = self.gen_measurement(sdata, "self.", 0)
             [self.write_line(s) for s in measure_lines]
             if accumulator > 0:
                 self.write_line(f"size += {accumulator};")
@@ -183,6 +183,9 @@ class ZigWriter(Writer):
         self.write_line(f"pub fn fromBytes({'' if sdata.is_simple() else 'allocator: std.mem.Allocator, '}offset: usize, buffer: []u8) !struct {{ value: {sname}, bytes_read: usize }} {{")
         self.indent_level += 1
         simple_offset = -1
+        if len(sdata.members) == 0:
+            self.write_line("_ = offset;")
+            self.write_line("_ = buffer;")
         if sdata.is_simple():
             simple_offset = 0
         else:
@@ -212,8 +215,19 @@ class ZigWriter(Writer):
             self.write_line(f"pub fn writeBytes(self: *const {sname}, offset: usize, buffer: []u8) usize {{")
             self.indent_level += 1
         simple_offset = -1
+        if len(sdata.members) == 0:
+            self.write_line("_ = self;")
+            self.write_line("_ = offset;")
         if sdata.is_simple():
             simple_offset = 0
+            if sdata.is_message:
+                self.write_line("if (tag) {")
+                self.indent_level += 1
+                msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
+                self.write_line(f"_ = writeNumber(u8, {simple_offset}, buffer, {msg_type_id});")
+                self.indent_level -= 1
+                self.write_line("}")
+                simple_offset += 1
         else:
             self.write_line("var local_offset = offset;")
             if sdata.is_message:
