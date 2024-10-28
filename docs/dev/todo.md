@@ -3,6 +3,7 @@ This file is a rough todo list for the tool itself.
 ## dustoff notes
 - check documentation to make sure it's not promising to be exception-free 
 - is `list_size_type` actually implemented?
+- check that other writers do like Zig's and clean up allocated memory on error (when reading lists) 
 
 ## Zig writer 
 - <sigh> buckle up

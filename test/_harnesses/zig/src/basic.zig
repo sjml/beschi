@@ -1,5 +1,6 @@
 const std = @import("std");
 const Checker = @import("./util.zig").Checker;
+const makeMutableSlice = @import("./util.zig").makeMutableSlice;
 
 const comprehensive = @import("lib/ComprehensiveMessage.zig");
 const TestingMessage = comprehensive.TestingMessage;
@@ -7,13 +8,6 @@ const Vec2 = comprehensive.Vec2;
 const Vec3 = comprehensive.Vec3;
 const Color = comprehensive.Color;
 const ComplexData = comprehensive.ComplexData;
-
-fn makeMutableSlice(comptime data: anytype) []@TypeOf(data[0]) {
-    const S = struct {
-        var array: [data.len]@TypeOf(data[0]) = data;
-    };
-    return &S.array;
-}
 
 // zig fmt: off
 const example = TestingMessage{
@@ -126,7 +120,7 @@ pub fn main() !void {
         var file = try std.fs.cwd().createFile(args[2], .{ .truncate = true });
         defer file.close();
 
-        _ = try file.write(buffer);
+        try file.writeAll(buffer);
     } else if (std.mem.eql(u8, args[1], "--read")) {
         var file = try std.fs.cwd().openFile(args[2], .{});
         defer file.close();
@@ -136,7 +130,8 @@ pub fn main() !void {
 
         const input_read = try TestingMessage.fromBytes(testAllocator, 0, buffer);
         checker.softAssert(input_read.bytes_read == 913, "size read check");
-        const input = input_read.value;
+        var input = input_read.value;
+        defer input.deinit(testAllocator);
         checker.softAssert(input.b == example.b, "byte");
         checker.softAssert(input.tf == example.tf, "bool");
         checker.softAssert(input.i16 == example.i16, "i16");
@@ -213,6 +208,9 @@ pub fn main() !void {
             }
         }
     }
+
+    const mem_result = gpa.deinit();
+    checker.softAssert(mem_result == .ok, "memory leaks");
 
     checker.check();
 }

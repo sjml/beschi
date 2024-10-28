@@ -45,7 +45,7 @@ class ZigWriter(Writer):
     def deserializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
         if parent_is_simple: # also means that *var* is simple because recursion!
             if var.vartype in NUMERIC_TYPE_SIZES.keys():
-                self.write_line(f"const {accessor}_{var.name} = readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer).value;")
+                self.write_line(f"const {accessor}_{var.name} = (try readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer)).value;")
             else:
                 self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes({simple_offset}, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
@@ -55,7 +55,7 @@ class ZigWriter(Writer):
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
             elif var.vartype in NUMERIC_TYPE_SIZES.keys():
-                self.write_line(f"const {accessor}_{var.name}_read = readNumber({self.type_mapping[var.vartype]}, local_offset, buffer);")
+                self.write_line(f"const {accessor}_{var.name}_read = try readNumber({self.type_mapping[var.vartype]}, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
             elif var.vartype == "string":
@@ -221,10 +221,12 @@ class ZigWriter(Writer):
         if sdata.is_simple():
             simple_offset = 0
             if sdata.is_message:
+                self.write_line("var local_offset = offset;")
+                self.write_line()
                 self.write_line("if (tag) {")
                 self.indent_level += 1
                 msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
-                self.write_line(f"_ = writeNumber(u8, {simple_offset}, buffer, {msg_type_id});")
+                self.write_line(f"local_offset = writeNumber(u8, local_offset, buffer, {msg_type_id});")
                 self.indent_level -= 1
                 self.write_line("}")
                 simple_offset += 1
@@ -239,10 +241,10 @@ class ZigWriter(Writer):
                 self.write_line("}")
             self.write_line()
         for mem in sdata.members:
-            self.serializer(mem, "self.", sdata.is_simple(), simple_offset)
+            self.serializer(mem, "self.", sdata.is_simple() and not sdata.is_message, simple_offset)
             if sdata.is_simple():
                 simple_offset += self.protocol.get_size_of(mem.vartype)
-        if sdata.is_simple():
+        if sdata.is_simple() and not sdata.is_message:
             self.write_line(f"return {simple_offset};")
         else:
             self.write_line()

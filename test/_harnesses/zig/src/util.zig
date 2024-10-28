@@ -17,3 +17,10 @@ pub const Checker = struct {
         }
     }
 };
+
+pub fn makeMutableSlice(comptime data: anytype) []@TypeOf(data[0]) {
+    const S = struct {
+        var array: [data.len]@TypeOf(data[0]) = data;
+    };
+    return &S.array;
+}

@@ -1,3 +1,8 @@
+const DataReaderError = error {
+    EOF,
+    InvalidData,
+};
+
 fn _numberTypeIsValid(comptime T: type) bool {
     const validNumericTypes = [_]type{
         bool,
@@ -15,11 +20,15 @@ fn _numberTypeIsValid(comptime T: type) bool {
     return false;
 }
 
-pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) struct { value: T, bytes_read: usize } {
+pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {
             @compileError("Invalid number type");
         }
+    }
+
+    if (offset + @sizeOf(T) > buffer.len) {
+        return DataReaderError.EOF;
     }
 
     switch (T) {
@@ -31,8 +40,13 @@ pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) struct { value:
 }
 
 pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []u8, bytes_read: usize } {
-    const len_read = readNumber({# STRING_SIZE_TYPE #}, offset, buffer);
+    const len_read = try readNumber({# STRING_SIZE_TYPE #}, offset, buffer);
     const len = len_read.value;
+
+    if (offset + @sizeOf({# STRING_SIZE_TYPE #}) + len > buffer.len) {
+        return DataReaderError.EOF;
+    }
+
     var str = try allocator.alloc(u8, len);
     for (0..len) |i| {
         str[i] = buffer[offset + len_read.bytes_read + i];
@@ -42,14 +56,39 @@ pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !st
 
 pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []T, bytes_read: usize } {
     var local_offset = offset;
-    const len_read = readNumber({# LIST_SIZE_TYPE #}, local_offset, buffer);
+    const len_read = try readNumber({# LIST_SIZE_TYPE #}, local_offset, buffer);
     const len = len_read.value;
     local_offset += len_read.bytes_read;
     var list = try allocator.alloc(T, len);
+    var made_count: {# LIST_SIZE_TYPE #} = 0;
+
+    errdefer {
+        for (0..made_count) |i| {
+            if (comptime _numberTypeIsValid(T)) {
+                // no-op; just keeping the same structure as below
+            }
+            else {
+                switch (T) {
+                    []u8, []const u8 => {
+                        allocator.free(list[i]);
+                    },
+                    else => {
+                        if (comptime _typeIsSimple(T)) {
+                            // no-op
+                        }
+                        else {
+                            list[i].deinit(allocator);
+                        }
+                    }
+                }
+            }
+        }
+        allocator.free(list);
+    }
 
     for (0..len) |i| {
         if (comptime _numberTypeIsValid(T)) {
-            const list_read = readNumber(T, local_offset, buffer);
+            const list_read = try readNumber(T, local_offset, buffer);
             list[i] = list_read.value;
             local_offset += list_read.bytes_read;
         } else {
@@ -73,6 +112,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
                 },
             }
         }
+        made_count += 1;
     }
     return .{ .value = list, .bytes_read = local_offset - offset };
 }
