@@ -1,17 +1,8 @@
 This file is a rough todo list for the tool itself.
 
 ## dustoff notes
-- check documentation to make sure it's not promising to be exception-free 
-- is `list_size_type` actually implemented?
-- check that other writers do like Zig's and clean up allocated memory on error (when reading lists) 
-- update rust (and write zig) documentation on the caveats with the tagged union / enum approach
-- zig namespace note
 - add endian handling to C writer for the sake of completion
 
-## Zig writer 
-- evaluate when `[]const u8` would be appropriate
-- documentation and example file
-  
 ## AssemblyScript writer?!
 - oh no
 - could probably just copy/inherit most of the TypeScript writer

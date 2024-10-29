@@ -174,7 +174,7 @@ class ZigWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"pub fn fromBytes({'' if sdata.is_simple() else 'allocator: std.mem.Allocator, '}offset: usize, buffer: []u8) !struct {{ value: {sname}, bytes_read: usize }} {{")
+        self.write_line(f"pub fn fromBytes({'' if sdata.is_simple() else 'allocator: std.mem.Allocator, '}offset: usize, buffer: []const u8) !struct {{ value: {sname}, bytes_read: usize }} {{")
         self.indent_level += 1
         simple_offset = -1
         if len(sdata.members) == 0:
@@ -309,7 +309,7 @@ class ZigWriter(Writer):
         self.write_line("};")
         self.write_line()
 
-        self.write_line("pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []u8) ![]Message {")
+        self.write_line("pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8) ![]Message {")
         self.indent_level += 1
         self.write_line("var msg_list = std.ArrayList(Message).init(allocator);")
         self.write_line("defer msg_list.deinit();")

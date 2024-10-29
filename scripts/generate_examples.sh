@@ -10,6 +10,7 @@ langs["go"]="go"
 langs["rust"]="rs"
 langs["swift"]="swift"
 langs["typescript"]="ts"
+langs["zig"]="zig"
 
 for lang in "${!langs[@]}"; do
   ext=${langs[$lang]}

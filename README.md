@@ -14,8 +14,8 @@ I go into more explanation for why this exists [in the documentation](./docs/), 
 
 Language-Specific Documentation: 
 
-| [C](./docs/languages/c.md) | [C#](./docs/languages/csharp.md) | [Go](./docs/languages/go.md) | [Rust](./docs/languages/rust.md) | [Swift](./docs/languages/swift.md) | [TypeScript](./docs/languages/typescript.md) |
-|-|-|-|-|-|-|
+| [C](./docs/languages/c.md) | [C#](./docs/languages/csharp.md) | [Go](./docs/languages/go.md) | [Rust](./docs/languages/rust.md) | [Swift](./docs/languages/swift.md) | [TypeScript](./docs/languages/typescript.md) | [Zig](./docs/languages/zig.md)
+|-|-|-|-|-|-|-|
 
 * [Dev Notes](./docs/dev)
 
@@ -108,19 +108,19 @@ teamColors = "[Color]"
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Type | C          | C#       | Go        | Rust     | Swift     | TypeScript |
-|---------------|------------|----------|-----------|----------|-----------|------------|
-| `byte`        | `uint8_t`  | `byte`   | `byte`    | `u8`     | `UInt8`   | `number`   |
-| `bool`        | `bool`     | `bool`   | `bool`    | `bool`   | `Bool`    | `boolean`  |
-| `int16`       | `uint16_t` | `short`  | `int16`   | `i16`    | `Int16`   | `number`   |
-| `uint16`      | `int16_t`  | `ushort` | `uint16`  | `u16`    | `UInt16`  | `number`   |
-| `int32`       | `uint32_t` | `int`    | `int32`   | `i32`    | `Int32`   | `number`   |
-| `uint32`      | `int32_t`  | `uint`   | `uint32`  | `u32`    | `UInt32`  | `number`   |
-| `int64`       | `uint64_t` | `long`   | `int64`   | `i64`    | `Int64`   | `bigint`   |
-| `uint64`      | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   |
-| `float`       | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   |
-| `double`      | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   |
-| `string`      | `char*`    | `string` | `string`  | `String` | `String`  | `string`   |
+| Protocol Type | C          | C#       | Go        | Rust     | Swift     | TypeScript | Zig           |
+|---------------|------------|----------|-----------|----------|-----------|------------|---------------|
+| **`byte`**    | `uint8_t`  | `byte`   | `byte`    | `u8`     | `UInt8`   | `number`   | `u8`          |
+| **`bool`**    | `bool`     | `bool`   | `bool`    | `bool`   | `Bool`    | `boolean`  | `bool`        |
+| **`int16`**   | `uint16_t` | `short`  | `int16`   | `i16`    | `Int16`   | `number`   | `i16`         |
+| **`uint16`**  | `int16_t`  | `ushort` | `uint16`  | `u16`    | `UInt16`  | `number`   | `u16`         |
+| **`int32`**   | `uint32_t` | `int`    | `int32`   | `i32`    | `Int32`   | `number`   | `i32`         |
+| **`uint32`**  | `int32_t`  | `uint`   | `uint32`  | `u32`    | `UInt32`  | `number`   | `u32`         |
+| **`int64`**   | `uint64_t` | `long`   | `int64`   | `i64`    | `Int64`   | `bigint`   | `i64`         |
+| **`uint64`**  | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   | `u64`         |
+| **`float`**   | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   | `f32`         |
+| **`double`**  | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   | `f64`         |
+| **`string`**  | `char*`    | `string` | `string`  | `String` | `String`  | `string`   | `[] const u8` |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. 
 

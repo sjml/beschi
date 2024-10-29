@@ -35,7 +35,7 @@ fn _typeIsSimple(comptime T: type) bool {
     return false;
 }
 
-pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value: T, bytes_read: usize } {
+pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {
             @compileError("Invalid number type");
@@ -54,7 +54,7 @@ pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value
     }
 }
 
-pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []u8, bytes_read: usize } {
+pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: []u8, bytes_read: usize } {
     const len_read = try readNumber({# STRING_SIZE_TYPE #}, offset, buffer);
     const len = len_read.value;
 
@@ -69,7 +69,7 @@ pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !st
     return .{ .value = str, .bytes_read = @sizeOf({# STRING_SIZE_TYPE #}) + len };
 }
 
-pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []T, bytes_read: usize } {
+pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: []T, bytes_read: usize } {
     var local_offset = offset;
     const len_read = try readNumber({# LIST_SIZE_TYPE #}, local_offset, buffer);
     const len = len_read.value;

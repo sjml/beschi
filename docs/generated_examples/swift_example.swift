@@ -273,13 +273,13 @@ public /* namespace */ enum AppMessages {
             nColor.alpha = try dataReader.GetFloat32()
             return nColor
         }
+
         func WriteBytes(_ dataWriter: DataWriter) -> Void {
             dataWriter.WriteFloat32(self.red)
             dataWriter.WriteFloat32(self.green)
             dataWriter.WriteFloat32(self.blue)
             dataWriter.WriteFloat32(self.alpha)
         }
-
     }
 
     public struct Spectrum {
@@ -299,6 +299,7 @@ public /* namespace */ enum AppMessages {
             }
             return nSpectrum
         }
+
         func WriteBytes(_ dataWriter: DataWriter) -> Void {
             self.defaultColor.WriteBytes(dataWriter)
             dataWriter.WriteUInt16(UInt16(self.colors.count))
@@ -306,7 +307,6 @@ public /* namespace */ enum AppMessages {
                 el.WriteBytes(dataWriter)
             }
         }
-
     }
 
     public struct Vector3Message : AppMessages_Message {
@@ -336,6 +336,7 @@ public /* namespace */ enum AppMessages {
             nVector3Message.z = try dataReader.GetFloat32()
             return nVector3Message
         }
+
         public func WriteBytes(data: inout Data, tag: Bool) -> Void {
             let dataWriter = DataWriter(withData: &data)
             if (tag) {
@@ -347,7 +348,6 @@ public /* namespace */ enum AppMessages {
 
             data = dataWriter.data
         }
-
     }
 
     public struct NewCharacterMessage : AppMessages_Message {
@@ -396,6 +396,7 @@ public /* namespace */ enum AppMessages {
             }
             return nNewCharacterMessage
         }
+
         public func WriteBytes(data: inout Data, tag: Bool) -> Void {
             let dataWriter = DataWriter(withData: &data)
             if (tag) {
@@ -414,7 +415,6 @@ public /* namespace */ enum AppMessages {
 
             data = dataWriter.data
         }
-
     }
 
     public struct CharacterJoinedTeam : AppMessages_Message {
@@ -453,6 +453,7 @@ public /* namespace */ enum AppMessages {
             }
             return nCharacterJoinedTeam
         }
+
         public func WriteBytes(data: inout Data, tag: Bool) -> Void {
             let dataWriter = DataWriter(withData: &data)
             if (tag) {
@@ -467,7 +468,6 @@ public /* namespace */ enum AppMessages {
 
             data = dataWriter.data
         }
-
     }
 
 }

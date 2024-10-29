@@ -148,6 +148,7 @@ impl Color {
     pub fn get_size_in_bytes(&self) -> u32 {
         16
     }
+
     pub fn from_bytes(reader: &mut BufferReader) -> Result<Color, AppMessagesError> {
         let red = reader.read_f32()?;
         let green = reader.read_f32()?;
@@ -155,6 +156,7 @@ impl Color {
         let alpha = reader.read_f32()?;
         Ok(Color {red, green, blue, alpha})
     }
+
     pub fn write_bytes(&self, writer: &mut Vec<u8>) {
         writer.extend(self.red.to_le_bytes());
         writer.extend(self.green.to_le_bytes());
@@ -175,6 +177,7 @@ impl Spectrum {
         size += 18;
         size
     }
+
     pub fn from_bytes(reader: &mut BufferReader) -> Result<Spectrum, AppMessagesError> {
         let default_color = Color::from_bytes(reader)?;
         let colors_len = reader.read_u16()?;
@@ -185,6 +188,7 @@ impl Spectrum {
         }
         Ok(Spectrum {default_color, colors})
     }
+
     pub fn write_bytes(&self, writer: &mut Vec<u8>) {
         self.default_color.write_bytes(writer);
         writer.extend((self.colors.len() as u16).to_le_bytes());
@@ -204,12 +208,14 @@ impl Vector3Message {
     pub fn get_size_in_bytes(&self) -> u32 {
         12
     }
+
     pub fn from_bytes(reader: &mut BufferReader) -> Result<Vector3Message, AppMessagesError> {
         let x = reader.read_f32()?;
         let y = reader.read_f32()?;
         let z = reader.read_f32()?;
         Ok(Vector3Message {x, y, z})
     }
+
     pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {
         if tag {
             writer.push(1_u8);
@@ -240,6 +246,7 @@ impl NewCharacterMessage {
         size += 21;
         size
     }
+
     pub fn from_bytes(reader: &mut BufferReader) -> Result<NewCharacterMessage, AppMessagesError> {
         let id = reader.read_u64()?;
         let character_name = reader.read_string()?;
@@ -255,6 +262,7 @@ impl NewCharacterMessage {
         }
         Ok(NewCharacterMessage {id, character_name, strength, intelligence, dexterity, gold_in_wallet, nicknames})
     }
+
     pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {
         if tag {
             writer.push(2_u8);
@@ -288,6 +296,7 @@ impl CharacterJoinedTeam {
         size += 11;
         size
     }
+
     pub fn from_bytes(reader: &mut BufferReader) -> Result<CharacterJoinedTeam, AppMessagesError> {
         let character_id = reader.read_u64()?;
         let team_name = reader.read_string()?;
@@ -299,6 +308,7 @@ impl CharacterJoinedTeam {
         }
         Ok(CharacterJoinedTeam {character_id, team_name, team_colors})
     }
+
     pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {
         if tag {
             writer.push(3_u8);
