@@ -26,7 +26,7 @@ class ZigBuilder(builder_util.Builder):
                 shutil.copy(gf, llf)
 
         if not os.path.exists(self.srcfile):
-            raise NotImplementedError(f"No existing test corresponding with \"{self.srcname}\"")
+            raise NotImplementedError(f"No existing test for Zig corresponding with \"{self.srcname}\"")
 
         if not os.path.exists("zig-out/bin/"):
             os.makedirs("zig-out/bin/")

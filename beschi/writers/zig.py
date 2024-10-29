@@ -10,7 +10,6 @@ LANGUAGE_NAME = "Zig"
 class ZigWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".zig"
-    in_progress = True
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p)
@@ -40,6 +39,7 @@ class ZigWriter(Writer):
             "int64": "0",
             "float": "0.0",
             "double": "0.0",
+            "string": '""',
         }
 
     def deserializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
@@ -151,18 +151,12 @@ class ZigWriter(Writer):
         self.indent_level += 1
         for var in sdata.members:
             if var.is_list:
-                self.write_line(f"{var.name}: []{self.type_mapping[var.vartype]},")
+                self.write_line(f"{var.name}: []{self.type_mapping[var.vartype]} = &.{{}},")
             else:
                 default_value = self.base_defaults.get(var.vartype)
                 if default_value == None:
-                    if var.is_simple():
-                        default_value = f"{var.vartype}{{}}"
-                    else:
-                        default_value = None
-                if default_value != None:
-                    self.write_line(f"{var.name}: {self.type_mapping[var.vartype]} = {default_value},")
-                else:
-                    self.write_line(f"{var.name}: {self.type_mapping[var.vartype]},")
+                    default_value = f"{var.vartype}{{}}"
+                self.write_line(f"{var.name}: {self.type_mapping[var.vartype]} = {default_value},")
         self.write_line()
 
         self.write_line(f"pub fn getSizeInBytes(self: *const {sname}) usize {{")
@@ -217,7 +211,8 @@ class ZigWriter(Writer):
         simple_offset = -1
         if len(sdata.members) == 0:
             self.write_line("_ = self;")
-            self.write_line("_ = offset;")
+            if not sdata.is_message:
+                self.write_line("_ = offset;")
         if sdata.is_simple():
             simple_offset = 0
             if sdata.is_message:
@@ -226,7 +221,7 @@ class ZigWriter(Writer):
                 self.write_line("if (tag) {")
                 self.indent_level += 1
                 msg_type_id = list(self.protocol.messages.keys()).index(sname) + 1
-                self.write_line(f"local_offset = writeNumber(u8, local_offset, buffer, {msg_type_id});")
+                self.write_line(f"local_offset += writeNumber(u8, local_offset, buffer, {msg_type_id});")
                 self.indent_level -= 1
                 self.write_line("}")
                 simple_offset += 1
@@ -267,7 +262,6 @@ class ZigWriter(Writer):
 
 
 
-
     def generate(self) -> str:
         self.output = []
 
@@ -288,32 +282,64 @@ class ZigWriter(Writer):
         self.write_line("const std = @import(\"std\");")
         self.write_line()
 
-        self.write_line( "fn _typeIsSimple(comptime T: type) bool {")
-        self.write_line( "    if (comptime _numberTypeIsValid(T)) {")
-        self.write_line( "        return true;")
-        self.write_line( "    }")
-        self.write_line( "    const simpleTypes = [_]type{")
         simple_structs  = [sname for sname, sdata in self.protocol.structs.items()  if sdata.is_simple()]
         simple_messages = [mname for mname, mdata in self.protocol.messages.items() if mdata.is_simple()]
-        if len(simple_structs):
-            self.write_line(f"        {', '.join(simple_structs )},")
-        if len(simple_messages):
-            self.write_line(f"        {', '.join(simple_messages)},")
-        self.write_line( "    };")
-        self.write_line( "    for (simpleTypes) |vt| {")
-        self.write_line( "        if (T == vt) {")
-        self.write_line( "            return true;")
-        self.write_line( "        }")
-        self.write_line( "    }")
-        self.write_line( "    return false;")
-        self.write_line( "}")
-        self.write_line()
+        simpletons = simple_structs + simple_messages
 
         subs = [
             ("{# STRING_SIZE_TYPE #}", self.get_native_string_size()),
             ("{# LIST_SIZE_TYPE #}"  , self.get_native_list_size()),
+            ("{# SIMPLE_TYPES #}", f"{', '.join(simpletons)}{',' if len(simpletons) > 0 else ''}"),
         ]
         self.add_boilerplate(subs)
+        self.write_line()
+
+        self.write_line("pub const MessageType = enum(u8) {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"{mname},")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.write_line()
+        self.write_line("pub const Message = union(MessageType) {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"{mname}: {mname},")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.write_line()
+
+        self.write_line("pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []u8) ![]Message {")
+        self.indent_level += 1
+        self.write_line("var msg_list = std.ArrayList(Message).init(allocator);")
+        self.write_line("defer msg_list.deinit();")
+        self.write_line();
+        self.write_line("var local_offset: usize = 0;")
+        self.write_line("while (local_offset < buffer.len) {")
+        self.indent_level += 1
+        self.write_line("const msg_type_byte = (try readNumber(u8, local_offset, buffer)).value;")
+        self.write_line("local_offset += 1;")
+        self.write_line("const msg_type: MessageType = std.meta.intToEnum(MessageType, msg_type_byte - 1) catch return DataReaderError.InvalidData;")
+        self.write_line("switch(msg_type) {")
+        self.indent_level += 1
+        for mname, mdata in self.protocol.messages.items():
+            self.write_line(f".{mname} => {{")
+            self.indent_level += 1
+            if mdata.is_simple():
+                self.write_line(f"const msg_read = try {mname}.fromBytes(local_offset, buffer);")
+            else:
+                self.write_line(f"const msg_read = try {mname}.fromBytes(allocator, local_offset, buffer);")
+            self.write_line("local_offset += msg_read.bytes_read;")
+            self.write_line(f"try msg_list.append(Message{{ .{mname} = msg_read.value }});")
+            self.indent_level -= 1
+            self.write_line("},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("return msg_list.toOwnedSlice();")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line()
 
         for sname, sdata in self.protocol.structs.items():

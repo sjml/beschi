@@ -9,9 +9,6 @@ use std::fs;
 #[allow(non_snake_case)]
 mod SmallMessages;
 
-#[allow(non_snake_case)]
-mod Nested;
-
 mod util;
 
 fn main() {
@@ -64,10 +61,6 @@ fn main() {
         match &msg_list[0] {
             SmallMessages::Message::ByteMessage(bm) => checker.soft_assert(bm.byte_member == byte_msg.byte_member, "msg 0 content"),
             _ => checker.soft_assert(false, "msg 0 type"),
-        }
-        match &msg_list[1] {
-            SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),
-            _ => checker.soft_assert(false, "msg 1 type"),
         }
         match &msg_list[1] {
             SmallMessages::Message::IntMessage(im) => checker.soft_assert(im.int_member == int_msg_a.int_member, "msg 1 content"),

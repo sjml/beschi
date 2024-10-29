@@ -92,7 +92,7 @@ Messages are indeed very similar to structs, but there are a few important disti
 * Messages can contain base types, structs, and lists of either. Structs can contain other structs, but messages *cannot* contain other messages. 
 * Only messages are written and read to buffers. (There are generated functions that do similarly with structs, but they should be considered internal implementation details and not called directly.)
 
-In short, messages are usually what you want to be operating on, but structs are very handy ways to bunch a group of data together for organiational purproses.
+In short, messages are usually what you want to be operating on, but structs are very handy ways to bunch a group of data together for organizational purproses.
 
 Note that all data members are initialized to zero values (or empty strings/lists). There's no way, at present, to specify other defaults in a protocol, so that needs to be handled in client code. 
 

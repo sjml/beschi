@@ -20,6 +20,21 @@ fn _numberTypeIsValid(comptime T: type) bool {
     return false;
 }
 
+fn _typeIsSimple(comptime T: type) bool {
+    if (comptime _numberTypeIsValid(T)) {
+        return true;
+    }
+    const simpleTypes = [_]type{
+        {# SIMPLE_TYPES #}
+    };
+    for (simpleTypes) |vt| {
+        if (T == vt) {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {

@@ -4,11 +4,19 @@ This file is a rough todo list for the tool itself.
 - check documentation to make sure it's not promising to be exception-free 
 - is `list_size_type` actually implemented?
 - check that other writers do like Zig's and clean up allocated memory on error (when reading lists) 
+- update rust (and write zig) documentation on the caveats with the tagged union / enum approach
+- zig namespace note
+- add endian handling to C writer for the sake of completion
 
 ## Zig writer 
-- <sigh> buckle up
-- test with a protocol that has no simple structs/messages
+- evaluate when `[]const u8` would be appropriate
 - documentation and example file
+  
+## AssemblyScript writer?!
+- oh no
+- could probably just copy/inherit most of the TypeScript writer
+  - test harness would be a pain, though...
+  - maybe just do the easy part and then leave it marked experimental? 
 
 ## protocol features:
 - static values, so you can, say, version a message and it will be automatically written to every instance of it
@@ -16,10 +24,8 @@ This file is a rough todo list for the tool itself.
         ```toml
         [[structs]]
         _name = "ConfigurationParamaters"
-        versionNumber = "u16:24"
-        signature = "string:Kilroy was here"
+        revision = "u16:24"
         semver = "[u16]:[0, 1, 0]" # this one makes me nervous for some reason
-        defaultColor = "Color:{r: 12, g: 128, b: 255}" # ok, now it's ridiculous
         # ..."
         ```
     - proposal:
