@@ -11,8 +11,9 @@ class GoWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".go"
 
-    def get_additional_args(parser: argparse.ArgumentParser):
-        group = parser.add_argument_group(LANGUAGE_NAME)
+    @classmethod
+    def get_additional_args(cls, parser: argparse.ArgumentParser):
+        group = parser.add_argument_group(cls.language_name)
         group.add_argument("--go-no-rename", action="store_const", const=True, default=False, help="don't rename data members to Uppercase")
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
