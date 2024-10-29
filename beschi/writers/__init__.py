@@ -4,8 +4,8 @@ import importlib
 from ..writer import Writer
 
 
-all_writers: dict[str, Writer] = {}
-experimental_writers: dict[str, Writer] = {}
+all_writers: dict[str, type[Writer]] = {}
+experimental_writers: dict[str, type[Writer]] = {}
 
 _writer_dir = os.path.abspath(os.path.dirname(__file__))
 for entry in os.listdir(_writer_dir):

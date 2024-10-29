@@ -3,12 +3,6 @@ This file is a rough todo list for the tool itself.
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
 
-## AssemblyScript writer?!
-- oh no
-- could probably just copy/inherit most of the TypeScript writer
-  - test harness would be a pain, though...
-  - maybe just do the easy part and then leave it marked experimental? 
-
 ## protocol features:
 - static values, so you can, say, version a message and it will be automatically written to every instance of it
     - maybe like:

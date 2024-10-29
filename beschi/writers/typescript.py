@@ -11,9 +11,11 @@ class TypeScriptWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".ts"
 
-    def get_additional_args(parser: argparse.ArgumentParser):
-        group = parser.add_argument_group(LANGUAGE_NAME)
-        group.add_argument("--typescript-use-namespace", action="store_const", const=True, default=False, help="wrap generated TypeScript code in a namespace")
+    @classmethod
+    def get_additional_args(cls, parser: argparse.ArgumentParser):
+        if cls.language_name == LANGUAGE_NAME:
+            group = parser.add_argument_group(cls.language_name)
+            group.add_argument("--typescript-use-namespace", action="store_const", const=True, default=False, help="wrap generated TypeScript code in a namespace")
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="  ")

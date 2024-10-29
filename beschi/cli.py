@@ -25,6 +25,8 @@ def main():
 
     for _, wclass in all_writers.items():
         wclass.get_additional_args(argparser)
+    for _, wclass in experimental_writers.items():
+        wclass.get_additional_args(argparser)
 
     argparser.epilog = "For more usage information, visit the development site: https://github.com/sjml/beschi"
 
