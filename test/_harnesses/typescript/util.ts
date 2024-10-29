@@ -1,4 +1,4 @@
-import * as minimist from "minimist";
+import minimist from "minimist";
 
 export function runTest(
     generateFunc: (filePath: string, assertionFunc: (condition: boolean, label: string) => void) => void,

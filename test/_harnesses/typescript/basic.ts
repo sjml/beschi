@@ -105,19 +105,19 @@ cx2.spectrum = [c1, c2, c3, c2, c1];
 example.cxl = [cx1, cx2];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(example.GetSizeInBytes());
+    const data = new ArrayBuffer(example.getSizeInBytes());
     const da = new ComprehensiveMessage.DataAccess(data);
-    example.WriteBytes(da, false);
+    example.writeBytes(da, false);
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(example.GetSizeInBytes() == 913, "size calculation check");
-    softAssert(example.GetSizeInBytes() == da.currentOffset, "written bytes check");
+    softAssert(example.getSizeInBytes() == 913, "size calculation check");
+    softAssert(example.getSizeInBytes() == da.currentOffset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = ComprehensiveMessage.TestingMessage.FromBytes(dv);
+    const input = ComprehensiveMessage.TestingMessage.fromBytes(dv);
     softAssert(input != null, "parsing test message");
 
     softAssert(input.b == example.b, "byte");

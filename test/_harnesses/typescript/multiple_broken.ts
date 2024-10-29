@@ -14,26 +14,26 @@ full.z = 3.0;
 
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    let size = 6 * full.GetSizeInBytes();
+    let size = 6 * full.getSizeInBytes();
     size += 6; // markers, one byte each
-    size += trunc.GetSizeInBytes();
+    size += trunc.getSizeInBytes();
     size += 1; // trunc marker
 
     const data = new ArrayBuffer(size);
     const da = new BrokenMessages.DataAccess(data);
 
-    full.WriteBytes(da, true);
-    full.WriteBytes(da, true);
-    full.WriteBytes(da, true);
+    full.writeBytes(da, true);
+    full.writeBytes(da, true);
+    full.writeBytes(da, true);
 
     // write a truncated message tagged as a full one
     da.buffer.setUint8(da.currentOffset, BrokenMessages.MessageType.FullMessageType);
     da.currentOffset += 1;
-    trunc.WriteBytes(da, false);
+    trunc.writeBytes(da, false);
 
-    full.WriteBytes(da, true);
-    full.WriteBytes(da, true);
-    full.WriteBytes(da, true);
+    full.writeBytes(da, true);
+    full.writeBytes(da, true);
+    full.writeBytes(da, true);
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 

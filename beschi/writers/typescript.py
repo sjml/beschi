@@ -49,7 +49,7 @@ class TypeScriptWriter(Writer):
     def deserializer(self, var: Variable, accessor: str):
         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
         if var.is_list:
-            self.write_line(f"const {var_clean}_Length = da.Get{self.base_serializers[self.protocol.list_size_type]}();")
+            self.write_line(f"const {var_clean}_Length = da.get{self.base_serializers[self.protocol.list_size_type]}();")
             self.write_line(f"{accessor}{var.name} = Array<{self.type_mapping[var.vartype]}>({var_clean}_Length);")
             idx = self.indent_level
             self.write_line(f"for (let i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
@@ -59,15 +59,15 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
-            self.write_line(f"{accessor}{var.name} = da.GetString();")
+            self.write_line(f"{accessor}{var.name} = da.getString();")
         elif var.vartype in NUMERIC_TYPE_SIZES:
-            self.write_line(f"{accessor}{var.name} = da.Get{self.base_serializers[var.vartype]}();")
+            self.write_line(f"{accessor}{var.name} = da.get{self.base_serializers[var.vartype]}();")
         else:
-            self.write_line(f"{accessor}{var.name} = {var.vartype}.FromBytes(da);")
+            self.write_line(f"{accessor}{var.name} = {var.vartype}.fromBytes(da);")
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"da.Set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
+            self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
             self.write_line(f"for (let i = 0; i < {accessor}{var.name}.length; i++) {{")
             self.indent_level += 1
             self.write_line(f"let el = {accessor}{var.name}[i];")
@@ -76,11 +76,11 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
-            self.write_line(f"da.SetString({accessor}{var.name});")
+            self.write_line(f"da.setString({accessor}{var.name});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
-            self.write_line(f"da.Set{self.base_serializers[var.vartype]}({accessor}{var.name});")
+            self.write_line(f"da.set{self.base_serializers[var.vartype]}({accessor}{var.name});")
         else:
-            self.write_line(f"{accessor}{var.name}.WriteBytes(da);")
+            self.write_line(f"{accessor}{var.name}.writeBytes(da);")
 
     def gen_measurement(self, st: Struct, accessor: str = "") -> tuple[list[str], int]:
         lines: list[str] = []
@@ -149,10 +149,10 @@ class TypeScriptWriter(Writer):
         self.write_line()
 
         if sdata.is_message:
-            self.write_line(f"GetMessageType() : MessageType {{ return MessageType.{sname}Type; }}")
+            self.write_line(f"getMessageType() : MessageType {{ return MessageType.{sname}Type; }}")
             self.write_line()
 
-            self.write_line("GetSizeInBytes(): number {")
+            self.write_line("getSizeInBytes(): number {")
             self.indent_level += 1
             measure_lines, accumulator = self.gen_measurement(sdata, "this.")
             [self.write_line(s) for s in measure_lines]
@@ -165,7 +165,7 @@ class TypeScriptWriter(Writer):
             self.write_line()
 
         if sdata.is_message:
-            self.write_line(f"static FromBytes(data: DataView|DataAccess): {sname} {{")
+            self.write_line(f"static fromBytes(data: DataView|DataAccess): {sname} {{")
             self.indent_level += 1
             self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
@@ -179,7 +179,7 @@ class TypeScriptWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         else:
-            self.write_line(f"static FromBytes(da: DataAccess): {sname} {{")
+            self.write_line(f"static fromBytes(da: DataAccess): {sname} {{")
             self.indent_level += 1
         if sdata.is_message:
             self.write_line("try {")
@@ -190,9 +190,9 @@ class TypeScriptWriter(Writer):
         if sdata.is_message:
             self.indent_level -= 1
             self.write_line("}")
-            self.write_line("catch (RangeError) {")
+            self.write_line("catch (err) {")
             self.indent_level += 1
-            self.write_line(f"throw new Error(`Could not read {sname} from offset ${{da.currentOffset}}`);")
+            self.write_line(f"throw new Error(`Could not read {sname} from offset ${{da.currentOffset}} (${{err.name}})`);")
             self.indent_level -= 1
             self.write_line("}")
         self.indent_level -= 1
@@ -200,7 +200,7 @@ class TypeScriptWriter(Writer):
         self.write_line()
 
         if sdata.is_message:
-            self.write_line("WriteBytes(data: DataView|DataAccess, tag: boolean): void {")
+            self.write_line("writeBytes(data: DataView|DataAccess, tag: boolean): void {")
             self.indent_level += 1
             self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
@@ -215,11 +215,11 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
             self.write_line("if (tag) {")
             self.indent_level += 1
-            self.write_line(f"da.SetByte(MessageType.{sname}Type);")
+            self.write_line(f"da.setByte(MessageType.{sname}Type);")
             self.indent_level -= 1
             self.write_line("}")
         else:
-            self.write_line("WriteBytes(da: DataAccess) {")
+            self.write_line("writeBytes(da: DataAccess) {")
             self.indent_level += 1
         [self.serializer(mem, "this.") for mem in sdata.members]
         self.indent_level -= 1
@@ -266,15 +266,15 @@ class TypeScriptWriter(Writer):
 
         self.write_line("export interface Message {")
         self.indent_level += 1
-        self.write_line("GetMessageType(): MessageType;")
-        self.write_line("WriteBytes(dv: DataView, tag: boolean): void;")
-        self.write_line("GetSizeInBytes(): number;")
+        self.write_line("getMessageType(): MessageType;")
+        self.write_line("writeBytes(dv: DataView, tag: boolean): void;")
+        self.write_line("getSizeInBytes(): number;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("export interface MessageStatic {")
         self.indent_level += 1
         self.write_line("new(): Message;")
-        self.write_line("FromBytes(dv: DataView): Message | null;")
+        self.write_line("fromBytes(dv: DataView): Message | null;")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("function staticImplements<T>() {")
@@ -288,15 +288,15 @@ class TypeScriptWriter(Writer):
         self.indent_level += 1
         self.write_line("const da = new DataAccess(dv);")
         self.write_line("const msgList: Message[] = [];")
-        self.write_line("while (!da.IsFinished()) {")
+        self.write_line("while (!da.isFinished()) {")
         self.indent_level += 1
-        self.write_line("const msgType: number = da.GetByte();")
+        self.write_line("const msgType: number = da.getByte();")
         self.write_line("switch (msgType) {")
         self.indent_level += 1
         for msg_type in self.protocol.messages:
             self.write_line(f"case MessageType.{msg_type}Type:")
             self.indent_level += 1
-            self.write_line(f"msgList.push({msg_type}.FromBytes(da));")
+            self.write_line(f"msgList.push({msg_type}.fromBytes(da));")
             self.write_line("break;")
             self.indent_level -= 1
         self.write_line("default:")

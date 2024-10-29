@@ -20,19 +20,19 @@ shortList.collection = [
 ];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(shortList.GetSizeInBytes());
+    const data = new ArrayBuffer(shortList.getSizeInBytes());
     const da = new SizedMessage.DataAccess(data);
-    shortList.WriteBytes(da, false);
+    shortList.writeBytes(da, false);
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(shortList.GetSizeInBytes() == 464, "short list size calculation check");
-    softAssert(shortList.GetSizeInBytes() == da.currentOffset, "written bytes check");
+    softAssert(shortList.getSizeInBytes() == 464, "short list size calculation check");
+    softAssert(shortList.getSizeInBytes() == da.currentOffset, "written bytes check");
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = SizedMessage.TextContainer.FromBytes(dv);
+    const input = SizedMessage.TextContainer.fromBytes(dv);
 
     softAssert(input.label == shortList.label, "readback label comparison");
     softAssert(input.collection.length == shortList.collection.length, "readback list length");

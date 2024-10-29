@@ -25,14 +25,6 @@ class TypeScriptBuilder(builder_util.Builder):
                 "npm", "install"
             ])
 
-        deps = [self.srcfile, *self.gen_files, self.node_libs]
-        if builder_util.needs_build(self.intermediate_path, deps):
-            # will build everything, but s'ok
-            subprocess.check_call([
-                "npx", "tsc"
-            ])
-
-
         if builder_util.needs_build(self.exepath, [self.intermediate_path]):
             shim = open("./exe_template").read()
             shim = shim.replace("{# EXE_NAME #}", self.srcname)

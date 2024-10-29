@@ -6,16 +6,16 @@ const example = new ComprehensiveMessage.TestingMessage();
 
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const data = new ArrayBuffer(example.GetSizeInBytes());
+    const data = new ArrayBuffer(example.getSizeInBytes());
     const da = new ComprehensiveMessage.DataAccess(data);
-    example.WriteBytes(da, false);
+    example.writeBytes(da, false);
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     const dv = getDataView(filePath);
-    const input = ComprehensiveMessage.TestingMessage.FromBytes(dv);
+    const input = ComprehensiveMessage.TestingMessage.fromBytes(dv);
     softAssert(input != null, "parsing test message");
 
     softAssert(input.b == example.b, "byte");

@@ -9,7 +9,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     const msgLen = 16;
     const data = new ArrayBuffer(msgLen);
     const da = new BrokenMessages.DataAccess(data);
-    lmsg.WriteBytes(da, false);
+    lmsg.writeBytes(da, false);
 
     // tweak the buffer so the message looks longer
     da.buffer.setUint8(0, 0xFF);
@@ -21,13 +21,13 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
     const dv = getDataView(filePath);
     let errMsg: string;
     try {
-        const input = BrokenMessages.ListMessage.FromBytes(dv);
+        const input = BrokenMessages.ListMessage.fromBytes(dv);
     }
     catch (e) {
         errMsg = e.message;
     }
 
-    softAssert(errMsg === "Could not read ListMessage from offset 14", "reading truncated message");
+    softAssert(errMsg === "Could not read ListMessage from offset 14 (RangeError)", "reading truncated message");
 }
 
 

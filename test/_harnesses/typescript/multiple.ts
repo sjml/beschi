@@ -24,29 +24,29 @@ longMsg.intMember = 2147483647n + 10n; // (2^31 - 1) + 10
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
     let size = 0;
-    size += byteMsg.GetSizeInBytes();
-    size += intMsgA.GetSizeInBytes() * 3;
-    size += intMsgB.GetSizeInBytes() * 4;
-    size += emptyMsg.GetSizeInBytes() * 2;
-    size += longMsg.GetSizeInBytes();
-    size += floatMsg.GetSizeInBytes();
+    size += byteMsg.getSizeInBytes();
+    size += intMsgA.getSizeInBytes() * 3;
+    size += intMsgB.getSizeInBytes() * 4;
+    size += emptyMsg.getSizeInBytes() * 2;
+    size += longMsg.getSizeInBytes();
+    size += floatMsg.getSizeInBytes();
     size += 12;
 
     const data = new ArrayBuffer(size);
     const da = new SmallMessages.DataAccess(data);
 
-    byteMsg.WriteBytes(da, true);   //  0
-    intMsgA.WriteBytes(da, true);   //  1
-    intMsgB.WriteBytes(da, true);   //  2
-    emptyMsg.WriteBytes(da, true);  //  3
-    longMsg.WriteBytes(da, true);   //  4
-    floatMsg.WriteBytes(da, true);  //  5
-    intMsgA.WriteBytes(da, true);   //  6
-    intMsgB.WriteBytes(da, true);   //  7
-    intMsgB.WriteBytes(da, true);   //  8
-    intMsgB.WriteBytes(da, true);   //  9
-    intMsgA.WriteBytes(da, true);   // 10
-    emptyMsg.WriteBytes(da, true);  // 11
+    byteMsg.writeBytes(da, true);   //  0
+    intMsgA.writeBytes(da, true);   //  1
+    intMsgB.writeBytes(da, true);   //  2
+    emptyMsg.writeBytes(da, true);  //  3
+    longMsg.writeBytes(da, true);   //  4
+    floatMsg.writeBytes(da, true);  //  5
+    intMsgA.writeBytes(da, true);   //  6
+    intMsgB.writeBytes(da, true);   //  7
+    intMsgB.writeBytes(da, true);   //  8
+    intMsgB.writeBytes(da, true);   //  9
+    intMsgA.writeBytes(da, true);   // 10
+    emptyMsg.writeBytes(da, true);  // 11
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
@@ -60,39 +60,39 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
 
     softAssert(msgList.length == 12, "reading multiple messages length");
 
-    softAssert(msgList[0].GetMessageType() == SmallMessages.MessageType.ByteMessageType, "msg 0 type");
+    softAssert(msgList[0].getMessageType() == SmallMessages.MessageType.ByteMessageType, "msg 0 type");
     softAssert((msgList[0] as SmallMessages.ByteMessage).byteMember == byteMsg.byteMember, "msg 0 content");
 
-    softAssert(msgList[1].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 1 type");
+    softAssert(msgList[1].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 1 type");
     softAssert((msgList[1] as SmallMessages.IntMessage).intMember == intMsgA.intMember, "msg 1 content");
 
-    softAssert(msgList[2].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 2 type");
+    softAssert(msgList[2].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 2 type");
     softAssert((msgList[2] as SmallMessages.IntMessage).intMember == intMsgB.intMember, "msg 2 content");
 
-    softAssert(msgList[3].GetMessageType() == SmallMessages.MessageType.EmptyMessageType, "msg 3 type");
+    softAssert(msgList[3].getMessageType() == SmallMessages.MessageType.EmptyMessageType, "msg 3 type");
 
-    softAssert(msgList[4].GetMessageType() == SmallMessages.MessageType.LongMessageType, "msg 4 type");
+    softAssert(msgList[4].getMessageType() == SmallMessages.MessageType.LongMessageType, "msg 4 type");
     softAssert((msgList[4] as SmallMessages.LongMessage).intMember == longMsg.intMember, "msg 4 content");
 
-    softAssert(msgList[5].GetMessageType() == SmallMessages.MessageType.FloatMessageType, "msg 5 type");
+    softAssert(msgList[5].getMessageType() == SmallMessages.MessageType.FloatMessageType, "msg 5 type");
     softAssert((msgList[5] as SmallMessages.FloatMessage).floatMember == Math.fround(floatMsg.floatMember), "msg 5 content");
 
-    softAssert(msgList[6].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 6 type");
+    softAssert(msgList[6].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 6 type");
     softAssert((msgList[6] as SmallMessages.IntMessage).intMember == intMsgA.intMember, "msg 6 content");
 
-    softAssert(msgList[7].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 7 type");
+    softAssert(msgList[7].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 7 type");
     softAssert((msgList[7] as SmallMessages.IntMessage).intMember == intMsgB.intMember, "msg 7 content");
 
-    softAssert(msgList[8].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 8 type");
+    softAssert(msgList[8].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 8 type");
     softAssert((msgList[8] as SmallMessages.IntMessage).intMember == intMsgB.intMember, "msg 8 content");
 
-    softAssert(msgList[9].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 9 type");
+    softAssert(msgList[9].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 9 type");
     softAssert((msgList[9] as SmallMessages.IntMessage).intMember == intMsgB.intMember, "msg 9 content");
 
-    softAssert(msgList[10].GetMessageType() == SmallMessages.MessageType.IntMessageType, "msg 10 type");
+    softAssert(msgList[10].getMessageType() == SmallMessages.MessageType.IntMessageType, "msg 10 type");
     softAssert((msgList[10] as SmallMessages.IntMessage).intMember == intMsgA.intMember, "msg 10 content");
 
-    softAssert(msgList[11].GetMessageType() == SmallMessages.MessageType.EmptyMessageType, "msg 11 type");
+    softAssert(msgList[11].getMessageType() == SmallMessages.MessageType.EmptyMessageType, "msg 11 type");
 }
 
 runTest(generate, read);
