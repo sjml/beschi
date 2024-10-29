@@ -237,12 +237,6 @@ class CWriter(Writer):
 
         if sdata.is_message:
             self.write_line(f"extern const {self.prefix}{sname} {self.prefix}{sname}_default;")
-            self.write_line(f"const {self.prefix}{sname} {self.prefix}{sname}_default = {{")
-            self.indent_level += 1
-            self.write_line(f"._mt = {self.prefix}MessageType_{sname},")
-            self.gen_default(sdata.members)
-            self.indent_level -= 1
-            self.write_line("};")
         self.write_line()
         if sdata.is_message:
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_WriteBytes({self.prefix}DataAccess* w, const {self.prefix}{sname}* src, bool tag);")
@@ -257,6 +251,13 @@ class CWriter(Writer):
 
     def gen_implementation(self, sname: str, sdata: Struct):
         if sdata.is_message:
+            self.write_line(f"const {self.prefix}{sname} {self.prefix}{sname}_default = {{")
+            self.indent_level += 1
+            self.write_line(f"._mt = {self.prefix}MessageType_{sname},")
+            self.gen_default(sdata.members)
+            self.indent_level -= 1
+            self.write_line("};")
+            self.write_line()
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size) {{")
             self.indent_level += 1
             measure_lines, accumulator = self.gen_measurement(sdata, "m->")
