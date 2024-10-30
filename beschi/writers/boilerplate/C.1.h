@@ -13,7 +13,7 @@
 ///////////////////////////////////////
 // standard utility definitions
 
-bool beschi_IsFinished(beschi_DataAccess *r) {
+bool beschi_IsFinished(const beschi_DataAccess *r) {
     return r->position >= r->bufferSize;
 }
 
@@ -126,108 +126,107 @@ beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_T
 
 
 
-beschi_err_t beschi__WriteUInt8(beschi_DataAccess *w, const uint8_t *ui8) {
+beschi_err_t beschi__WriteUInt8(beschi_DataAccess *w, const uint8_t ui8) {
     if (w->bufferSize < w->position + 1) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui8, 1);
+    w->buffer[w->position] = ui8;
     w->position += 1;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteBool(beschi_DataAccess *w, const bool *b) {
+beschi_err_t beschi__WriteBool(beschi_DataAccess *w, const bool b) {
     beschi_err_t err;
-    uint8_t byteVal = (uint8_t)(*b ? 1 : 0);
-    err = beschi__WriteUInt8(w, &byteVal);
+    err = beschi__WriteUInt8(w, (uint8_t)(b ? 1 : 0));
     if (err != BESCHI_ERR_OK) {
         return err;
     }
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt16(beschi_DataAccess *w, const int16_t *i16) {
+beschi_err_t beschi__WriteInt16(beschi_DataAccess *w, const int16_t i16) {
     if (w->bufferSize < w->position + 2) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i16, 2);
+    memcpy(w->buffer + w->position, &i16, 2);
     w->position += 2;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt16(beschi_DataAccess *w, const uint16_t *ui16) {
+beschi_err_t beschi__WriteUInt16(beschi_DataAccess *w, const uint16_t ui16) {
     if (w->bufferSize < w->position + 2) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui16, 2);
+    memcpy(w->buffer + w->position, &ui16, 2);
     w->position += 2;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt32(beschi_DataAccess *w, const int32_t *i32) {
+beschi_err_t beschi__WriteInt32(beschi_DataAccess *w, const int32_t i32) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i32, 4);
+    memcpy(w->buffer + w->position, &i32, 4);
     w->position += 4;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt32(beschi_DataAccess *w, const uint32_t *ui32) {
+beschi_err_t beschi__WriteUInt32(beschi_DataAccess *w, const uint32_t ui32) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui32, 4);
+    memcpy(w->buffer + w->position, &ui32, 4);
     w->position += 4;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt64(beschi_DataAccess *w, const int64_t *i64) {
+beschi_err_t beschi__WriteInt64(beschi_DataAccess *w, const int64_t i64) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i64, 8);
+    memcpy(w->buffer + w->position, &i64, 8);
     w->position += 8;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt64(beschi_DataAccess *w, const uint64_t *ui64) {
+beschi_err_t beschi__WriteUInt64(beschi_DataAccess *w, const uint64_t ui64) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui64, 8);
+    memcpy(w->buffer + w->position, &ui64, 8);
     w->position += 8;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteFloat(beschi_DataAccess *w, const float *f) {
+beschi_err_t beschi__WriteFloat(beschi_DataAccess *w, const float f) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, f, 4);
+    memcpy(w->buffer + w->position, &f, 4);
     w->position += 4;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double *d) {
+beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double d) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, d, 8);
+    memcpy(w->buffer + w->position, &d, 8);
     w->position += 8;
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const {# STRING_SIZE_TYPE_LOWER #}_t *len) {
+beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const {# STRING_SIZE_TYPE_LOWER #}_t len) {
     beschi_err_t err;
     err = beschi__Write{# STRING_SIZE_TYPE #}(w, len);
     if (err != BESCHI_ERR_OK) {
         return err;
     }
-    if (w->bufferSize < w->position + *len) {
+    if (w->bufferSize < w->position + len) {
         return BESCHI_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, *s, *len);
-    w->position += *len;
+    memcpy(w->buffer + w->position, *s, len);
+    w->position += len;
     return BESCHI_ERR_OK;
 }
 

@@ -5,6 +5,9 @@ This file is a rough todo list for the tool itself.
 - rethink C memory story -- destroy functions work, but only on `malloc`ed memory, and sometimes need to clean up stack variables that contain allocations
   - (also probably want to allow swapping out malloc/free for your own things)
 - is leaks actually running?
+- processrawmessage documentation
+- analyze use of const (data access structs especially)
+- test suite for destroying messages
 
 ## protocol features:
 - static values, so you can, say, version a message and it will be automatically written to every instance of it

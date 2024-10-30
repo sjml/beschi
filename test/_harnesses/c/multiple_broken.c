@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
         // write a truncated message tagged as a full one
         const uint8_t id = (uint8_t)full._mt;
-        err = BrokenMessages__WriteUInt8(&writer, &id);
+        err = BrokenMessages__WriteUInt8(&writer, id);
         if (err != BROKENMESSAGES_ERR_OK) { return err; }
         err = BrokenMessages_TruncatedMessage_WriteBytes(&writer, &trunc, false);
         if (err != BROKENMESSAGES_ERR_OK) { return err; }

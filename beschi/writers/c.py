@@ -103,7 +103,7 @@ class CWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[self.protocol.list_size_type]}(w, &({accessor}{var.name}_len));")
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[self.protocol.list_size_type]}(w, ({accessor}{var.name}_len));")
             self.err_check_return()
             idx = self.indent_level
             self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
@@ -117,11 +117,11 @@ class CWriter(Writer):
             if idx_search != None:
                 name = idx_search.group(1)
                 idx = idx_search.group(2)
-                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), &({accessor}{name}_els_len[{idx}]));")
+                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), ({accessor}{name}_els_len[{idx}]));")
             else:
-                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), &({accessor}{var.name}_len));")
+                self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), ({accessor}{var.name}_len));")
         elif var.vartype in NUMERIC_TYPE_SIZES:
-            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[var.vartype]}(w, &({accessor}{var.name}));")
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[var.vartype]}(w, ({accessor}{var.name}));")
         else:
             self.write_line(f"err = {self.prefix}{var.vartype}_WriteBytes(w, &({accessor}{var.name}));")
         self.err_check_return()
@@ -311,7 +311,7 @@ class CWriter(Writer):
         if sdata.is_message:
             self.write_line("if (tag) {")
             self.indent_level += 1
-            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t *)&(src->_mt));")
+            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t)(src->_mt));")
             self.err_check_return()
             self.indent_level -= 1
             self.write_line("}")
@@ -356,7 +356,9 @@ class CWriter(Writer):
         self.write_line()
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}GetSizeInBytes(const void* m, size_t* len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}WriteBytes({self.prefix}DataAccess* w, const void* m, bool tag);")
         self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListOut, size_t* len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}Destroy(void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len);")
         self.write_line()
 
@@ -398,7 +400,45 @@ class CWriter(Writer):
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
             self.write_line(f"return {self.prefix}{msg_type}_GetSizeInBytes((const {self.prefix}{msg_type}*)m, len);")
-            self.write_line("break;")
+            self.indent_level -= 1
+        self.write_line("}")
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"{self.prefix}err_t {self.prefix}WriteBytes({self.prefix}DataAccess* w, const void* m, bool tag) {{")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(m);")
+        self.write_line("switch (msgType) {")
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        for msg_type in self.protocol.messages:
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"return {self.prefix}{msg_type}_WriteBytes(w, (const {self.prefix}{msg_type}*)m, tag);")
+            self.indent_level -= 1
+        self.write_line("}")
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"{self.prefix}err_t {self.prefix}Destroy(void* m) {{")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(m);")
+        self.write_line("switch (msgType) {")
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        for msg_type in self.protocol.messages:
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"{self.prefix}{msg_type}_Destroy(({self.prefix}{msg_type}*)m);")
+            self.write_line(f"return {self.prefix.upper()}ERR_OK;")
             self.indent_level -= 1
         self.write_line("}")
         self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
@@ -428,7 +468,7 @@ class CWriter(Writer):
         self.write_line()
         self.write_line("void* out;")
         self.write_line("switch (msgType) {")
-        self.write_line("case 0:")
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
         self.indent_level += 1
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1

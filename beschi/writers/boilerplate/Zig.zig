@@ -176,3 +176,9 @@ pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usiz
     }
     return local_offset - offset;
 }
+
+pub fn writeBytes(m: *const Message, offset: usize, buffer: []u8, tag: bool) usize {
+    switch (m.*) {
+        inline else => |inner| return inner.writeBytes(offset, buffer, tag),
+    }
+}
