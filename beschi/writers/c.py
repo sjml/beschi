@@ -245,6 +245,7 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst);")
         if sdata.is_message:
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size);")
+            self.write_line(f"{self.prefix}{sname}* {self.prefix}{sname}_Create(void);")
             self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m);")
         self.write_line()
         self.write_line()
@@ -265,6 +266,18 @@ class CWriter(Writer):
             if accumulator > 0:
                 self.write_line(f"*size += {accumulator};")
             self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+
+            self.write_line(f"{self.prefix}{sname}* {self.prefix}{sname}_Create(void) {{")
+            self.indent_level += 1
+            self.write_line(f"{self.prefix}{sname}* out = ({self.prefix}{sname}*)malloc(sizeof({self.prefix}{sname}));")
+            self.write_line(f"if (out == NULL) {{ return NULL; }}")
+            self.write_line(f"out->_mt = {self.prefix}MessageType_{sname};")
+            for mem in sdata.members:
+                self.write_line(f"out->{mem.name} = {self.prefix}{sname}_default.{mem.name};")
+            self.write_line("return out;")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
