@@ -266,6 +266,11 @@ class SwiftWriter(Writer):
         if self.protocol.namespace != None:
             accessor = f"{self.protocol.namespace}."
         self.write_line(f"let msgTypeByte = try dr.GetUInt8()")
+        self.write_line("if msgTypeByte == 0 {")
+        self.indent_level += 1
+        self.write_line("return msgList")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line(f"guard let msgType = {accessor}MessageType(rawValue: msgTypeByte)")
         self.write_line("else {")
         self.indent_level += 1

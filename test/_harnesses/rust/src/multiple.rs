@@ -53,7 +53,8 @@ fn main() {
     }
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
-        let buffer = fs::read(&filename).unwrap();
+        let mut buffer = fs::read(&filename).unwrap();
+        buffer.resize(buffer.len() + 25, 0);
         let mut reader = SmallMessages::BufferReader::new(buffer);
         let msg_list = SmallMessages::process_raw_bytes(&mut reader).unwrap();
         checker.soft_assert(msg_list.len() == 12, "reading multiple messages length");

@@ -319,6 +319,11 @@ class ZigWriter(Writer):
         self.indent_level += 1
         self.write_line("const msg_type_byte = (try readNumber(u8, local_offset, buffer)).value;")
         self.write_line("local_offset += 1;")
+        self.write_line("if (msg_type_byte == 0) {")
+        self.indent_level += 1
+        self.write_line("return msg_list.toOwnedSlice();")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("const msg_type: MessageType = std.meta.intToEnum(MessageType, msg_type_byte - 1) catch return DataReaderError.InvalidData;")
         self.write_line("switch(msg_type) {")
         self.indent_level += 1

@@ -258,6 +258,11 @@ class GoWriter(Writer):
         self.write_line("break")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line("if msgType == 0 {")
+        self.indent_level += 1
+        self.write_line("return msgList, nil")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("switch msgType {")
         for msg_type in self.protocol.messages:
             self.write_line(f"case {msg_type}Type:")

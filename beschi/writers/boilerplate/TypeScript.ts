@@ -143,3 +143,4 @@ export class DataAccess {
         this.currentOffset += strBuffer.byteLength;
     }
 }
+

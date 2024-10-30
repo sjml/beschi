@@ -41,7 +41,7 @@ fn _typeIsSimple(comptime T: type) bool {
     return false;
 }
 
-pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value: T, bytes_read: usize } {
+pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {
             @compileError("Invalid number type");
@@ -60,7 +60,7 @@ pub fn readNumber(comptime T: type, offset: usize, buffer: []u8) !struct { value
     }
 }
 
-pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []u8, bytes_read: usize } {
+pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: []u8, bytes_read: usize } {
     const len_read = try readNumber(u8, offset, buffer);
     const len = len_read.value;
 
@@ -75,7 +75,7 @@ pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !st
     return .{ .value = str, .bytes_read = @sizeOf(u8) + len };
 }
 
-pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: []T, bytes_read: usize } {
+pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: []T, bytes_read: usize } {
     var local_offset = offset;
     const len_read = try readNumber(u16, local_offset, buffer);
     const len = len_read.value;
@@ -195,7 +195,7 @@ pub const Message = union(MessageType) {
     CharacterJoinedTeam: CharacterJoinedTeam,
 };
 
-pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []u8) ![]Message {
+pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8) ![]Message {
     var msg_list = std.ArrayList(Message).init(allocator);
     defer msg_list.deinit();
 
@@ -236,7 +236,7 @@ pub const Color = struct {
         return 16;
     }
 
-    pub fn fromBytes(offset: usize, buffer: []u8) !struct { value: Color, bytes_read: usize } {
+    pub fn fromBytes(offset: usize, buffer: []const u8) !struct { value: Color, bytes_read: usize } {
         const Color_red = (try readNumber(f32, offset + 0, buffer)).value;
         const Color_green = (try readNumber(f32, offset + 4, buffer)).value;
         const Color_blue = (try readNumber(f32, offset + 8, buffer)).value;
@@ -269,7 +269,7 @@ pub const Spectrum = struct {
         return size;
     }
 
-    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: Spectrum, bytes_read: usize } {
+    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: Spectrum, bytes_read: usize } {
         var local_offset = offset;
 
         const Spectrum_defaultColor_read = try Color.fromBytes(local_offset, buffer);
@@ -310,7 +310,7 @@ pub const Vector3Message = struct {
         return 12;
     }
 
-    pub fn fromBytes(offset: usize, buffer: []u8) !struct { value: Vector3Message, bytes_read: usize } {
+    pub fn fromBytes(offset: usize, buffer: []const u8) !struct { value: Vector3Message, bytes_read: usize } {
         const Vector3Message_x = (try readNumber(f32, offset + 0, buffer)).value;
         const Vector3Message_y = (try readNumber(f32, offset + 4, buffer)).value;
         const Vector3Message_z = (try readNumber(f32, offset + 8, buffer)).value;
@@ -354,7 +354,7 @@ pub const NewCharacterMessage = struct {
         return size;
     }
 
-    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: NewCharacterMessage, bytes_read: usize } {
+    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: NewCharacterMessage, bytes_read: usize } {
         var local_offset = offset;
 
         const NewCharacterMessage_id_read = try readNumber(u64, local_offset, buffer);
@@ -435,7 +435,7 @@ pub const CharacterJoinedTeam = struct {
         return size;
     }
 
-    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []u8) !struct { value: CharacterJoinedTeam, bytes_read: usize } {
+    pub fn fromBytes(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: CharacterJoinedTeam, bytes_read: usize } {
         var local_offset = offset;
 
         const CharacterJoinedTeam_characterID_read = try readNumber(u64, local_offset, buffer);

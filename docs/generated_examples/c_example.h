@@ -107,16 +107,11 @@ typedef struct {
     float z;
 } AppMessages_Vector3Message;
 extern const AppMessages_Vector3Message AppMessages_Vector3Message_default;
-const AppMessages_Vector3Message AppMessages_Vector3Message_default = {
-    ._mt = AppMessages_MessageType_Vector3Message,
-    .x = 0.0f,
-    .y = 0.0f,
-    .z = 0.0f,
-};
 
 AppMessages_err_t AppMessages_Vector3Message_WriteBytes(AppMessages_DataAccess* w, const AppMessages_Vector3Message* src, bool tag);
 AppMessages_err_t AppMessages_Vector3Message_FromBytes(AppMessages_DataAccess* r, AppMessages_Vector3Message* dst);
 AppMessages_err_t AppMessages_Vector3Message_GetSizeInBytes(const AppMessages_Vector3Message* m, size_t* size);
+AppMessages_Vector3Message* AppMessages_Vector3Message_Create(void);
 void AppMessages_Vector3Message_Destroy(AppMessages_Vector3Message *m);
 
 
@@ -134,23 +129,11 @@ typedef struct {
     char** nicknames;
 } AppMessages_NewCharacterMessage;
 extern const AppMessages_NewCharacterMessage AppMessages_NewCharacterMessage_default;
-const AppMessages_NewCharacterMessage AppMessages_NewCharacterMessage_default = {
-    ._mt = AppMessages_MessageType_NewCharacterMessage,
-    .id = 0,
-    .characterName_len = 0,
-    .characterName = (char*)"",
-    .strength = 0,
-    .intelligence = 0,
-    .dexterity = 0,
-    .goldInWallet = 0,
-    .nicknames_len = 0,
-    .nicknames_els_len = NULL,
-    .nicknames = NULL,
-};
 
 AppMessages_err_t AppMessages_NewCharacterMessage_WriteBytes(AppMessages_DataAccess* w, const AppMessages_NewCharacterMessage* src, bool tag);
 AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAccess* r, AppMessages_NewCharacterMessage* dst);
 AppMessages_err_t AppMessages_NewCharacterMessage_GetSizeInBytes(const AppMessages_NewCharacterMessage* m, size_t* size);
+AppMessages_NewCharacterMessage* AppMessages_NewCharacterMessage_Create(void);
 void AppMessages_NewCharacterMessage_Destroy(AppMessages_NewCharacterMessage *m);
 
 
@@ -163,18 +146,11 @@ typedef struct {
     AppMessages_Color* teamColors;
 } AppMessages_CharacterJoinedTeam;
 extern const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default;
-const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default = {
-    ._mt = AppMessages_MessageType_CharacterJoinedTeam,
-    .characterID = 0,
-    .teamName_len = 0,
-    .teamName = (char*)"",
-    .teamColors_len = 0,
-    .teamColors = NULL,
-};
 
 AppMessages_err_t AppMessages_CharacterJoinedTeam_WriteBytes(AppMessages_DataAccess* w, const AppMessages_CharacterJoinedTeam* src, bool tag);
 AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAccess* r, AppMessages_CharacterJoinedTeam* dst);
 AppMessages_err_t AppMessages_CharacterJoinedTeam_GetSizeInBytes(const AppMessages_CharacterJoinedTeam* m, size_t* size);
+AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void);
 void AppMessages_CharacterJoinedTeam_Destroy(AppMessages_CharacterJoinedTeam *m);
 
 
@@ -613,9 +589,26 @@ AppMessages_err_t AppMessages_Spectrum_WriteBytes(AppMessages_DataAccess* w, con
     return APPMESSAGES_ERR_OK;
 }
 
+const AppMessages_Vector3Message AppMessages_Vector3Message_default = {
+    ._mt = AppMessages_MessageType_Vector3Message,
+    .x = 0.0f,
+    .y = 0.0f,
+    .z = 0.0f,
+};
+
 AppMessages_err_t AppMessages_Vector3Message_GetSizeInBytes(const AppMessages_Vector3Message* m, size_t* size) {
     *size = 12;
     return APPMESSAGES_ERR_OK;
+}
+
+AppMessages_Vector3Message* AppMessages_Vector3Message_Create(void) {
+    AppMessages_Vector3Message* out = (AppMessages_Vector3Message*)malloc(sizeof(AppMessages_Vector3Message));
+    if (out == NULL) { return NULL; }
+    out->_mt = AppMessages_MessageType_Vector3Message;
+    out->x = AppMessages_Vector3Message_default.x;
+    out->y = AppMessages_Vector3Message_default.y;
+    out->z = AppMessages_Vector3Message_default.z;
+    return out;
 }
 
 void AppMessages_Vector3Message_Destroy(AppMessages_Vector3Message *m) {
@@ -663,6 +656,20 @@ AppMessages_err_t AppMessages_Vector3Message_WriteBytes(AppMessages_DataAccess* 
     return APPMESSAGES_ERR_OK;
 }
 
+const AppMessages_NewCharacterMessage AppMessages_NewCharacterMessage_default = {
+    ._mt = AppMessages_MessageType_NewCharacterMessage,
+    .id = 0,
+    .characterName_len = 0,
+    .characterName = (char*)"",
+    .strength = 0,
+    .intelligence = 0,
+    .dexterity = 0,
+    .goldInWallet = 0,
+    .nicknames_len = 0,
+    .nicknames_els_len = NULL,
+    .nicknames = NULL,
+};
+
 AppMessages_err_t AppMessages_NewCharacterMessage_GetSizeInBytes(const AppMessages_NewCharacterMessage* m, size_t* size) {
     *size = 0;
     *size += m->characterName_len;
@@ -671,6 +678,20 @@ AppMessages_err_t AppMessages_NewCharacterMessage_GetSizeInBytes(const AppMessag
     }
     *size += 21;
     return APPMESSAGES_ERR_OK;
+}
+
+AppMessages_NewCharacterMessage* AppMessages_NewCharacterMessage_Create(void) {
+    AppMessages_NewCharacterMessage* out = (AppMessages_NewCharacterMessage*)malloc(sizeof(AppMessages_NewCharacterMessage));
+    if (out == NULL) { return NULL; }
+    out->_mt = AppMessages_MessageType_NewCharacterMessage;
+    out->id = AppMessages_NewCharacterMessage_default.id;
+    out->characterName = AppMessages_NewCharacterMessage_default.characterName;
+    out->strength = AppMessages_NewCharacterMessage_default.strength;
+    out->intelligence = AppMessages_NewCharacterMessage_default.intelligence;
+    out->dexterity = AppMessages_NewCharacterMessage_default.dexterity;
+    out->goldInWallet = AppMessages_NewCharacterMessage_default.goldInWallet;
+    out->nicknames = AppMessages_NewCharacterMessage_default.nicknames;
+    return out;
 }
 
 void AppMessages_NewCharacterMessage_Destroy(AppMessages_NewCharacterMessage *m) {
@@ -778,12 +799,31 @@ AppMessages_err_t AppMessages_NewCharacterMessage_WriteBytes(AppMessages_DataAcc
     return APPMESSAGES_ERR_OK;
 }
 
+const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default = {
+    ._mt = AppMessages_MessageType_CharacterJoinedTeam,
+    .characterID = 0,
+    .teamName_len = 0,
+    .teamName = (char*)"",
+    .teamColors_len = 0,
+    .teamColors = NULL,
+};
+
 AppMessages_err_t AppMessages_CharacterJoinedTeam_GetSizeInBytes(const AppMessages_CharacterJoinedTeam* m, size_t* size) {
     *size = 0;
     *size += m->teamName_len;
     *size += m->teamColors_len * 16;
     *size += 11;
     return APPMESSAGES_ERR_OK;
+}
+
+AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void) {
+    AppMessages_CharacterJoinedTeam* out = (AppMessages_CharacterJoinedTeam*)malloc(sizeof(AppMessages_CharacterJoinedTeam));
+    if (out == NULL) { return NULL; }
+    out->_mt = AppMessages_MessageType_CharacterJoinedTeam;
+    out->characterID = AppMessages_CharacterJoinedTeam_default.characterID;
+    out->teamName = AppMessages_CharacterJoinedTeam_default.teamName;
+    out->teamColors = AppMessages_CharacterJoinedTeam_default.teamColors;
+    return out;
 }
 
 void AppMessages_CharacterJoinedTeam_Destroy(AppMessages_CharacterJoinedTeam *m) {

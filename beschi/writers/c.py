@@ -428,6 +428,10 @@ class CWriter(Writer):
         self.write_line()
         self.write_line("void* out;")
         self.write_line("switch (msgType) {")
+        self.write_line("case 0:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
         for msg_type in self.protocol.messages:
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1

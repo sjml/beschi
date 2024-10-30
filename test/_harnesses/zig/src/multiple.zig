@@ -54,8 +54,16 @@ pub fn main() !void {
         var file = try std.fs.cwd().openFile(args[2], .{});
         defer file.close();
 
-        const buffer = try file.readToEndAlloc(testAllocator, std.math.maxInt(u32));
+        const original_buffer = try file.readToEndAlloc(testAllocator, std.math.maxInt(u32));
+        defer testAllocator.free(original_buffer);
+
+        const buffer = try testAllocator.alloc(u8, original_buffer.len + 25);
         defer testAllocator.free(buffer);
+
+        std.mem.copyForwards(u8, buffer[0..original_buffer.len], original_buffer);
+        for (buffer[original_buffer.len..]) |*b| {
+            b.* = 0;
+        }
 
         const msg_list = try small.processRawBytes(testAllocator, buffer);
         defer testAllocator.free(msg_list);

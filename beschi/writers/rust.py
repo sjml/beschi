@@ -235,6 +235,7 @@ class RustWriter(Writer):
         self.write_line("let msg_type = reader.take_byte()?;")
         self.write_line("match msg_type {")
         self.indent_level += 1
+        self.write_line("0 => return Ok(msg_list),")
         for i, k in enumerate(self.protocol.messages.keys()):
             self.write_line(f"{i+1} => msg_list.push(Message::{k}({k}::from_bytes(reader)?)),")
         self.write_line(f"_ => return Err({self.prefix}Error::InvalidData),")

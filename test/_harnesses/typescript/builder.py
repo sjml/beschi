@@ -34,10 +34,6 @@ class TypeScriptBuilder(builder_util.Builder):
 
     def clean(self):
         super().clean()
-        if os.path.exists(self.node_libs):
-            subprocess.check_call([
-                "npx", "tsc", "--build", "--clean"
-            ])
         # builder_util.cleanup([self.node_libs, "package-lock.json"])
 
 

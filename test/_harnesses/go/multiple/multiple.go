@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"io"
 	"os"
@@ -78,7 +79,15 @@ func main() {
 		}
 		defer dat.Close()
 
-		msgList, err := SmallMessages.ProcessRawBytes(dat)
+		content, err := io.ReadAll(dat)
+		if err != nil {
+			panic(err)
+		}
+		buffer := make([]byte, len(content)+25)
+		copy(buffer, content)
+		reader := bytes.NewReader(buffer)
+
+		msgList, err := SmallMessages.ProcessRawBytes(reader)
 		softAssert(err == nil, "reading multiple messages")
 
 		softAssert(len(msgList) == 12, "reading multiple messages length")

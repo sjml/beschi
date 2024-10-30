@@ -49,8 +49,8 @@ class SwiftBuilder(builder_util.Builder):
         subprocess.check_call([
             "swift", "package", "clean"
         ])
-        if os.path.exists(self.lib_src_dir):
-            shutil.rmtree(self.lib_src_dir)
+        # if os.path.exists(self.lib_src_dir):
+            # shutil.rmtree(self.lib_src_dir)
 
 
 if "__main__" == __name__:

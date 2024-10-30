@@ -1,3 +1,4 @@
+import fs from "fs";
 import { getDataView, writeBuffer, runTest } from "./util";
 
 import * as SmallMessages from '../../../out/generated/typescript/SmallMessages';
@@ -54,6 +55,9 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 }
 
 function read(filePath: string, softAssert: (condition: boolean, label: string) => void) {
+    const originalData = fs.readFileSync(filePath);
+    const data = Buffer.concat([originalData, Buffer.alloc(25)]);
+
     const dv = getDataView(filePath);
 
     const msgList = SmallMessages.ProcessRawBytes(dv);

@@ -293,6 +293,10 @@ class TypeScriptWriter(Writer):
         self.write_line("const msgType: number = da.getByte();")
         self.write_line("switch (msgType) {")
         self.indent_level += 1
+        self.write_line("case 0:")
+        self.indent_level +=1
+        self.write_line("return msgList;")
+        self.indent_level -=1
         for msg_type in self.protocol.messages:
             self.write_line(f"case MessageType.{msg_type}Type:")
             self.indent_level += 1
@@ -303,11 +307,6 @@ class TypeScriptWriter(Writer):
         self.indent_level += 1
         self.write_line("throw new Error(`Unknown message type: ${msgType}`);")
         self.indent_level -= 1
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("if (msgList[msgList.length - 1] == null) {")
-        self.indent_level += 1
-        self.write_line("break;")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1
@@ -322,6 +321,14 @@ class TypeScriptWriter(Writer):
 
         for mname, mdata in self.protocol.messages.items():
             self.gen_struct(mname, mdata)
+
+        self.write_line("export const MessageTypeMap = new Map<MessageType, { new(): Message }>([");
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"[MessageType.{mname}Type, {mname}],")
+        self.indent_level -= 1
+        self.write_line("]);")
+        self.write_line()
 
         if self.use_namespace:
             self.indent_level -= 1

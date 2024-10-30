@@ -296,6 +296,10 @@ class CSharpWriter(Writer):
         self.write_line("switch (msgType)")
         self.write_line("{")
         self.indent_level += 1
+        self.write_line("case 0:")
+        self.indent_level += 1
+        self.write_line("return msgList.ToArray();")
+        self.indent_level -= 1
         for msg_type in self.protocol.messages:
             self.write_line(f"case (byte)MessageType.{msg_type}Type:")
             self.indent_level += 1

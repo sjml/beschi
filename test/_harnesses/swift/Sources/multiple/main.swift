@@ -75,7 +75,8 @@ if parsed["generate"] != nil {
     softAssert(size == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
-    let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
+    let originalData = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
+    let data = originalData + [UInt8](repeating: 0, count: 25)
 
     let msgList = try SmallMessages.ProcessRawBytes(data)
 

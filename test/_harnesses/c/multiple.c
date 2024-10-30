@@ -105,15 +105,20 @@ int main(int argc, char** argv) {
     }
 
     else if (readPath != NULL) {
+        // to check that we handle the end of the stream
+        const size_t extraBufferSize = 25;
+
         fp = fopen(readPath, "rb");
         fseek(fp, 0, SEEK_END);
         bufferSize = (size_t)ftell(fp);
         rewind(fp);
+        bufferSize += extraBufferSize;
         buffer = (uint8_t*)malloc(bufferSize);
-        size_t ret = fread(buffer, 1, bufferSize, fp);
+        memset(buffer + bufferSize - extraBufferSize, 0, extraBufferSize);
+        size_t ret = fread(buffer, 1, bufferSize - extraBufferSize, fp);
         fclose(fp);
 
-        if (ret != bufferSize) {
+        if (ret != bufferSize - extraBufferSize) {
             fprintf(stderr, "ERROR: Couldn't read %s\n", readPath);
             exit(1);
         }

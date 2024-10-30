@@ -20,133 +20,134 @@ export class DataAccess {
         }
     }
 
-    IsFinished(): boolean {
+    isFinished(): boolean {
         return this.currentOffset >= this.buffer.byteLength;
     }
 
-    GetByte(): number {
+    getByte(): number {
         const ret = this.buffer.getUint8(this.currentOffset);
         this.currentOffset += 1;
         return ret;
     }
 
-    GetBool(): boolean {
-        return this.GetByte() > 0;
+    getBool(): boolean {
+        return this.getByte() > 0;
     }
 
-    GetInt16(): number {
+    getInt16(): number {
         const ret = this.buffer.getInt16(this.currentOffset, true);
         this.currentOffset += 2;
         return ret;
     }
 
-    GetUint16(): number {
+    getUint16(): number {
         const ret = this.buffer.getUint16(this.currentOffset, true);
         this.currentOffset += 2;
         return ret;
     }
 
-    GetInt32(): number {
+    getInt32(): number {
         const ret = this.buffer.getInt32(this.currentOffset, true);
         this.currentOffset += 4;
         return ret;
     }
 
-    GetUint32(): number {
+    getUint32(): number {
         const ret = this.buffer.getUint32(this.currentOffset, true);
         this.currentOffset += 4;
         return ret;
     }
 
-    GetInt64(): bigint {
+    getInt64(): bigint {
         const ret = this.buffer.getBigInt64(this.currentOffset, true);
         this.currentOffset += 8;
         return ret;
     }
 
-    GetUint64(): bigint {
+    getUint64(): bigint {
         const ret = this.buffer.getBigUint64(this.currentOffset, true);
         this.currentOffset += 8;
         return ret;
     }
 
-    GetFloat32(): number {
+    getFloat32(): number {
         const ret = this.buffer.getFloat32(this.currentOffset, true);
         this.currentOffset += 4;
         return Math.fround(ret);
     }
 
-    GetFloat64(): number {
+    getFloat64(): number {
         const ret = this.buffer.getFloat64(this.currentOffset, true);
         this.currentOffset += 8;
         return ret;
     }
 
-    GetString(): string {
-        const len = this.GetByte();
+    getString(): string {
+        const len = this.getByte();
         const strBuffer = new Uint8Array(this.buffer.buffer, this.currentOffset, len);
         this.currentOffset += len;
         return _textDec.decode(strBuffer);
     }
 
 
-    SetByte(val: number) {
+    setByte(val: number) {
         this.buffer.setUint8(this.currentOffset, val);
         this.currentOffset += 1;
     }
 
-    SetBool(val: boolean) {
-        this.SetByte(val ? 1 : 0);
+    setBool(val: boolean) {
+        this.setByte(val ? 1 : 0);
     }
 
-    SetInt16(val: number) {
+    setInt16(val: number) {
         this.buffer.setInt16(this.currentOffset, val, true);
         this.currentOffset += 2;
     }
 
-    SetUint16(val: number) {
+    setUint16(val: number) {
         this.buffer.setUint16(this.currentOffset, val, true);
         this.currentOffset += 2;
     }
 
-    SetInt32(val: number) {
+    setInt32(val: number) {
         this.buffer.setInt32(this.currentOffset, val, true);
         this.currentOffset += 4;
     }
 
-    SetUint32(val: number) {
+    setUint32(val: number) {
         this.buffer.setUint32(this.currentOffset, val, true);
         this.currentOffset += 4;
     }
 
-    SetInt64(val: bigint) {
+    setInt64(val: bigint) {
         this.buffer.setBigInt64(this.currentOffset, val, true);
         this.currentOffset += 8;
     }
 
-    SetUint64(val: bigint) {
+    setUint64(val: bigint) {
         this.buffer.setBigUint64(this.currentOffset, val, true);
         this.currentOffset += 8;
     }
 
-    SetFloat32(val: number) {
+    setFloat32(val: number) {
         this.buffer.setFloat32(this.currentOffset, val, true);
         this.currentOffset += 4;
     }
 
-    SetFloat64(val: number) {
+    setFloat64(val: number) {
         this.buffer.setFloat64(this.currentOffset, val, true);
         this.currentOffset += 8;
     }
 
-    SetString(val: string) {
+    setString(val: string) {
         const strBuffer = _textEnc.encode(val);
-        this.SetByte(strBuffer.byteLength);
+        this.setByte(strBuffer.byteLength);
         const arr = new Uint8Array(this.buffer.buffer);
         arr.set(strBuffer, this.currentOffset);
         this.currentOffset += strBuffer.byteLength;
     }
 }
+
 export enum MessageType {
   Vector3MessageType = 1,
   NewCharacterMessageType = 2,
@@ -154,13 +155,13 @@ export enum MessageType {
 }
 
 export interface Message {
-  GetMessageType(): MessageType;
-  WriteBytes(dv: DataView, tag: boolean): void;
-  GetSizeInBytes(): number;
+  getMessageType(): MessageType;
+  writeBytes(dv: DataView, tag: boolean): void;
+  getSizeInBytes(): number;
 }
 export interface MessageStatic {
   new(): Message;
-  FromBytes(dv: DataView): Message | null;
+  fromBytes(dv: DataView): Message | null;
 }
 function staticImplements<T>() {
   return (constructor: T) => {}
@@ -169,23 +170,22 @@ function staticImplements<T>() {
 export function ProcessRawBytes(dv: DataView): Message[] {
   const da = new DataAccess(dv);
   const msgList: Message[] = [];
-  while (!da.IsFinished()) {
-    const msgType: number = da.GetByte();
+  while (!da.isFinished()) {
+    const msgType: number = da.getByte();
     switch (msgType) {
+      case 0:
+        return msgList;
       case MessageType.Vector3MessageType:
-        msgList.push(Vector3Message.FromBytes(da));
+        msgList.push(Vector3Message.fromBytes(da));
         break;
       case MessageType.NewCharacterMessageType:
-        msgList.push(NewCharacterMessage.FromBytes(da));
+        msgList.push(NewCharacterMessage.fromBytes(da));
         break;
       case MessageType.CharacterJoinedTeamType:
-        msgList.push(CharacterJoinedTeam.FromBytes(da));
+        msgList.push(CharacterJoinedTeam.fromBytes(da));
         break;
       default:
         throw new Error(`Unknown message type: ${msgType}`);
-    }
-    if (msgList[msgList.length - 1] == null) {
-      break;
     }
   }
   return msgList;
@@ -197,20 +197,20 @@ export class Color {
   blue: number = 0;
   alpha: number = 0;
 
-  static FromBytes(da: DataAccess): Color {
+  static fromBytes(da: DataAccess): Color {
     const nColor = new Color();
-    nColor.red = da.GetFloat32();
-    nColor.green = da.GetFloat32();
-    nColor.blue = da.GetFloat32();
-    nColor.alpha = da.GetFloat32();
+    nColor.red = da.getFloat32();
+    nColor.green = da.getFloat32();
+    nColor.blue = da.getFloat32();
+    nColor.alpha = da.getFloat32();
     return nColor;
   }
 
-  WriteBytes(da: DataAccess) {
-    da.SetFloat32(this.red);
-    da.SetFloat32(this.green);
-    da.SetFloat32(this.blue);
-    da.SetFloat32(this.alpha);
+  writeBytes(da: DataAccess) {
+    da.setFloat32(this.red);
+    da.setFloat32(this.green);
+    da.setFloat32(this.blue);
+    da.setFloat32(this.alpha);
   }
 
 }
@@ -219,23 +219,23 @@ export class Spectrum {
   defaultColor: Color = new Color();
   colors: Color[] = [];
 
-  static FromBytes(da: DataAccess): Spectrum {
+  static fromBytes(da: DataAccess): Spectrum {
     const nSpectrum = new Spectrum();
-    nSpectrum.defaultColor = Color.FromBytes(da);
-    const colors_Length = da.GetUint16();
+    nSpectrum.defaultColor = Color.fromBytes(da);
+    const colors_Length = da.getUint16();
     nSpectrum.colors = Array<Color>(colors_Length);
     for (let i2 = 0; i2 < colors_Length; i2++) {
-      nSpectrum.colors[i2] = Color.FromBytes(da);
+      nSpectrum.colors[i2] = Color.fromBytes(da);
     }
     return nSpectrum;
   }
 
-  WriteBytes(da: DataAccess) {
-    this.defaultColor.WriteBytes(da);
-    da.SetUint16(this.colors.length);
+  writeBytes(da: DataAccess) {
+    this.defaultColor.writeBytes(da);
+    da.setUint16(this.colors.length);
     for (let i = 0; i < this.colors.length; i++) {
       let el = this.colors[i];
-      el.WriteBytes(da);
+      el.writeBytes(da);
     }
   }
 
@@ -247,13 +247,13 @@ export class Vector3Message implements Message {
   y: number = 0;
   z: number = 0;
 
-  GetMessageType() : MessageType { return MessageType.Vector3MessageType; }
+  getMessageType() : MessageType { return MessageType.Vector3MessageType; }
 
-  GetSizeInBytes(): number {
+  getSizeInBytes(): number {
     return 12;
   }
 
-  static FromBytes(data: DataView|DataAccess): Vector3Message {
+  static fromBytes(data: DataView|DataAccess): Vector3Message {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -263,17 +263,17 @@ export class Vector3Message implements Message {
     }
     try {
       const nVector3Message = new Vector3Message();
-      nVector3Message.x = da.GetFloat32();
-      nVector3Message.y = da.GetFloat32();
-      nVector3Message.z = da.GetFloat32();
+      nVector3Message.x = da.getFloat32();
+      nVector3Message.y = da.getFloat32();
+      nVector3Message.z = da.getFloat32();
       return nVector3Message;
     }
-    catch (RangeError) {
-      throw new Error(`Could not read Vector3Message from offset ${da.currentOffset}`);
+    catch (err) {
+      throw new Error(`Could not read Vector3Message from offset ${da.currentOffset} (${err.name})`);
     }
   }
 
-  WriteBytes(data: DataView|DataAccess, tag: boolean): void {
+  writeBytes(data: DataView|DataAccess, tag: boolean): void {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -282,11 +282,11 @@ export class Vector3Message implements Message {
       da = data;
     }
     if (tag) {
-      da.SetByte(MessageType.Vector3MessageType);
+      da.setByte(MessageType.Vector3MessageType);
     }
-    da.SetFloat32(this.x);
-    da.SetFloat32(this.y);
-    da.SetFloat32(this.z);
+    da.setFloat32(this.x);
+    da.setFloat32(this.y);
+    da.setFloat32(this.z);
   }
 
 }
@@ -301,9 +301,9 @@ export class NewCharacterMessage implements Message {
   goldInWallet: number = 0;
   nicknames: string[] = [];
 
-  GetMessageType() : MessageType { return MessageType.NewCharacterMessageType; }
+  getMessageType() : MessageType { return MessageType.NewCharacterMessageType; }
 
-  GetSizeInBytes(): number {
+  getSizeInBytes(): number {
     let size: number = 0;
     size += _textEnc.encode(this.characterName).byteLength;
     for (let nicknames_i=0; nicknames_i < this.nicknames.length; nicknames_i++) {
@@ -313,7 +313,7 @@ export class NewCharacterMessage implements Message {
     return size;
   }
 
-  static FromBytes(data: DataView|DataAccess): NewCharacterMessage {
+  static fromBytes(data: DataView|DataAccess): NewCharacterMessage {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -323,25 +323,25 @@ export class NewCharacterMessage implements Message {
     }
     try {
       const nNewCharacterMessage = new NewCharacterMessage();
-      nNewCharacterMessage.id = da.GetUint64();
-      nNewCharacterMessage.characterName = da.GetString();
-      nNewCharacterMessage.strength = da.GetUint16();
-      nNewCharacterMessage.intelligence = da.GetUint16();
-      nNewCharacterMessage.dexterity = da.GetUint16();
-      nNewCharacterMessage.goldInWallet = da.GetUint32();
-      const nicknames_Length = da.GetUint16();
+      nNewCharacterMessage.id = da.getUint64();
+      nNewCharacterMessage.characterName = da.getString();
+      nNewCharacterMessage.strength = da.getUint16();
+      nNewCharacterMessage.intelligence = da.getUint16();
+      nNewCharacterMessage.dexterity = da.getUint16();
+      nNewCharacterMessage.goldInWallet = da.getUint32();
+      const nicknames_Length = da.getUint16();
       nNewCharacterMessage.nicknames = Array<string>(nicknames_Length);
       for (let i3 = 0; i3 < nicknames_Length; i3++) {
-        nNewCharacterMessage.nicknames[i3] = da.GetString();
+        nNewCharacterMessage.nicknames[i3] = da.getString();
       }
       return nNewCharacterMessage;
     }
-    catch (RangeError) {
-      throw new Error(`Could not read NewCharacterMessage from offset ${da.currentOffset}`);
+    catch (err) {
+      throw new Error(`Could not read NewCharacterMessage from offset ${da.currentOffset} (${err.name})`);
     }
   }
 
-  WriteBytes(data: DataView|DataAccess, tag: boolean): void {
+  writeBytes(data: DataView|DataAccess, tag: boolean): void {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -350,18 +350,18 @@ export class NewCharacterMessage implements Message {
       da = data;
     }
     if (tag) {
-      da.SetByte(MessageType.NewCharacterMessageType);
+      da.setByte(MessageType.NewCharacterMessageType);
     }
-    da.SetUint64(this.id);
-    da.SetString(this.characterName);
-    da.SetUint16(this.strength);
-    da.SetUint16(this.intelligence);
-    da.SetUint16(this.dexterity);
-    da.SetUint32(this.goldInWallet);
-    da.SetUint16(this.nicknames.length);
+    da.setUint64(this.id);
+    da.setString(this.characterName);
+    da.setUint16(this.strength);
+    da.setUint16(this.intelligence);
+    da.setUint16(this.dexterity);
+    da.setUint32(this.goldInWallet);
+    da.setUint16(this.nicknames.length);
     for (let i = 0; i < this.nicknames.length; i++) {
       let el = this.nicknames[i];
-      da.SetString(el);
+      da.setString(el);
     }
   }
 
@@ -373,9 +373,9 @@ export class CharacterJoinedTeam implements Message {
   teamName: string = "";
   teamColors: Color[] = [];
 
-  GetMessageType() : MessageType { return MessageType.CharacterJoinedTeamType; }
+  getMessageType() : MessageType { return MessageType.CharacterJoinedTeamType; }
 
-  GetSizeInBytes(): number {
+  getSizeInBytes(): number {
     let size: number = 0;
     size += _textEnc.encode(this.teamName).byteLength;
     size += this.teamColors.length * 16;
@@ -383,7 +383,7 @@ export class CharacterJoinedTeam implements Message {
     return size;
   }
 
-  static FromBytes(data: DataView|DataAccess): CharacterJoinedTeam {
+  static fromBytes(data: DataView|DataAccess): CharacterJoinedTeam {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -393,21 +393,21 @@ export class CharacterJoinedTeam implements Message {
     }
     try {
       const nCharacterJoinedTeam = new CharacterJoinedTeam();
-      nCharacterJoinedTeam.characterID = da.GetUint64();
-      nCharacterJoinedTeam.teamName = da.GetString();
-      const teamColors_Length = da.GetUint16();
+      nCharacterJoinedTeam.characterID = da.getUint64();
+      nCharacterJoinedTeam.teamName = da.getString();
+      const teamColors_Length = da.getUint16();
       nCharacterJoinedTeam.teamColors = Array<Color>(teamColors_Length);
       for (let i3 = 0; i3 < teamColors_Length; i3++) {
-        nCharacterJoinedTeam.teamColors[i3] = Color.FromBytes(da);
+        nCharacterJoinedTeam.teamColors[i3] = Color.fromBytes(da);
       }
       return nCharacterJoinedTeam;
     }
-    catch (RangeError) {
-      throw new Error(`Could not read CharacterJoinedTeam from offset ${da.currentOffset}`);
+    catch (err) {
+      throw new Error(`Could not read CharacterJoinedTeam from offset ${da.currentOffset} (${err.name})`);
     }
   }
 
-  WriteBytes(data: DataView|DataAccess, tag: boolean): void {
+  writeBytes(data: DataView|DataAccess, tag: boolean): void {
     let da: DataAccess;
     if (data instanceof DataView) {
       da = new DataAccess(data);
@@ -416,16 +416,22 @@ export class CharacterJoinedTeam implements Message {
       da = data;
     }
     if (tag) {
-      da.SetByte(MessageType.CharacterJoinedTeamType);
+      da.setByte(MessageType.CharacterJoinedTeamType);
     }
-    da.SetUint64(this.characterID);
-    da.SetString(this.teamName);
-    da.SetUint16(this.teamColors.length);
+    da.setUint64(this.characterID);
+    da.setString(this.teamName);
+    da.setUint16(this.teamColors.length);
     for (let i = 0; i < this.teamColors.length; i++) {
       let el = this.teamColors[i];
-      el.WriteBytes(da);
+      el.writeBytes(da);
     }
   }
 
 }
+
+export const MessageTypeMap = new Map<MessageType, { new(): Message }>([
+  [MessageType.Vector3MessageType, Vector3Message],
+  [MessageType.NewCharacterMessageType, NewCharacterMessage],
+  [MessageType.CharacterJoinedTeamType, CharacterJoinedTeam],
+]);
 
