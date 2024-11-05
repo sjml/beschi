@@ -10,6 +10,13 @@
 //
 
 
+#ifndef BESCHI_MALLOC
+    #define BESCHI_MALLOC(size)             malloc(size)
+    #define BESCHI_REALLOC(ptr, newSize)    realloc(ptr, newSize)
+    #define BESCHI_FREE(ptr)                free(ptr)
+#endif
+
+
 ///////////////////////////////////////
 // standard utility definitions
 

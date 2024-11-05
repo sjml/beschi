@@ -3,13 +3,31 @@ This file is a rough todo list for the tool itself.
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
 - rethink C memory story -- destroy functions work, but only on `malloc`ed memory, and sometimes need to clean up stack variables that contain allocations
-  - (also probably want to allow swapping out malloc/free for your own things)
-- is leaks actually running?
 - processrawmessage documentation
 - analyze use of const (data access structs especially)
 - test suite for destroying messages
 
 ## protocol features:
+- enums!
+    - new table type, specced like this
+        ```toml
+        [[enums]]
+        _name = "GameState"
+        values = [
+            "Setup",
+            "Ready",
+            "Running",
+            "Paused",
+            "Shutdown",
+            "Crashed",
+        ]
+
+        [[structs]]
+        _name = "MyStruct"
+        state_I_care_about = "GameState"
+        ```
+    - beschi will choose the underlying numeric type; if <= 255 values, `byte`; if < 65,535, `uint16`, etc. 
+    - will be read into proper enum value in the target language, if applicable, and written into memory as a number
 - static values, so you can, say, version a message and it will be automatically written to every instance of it
     - maybe like:
         ```toml
@@ -46,6 +64,7 @@ This file is a rough todo list for the tool itself.
     - check that numbers are in the appropriate range (like JavaScript where everything is everything)
         - in languages with strong types enforced by a compiler, skip
     - check that strings and lists are <= their max defined length
+    - check that enums actually match one of the values
 - add optional bounds checking on buffer access
   - zig: 
     ```zig

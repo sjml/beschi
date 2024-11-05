@@ -75,10 +75,10 @@ class CWriter(Writer):
                 pref = ""
             else:
                 pref = self.prefix
-            self.write_line(f"{accessor}{var.name} = ({pref}{self.type_mapping[var.vartype]}*)malloc(sizeof({pref}{self.type_mapping[var.vartype]}) * {accessor}{var.name}_len);")
+            self.write_line(f"{accessor}{var.name} = ({pref}{self.type_mapping[var.vartype]}*){self.prefix.upper()}MALLOC(sizeof({pref}{self.type_mapping[var.vartype]}) * {accessor}{var.name}_len);")
             self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             if var.vartype == "string":
-                self.write_line(f"{accessor}{var.name}_els_len = ({self.get_native_string_size()}*)malloc(sizeof({self.get_native_string_size()}) * {accessor}{var.name}_len);")
+                self.write_line(f"{accessor}{var.name}_els_len = ({self.get_native_string_size()}*){self.prefix.upper()}MALLOC(sizeof({self.get_native_string_size()}) * {accessor}{var.name}_len);")
                 self.write_line(f"if ({accessor}{var.name} == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             idx = self.indent_level
             self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
@@ -194,7 +194,7 @@ class CWriter(Writer):
             return
         if var.is_list:
             if var.is_simple(True):
-                self.write_line(f"free({accessor}{var.name});")
+                self.write_line(f"{self.prefix.upper()}FREE({accessor}{var.name});")
             else:
                 idx = self.indent_level
                 self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
@@ -204,10 +204,10 @@ class CWriter(Writer):
                 self.indent_level -= 1
                 self.write_line("}")
                 if var.vartype == "string":
-                    self.write_line(f"free({accessor}{var.name}_els_len);")
-                self.write_line(f"free({accessor}{var.name});")
+                    self.write_line(f"{self.prefix.upper()}FREE({accessor}{var.name}_els_len);")
+                self.write_line(f"{self.prefix.upper()}FREE({accessor}{var.name});")
         elif var.vartype == "string":
-            self.write_line(f"free({accessor}{var.name});")
+            self.write_line(f"{self.prefix.upper()}FREE({accessor}{var.name});")
         else:
             [self.destructor(mem, f"{accessor}{var.name}.") for mem in self.protocol.structs[var.vartype].members]
 
@@ -272,7 +272,7 @@ class CWriter(Writer):
 
             self.write_line(f"{self.prefix}{sname}* {self.prefix}{sname}_Create(void) {{")
             self.indent_level += 1
-            self.write_line(f"{self.prefix}{sname}* out = ({self.prefix}{sname}*)malloc(sizeof({self.prefix}{sname}));")
+            self.write_line(f"{self.prefix}{sname}* out = ({self.prefix}{sname}*){self.prefix.upper()}MALLOC(sizeof({self.prefix}{sname}));")
             self.write_line(f"if (out == NULL) {{ return NULL; }}")
             self.write_line(f"out->_mt = {self.prefix}MessageType_{sname};")
             for mem in sdata.members:
@@ -285,7 +285,7 @@ class CWriter(Writer):
             self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m) {{")
             self.indent_level += 1
             [self.destructor(mem, f"m->") for mem in sdata.members]
-            self.write_line("free(m);")
+            self.write_line(f"{self.prefix.upper()}FREE(m);")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
@@ -450,7 +450,7 @@ class CWriter(Writer):
         self.indent_level += 1
         self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
         self.write_line("size_t currCapacity = 8;")
-        self.write_line("*msgListDst = (void**)malloc(sizeof(void*) * currCapacity);")
+        self.write_line(f"*msgListDst = (void**){self.prefix.upper()}MALLOC(sizeof(void*) * currCapacity);")
         self.write_line(f"if (*msgListDst == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.write_line("*len = 0;")
         self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
@@ -458,7 +458,7 @@ class CWriter(Writer):
         self.write_line("while (*len >= currCapacity) {")
         self.indent_level += 1
         self.write_line("currCapacity *= 2;")
-        self.write_line("*msgListDst = (void**)realloc(*msgListDst, (sizeof(void*) * currCapacity));")
+        self.write_line(f"*msgListDst = (void**){self.prefix.upper()}REALLOC(*msgListDst, (sizeof(void*) * currCapacity));")
         self.write_line(f"if (*msgListDst == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.indent_level -= 1
         self.write_line("}")
@@ -475,7 +475,7 @@ class CWriter(Writer):
         for msg_type in self.protocol.messages:
             self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
             self.indent_level += 1
-            self.write_line(f"out = malloc(sizeof({self.prefix}{msg_type}));")
+            self.write_line(f"out = {self.prefix.upper()}MALLOC(sizeof({self.prefix}{msg_type}));")
             self.write_line(f"if (out == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
             self.write_line(f"err = {self.prefix}{msg_type}_FromBytes(r, ({self.prefix}{msg_type}*)out);")
             self.write_line("(*msgListDst)[*len] = out;")
@@ -514,7 +514,7 @@ class CWriter(Writer):
         self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line("free(msgList);")
+        self.write_line(f"{self.prefix.upper()}FREE(msgList);")
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1
         self.write_line("}")
