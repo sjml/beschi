@@ -26,7 +26,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         errMsg = e.message;
     }
 
-    softAssert(errMsg === "Could not read FullMessage from offset 8 (RangeError)", "reading broken message");
+    softAssert(errMsg === "Could not read FullMessage from offset 8 (RangeError -- Offset is outside the bounds of the DataView)", "reading broken message");
 }
 
 

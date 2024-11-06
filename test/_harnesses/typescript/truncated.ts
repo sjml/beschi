@@ -27,7 +27,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         errMsg = e.message;
     }
 
-    softAssert(errMsg === "Could not read ListMessage from offset 14 (RangeError)", "reading truncated message");
+    softAssert(errMsg === "Could not read ListMessage from offset 14 (RangeError -- Offset is outside the bounds of the DataView)", "reading truncated message");
 }
 
 
