@@ -27,7 +27,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     full.writeBytes(da, true);
 
     // write a truncated message tagged as a full one
-    da.buffer.setUint8(da.currentOffset, BrokenMessages.MessageType.FullMessageType);
+    da.data.setUint8(da.currentOffset, BrokenMessages.MessageType.FullMessageType);
     da.currentOffset += 1;
     trunc.writeBytes(da, false);
 

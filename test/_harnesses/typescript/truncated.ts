@@ -12,7 +12,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
     lmsg.writeBytes(da, false);
 
     // tweak the buffer so the message looks longer
-    da.buffer.setUint8(0, 0xFF);
+    da.data.setUint8(0, 0xFF);
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 }

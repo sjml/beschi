@@ -164,12 +164,17 @@ class TypeScriptWriter(Writer):
             self.write_line()
 
         if sdata.is_message:
-            self.write_line(f"static fromBytes(data: DataView|DataAccess): {sname} {{")
+            self.write_line(f"static fromBytes(data: DataView|DataAccess|ArrayBuffer): {sname} {{")
             self.indent_level += 1
             self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
             self.indent_level += 1
             self.write_line("da = new DataAccess(data);")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line("else if (data instanceof ArrayBuffer) {")
+            self.indent_level += 1
+            self.write_line("da = new DataAccess(new DataView(data));")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("else {")
@@ -269,9 +274,19 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("export function ProcessRawBytes(dv: DataView): Message[] {")
+        self.write_line("export function ProcessRawBytes(data: DataView|DataAccess): Message[] {")
         self.indent_level += 1
-        self.write_line("const da = new DataAccess(dv);")
+        self.write_line("let da: DataAccess;")
+        self.write_line("if (data instanceof DataView) {")
+        self.indent_level += 1
+        self.write_line("da = new DataAccess(data);")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("else {")
+        self.indent_level += 1
+        self.write_line("da = data;")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("const msgList: Message[] = [];")
         self.write_line("while (!da.isFinished()) {")
         self.indent_level += 1
