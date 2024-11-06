@@ -25,7 +25,6 @@ The base data types map to TypeScript accordingly:
 ## Caveats
 
 * Following [current recommendations from the TypeScript team](https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html), it ignores the defined namespace in favor of treating the whole exported code file as a module. You can still get the same syntax by importing like: `import * as AppMessages from './AppMessages';`. 
-* The generated TypeScript code uses decorators to provide something similar to static functions. There might be a better way of handling this, and I'm open to suggestion, but for now you have to have `experimentalDecorators` enabled in your TypeScript configuration. 
 * 64-bit integers (both signed and unsigned) are implemented with BigInt, which has [pretty broad support at this point](https://caniuse.com/?search=bigint). Your client code may need to handle them differently though -- you can't seamlessly do math with a regular `number` and a `bigint`. Users of other languages are used to these kinds of folds, but JavaScript/TypeScript users may find them new and annoying. :) 
 * Reading and writing messages is wrapped in a custom `DataAccess` class that tracks position in a `DataView`. You can either construct it yourself if you want to, for instance, do multiple passes of writing to the same buffer. If you pass a `DataView` to a function that expects a `DataAccess`, the latter will be used internally but not returned to you. 
 

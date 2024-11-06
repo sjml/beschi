@@ -126,8 +126,7 @@ class TypeScriptWriter(Writer):
 
     def gen_struct(self, sname: str, sdata: Struct):
         if sdata.is_message:
-            self.write_line("@staticImplements<MessageStatic>()")
-            self.write_line(f"export class {sname} implements Message {{")
+            self.write_line(f"export class {sname} extends Message {{")
         else:
             self.write_line(f"export class {sname} {{")
         self.indent_level += 1
@@ -192,7 +191,13 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
             self.write_line("catch (err) {")
             self.indent_level += 1
-            self.write_line(f"throw new Error(`Could not read {sname} from offset ${{da.currentOffset}} (${{err.name}})`);")
+            self.write_line("let errMsg = \"[Unknown error]\";")
+            self.write_line("if (err instanceof Error) {")
+            self.indent_level += 1
+            self.write_line("errMsg = `${err.name} -- ${err.message}`;")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"throw new Error(`Could not read {sname} from offset ${{da.currentOffset}} (${{errMsg}})`);")
             self.indent_level -= 1
             self.write_line("}")
         self.indent_level -= 1
@@ -260,26 +265,6 @@ class TypeScriptWriter(Writer):
         self.write_line("export enum MessageType {")
         self.indent_level += 1
         [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(self.protocol.messages)]
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        self.write_line("export interface Message {")
-        self.indent_level += 1
-        self.write_line("getMessageType(): MessageType;")
-        self.write_line("writeBytes(dv: DataView, tag: boolean): void;")
-        self.write_line("getSizeInBytes(): number;")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("export interface MessageStatic {")
-        self.indent_level += 1
-        self.write_line("new(): Message;")
-        self.write_line("fromBytes(dv: DataView): Message | null;")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("function staticImplements<T>() {")
-        self.indent_level += 1
-        self.write_line("return (constructor: T) => {}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

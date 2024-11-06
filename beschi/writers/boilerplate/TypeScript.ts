@@ -144,3 +144,13 @@ export class DataAccess {
     }
 }
 
+export abstract class Message {
+    abstract getMessageType(): MessageType;
+    abstract writeBytes(dv: DataView, tag: boolean): void;
+    abstract getSizeInBytes(): number;
+
+    static fromBytes(dv: DataView): Message | null {
+        throw new Error("Cannot read abstract Message from bytes.");
+    };
+}
+
