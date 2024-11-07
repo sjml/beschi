@@ -35,7 +35,7 @@ typedef struct {
     size_t position;
 } AppMessages_DataAccess;
 
-bool AppMessages_IsFinished(AppMessages_DataAccess *r);
+bool AppMessages_IsFinished(const AppMessages_DataAccess *r);
 AppMessages_err_t AppMessages__ReadUInt8(AppMessages_DataAccess *r, uint8_t *ui8);
 AppMessages_err_t AppMessages__ReadBool(AppMessages_DataAccess *r, bool *b);
 AppMessages_err_t AppMessages__ReadInt16(AppMessages_DataAccess *r, int16_t *i16);
@@ -48,17 +48,17 @@ AppMessages_err_t AppMessages__ReadFloat(AppMessages_DataAccess *r, float *f);
 AppMessages_err_t AppMessages__ReadDouble(AppMessages_DataAccess *r, double *d);
 AppMessages_err_t AppMessages__ReadString(AppMessages_DataAccess *r, char **s, uint8_t *len);
 
-AppMessages_err_t AppMessages__WriteUInt8(AppMessages_DataAccess *w, const uint8_t *ui8);
-AppMessages_err_t AppMessages__WriteBool(AppMessages_DataAccess *w, const bool *b);
-AppMessages_err_t AppMessages__WriteInt16(AppMessages_DataAccess *w, const int16_t *i16);
-AppMessages_err_t AppMessages__WriteUInt16(AppMessages_DataAccess *w, const uint16_t *ui16);
-AppMessages_err_t AppMessages__WriteInt32(AppMessages_DataAccess *w, const int32_t *i32);
-AppMessages_err_t AppMessages__WriteUInt32(AppMessages_DataAccess *w, const uint32_t *ui32);
-AppMessages_err_t AppMessages__WriteInt64(AppMessages_DataAccess *w, const int64_t *i64);
-AppMessages_err_t AppMessages__WriteUInt64(AppMessages_DataAccess *w, const uint64_t *ui32);
-AppMessages_err_t AppMessages__WriteFloat(AppMessages_DataAccess *w, const float *f);
-AppMessages_err_t AppMessages__WriteDouble(AppMessages_DataAccess *w, const double *d);
-AppMessages_err_t AppMessages__WriteString(AppMessages_DataAccess *w, char* const *s, const uint8_t *len);
+AppMessages_err_t AppMessages__WriteUInt8(AppMessages_DataAccess *w, const uint8_t ui8);
+AppMessages_err_t AppMessages__WriteBool(AppMessages_DataAccess *w, const bool b);
+AppMessages_err_t AppMessages__WriteInt16(AppMessages_DataAccess *w, const int16_t i16);
+AppMessages_err_t AppMessages__WriteUInt16(AppMessages_DataAccess *w, const uint16_t ui16);
+AppMessages_err_t AppMessages__WriteInt32(AppMessages_DataAccess *w, const int32_t i32);
+AppMessages_err_t AppMessages__WriteUInt32(AppMessages_DataAccess *w, const uint32_t ui32);
+AppMessages_err_t AppMessages__WriteInt64(AppMessages_DataAccess *w, const int64_t i64);
+AppMessages_err_t AppMessages__WriteUInt64(AppMessages_DataAccess *w, const uint64_t ui32);
+AppMessages_err_t AppMessages__WriteFloat(AppMessages_DataAccess *w, const float f);
+AppMessages_err_t AppMessages__WriteDouble(AppMessages_DataAccess *w, const double d);
+AppMessages_err_t AppMessages__WriteString(AppMessages_DataAccess *w, char* const *s, const uint8_t len);
 
 // end of standard utility declarations
 ///////////////////////////////////////
@@ -76,7 +76,9 @@ typedef enum {
 
 AppMessages_MessageType AppMessages_GetMessageType(const void* m);
 AppMessages_err_t AppMessages_GetSizeInBytes(const void* m, size_t* len);
+AppMessages_err_t AppMessages_WriteBytes(AppMessages_DataAccess* w, const void* m, bool tag);
 AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void*** msgListOut, size_t* len);
+AppMessages_err_t AppMessages_Destroy(void* m);
 AppMessages_err_t AppMessages_DestroyMessageList(void** msgList, size_t len);
 
 typedef struct {
@@ -154,6 +156,13 @@ AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void);
 void AppMessages_CharacterJoinedTeam_Destroy(AppMessages_CharacterJoinedTeam *m);
 
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif // INCLUDE_APPMESSAGES_H
+
+
 // end of struct/message declarations
 ///////////////////////////////////////
 
@@ -166,10 +175,17 @@ void AppMessages_CharacterJoinedTeam_Destroy(AppMessages_CharacterJoinedTeam *m)
 //
 
 
+#ifndef APPMESSAGES_MALLOC
+    #define APPMESSAGES_MALLOC(size)             malloc(size)
+    #define APPMESSAGES_REALLOC(ptr, newSize)    realloc(ptr, newSize)
+    #define APPMESSAGES_FREE(ptr)                free(ptr)
+#endif
+
+
 ///////////////////////////////////////
 // standard utility definitions
 
-bool AppMessages_IsFinished(AppMessages_DataAccess *r) {
+bool AppMessages_IsFinished(const AppMessages_DataAccess *r) {
     return r->position >= r->bufferSize;
 }
 
@@ -282,108 +298,107 @@ AppMessages_err_t AppMessages__ReadString(AppMessages_DataAccess *r, char **s, u
 
 
 
-AppMessages_err_t AppMessages__WriteUInt8(AppMessages_DataAccess *w, const uint8_t *ui8) {
+AppMessages_err_t AppMessages__WriteUInt8(AppMessages_DataAccess *w, const uint8_t ui8) {
     if (w->bufferSize < w->position + 1) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui8, 1);
+    w->buffer[w->position] = ui8;
     w->position += 1;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteBool(AppMessages_DataAccess *w, const bool *b) {
+AppMessages_err_t AppMessages__WriteBool(AppMessages_DataAccess *w, const bool b) {
     AppMessages_err_t err;
-    uint8_t byteVal = (uint8_t)(*b ? 1 : 0);
-    err = AppMessages__WriteUInt8(w, &byteVal);
+    err = AppMessages__WriteUInt8(w, (uint8_t)(b ? 1 : 0));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteInt16(AppMessages_DataAccess *w, const int16_t *i16) {
+AppMessages_err_t AppMessages__WriteInt16(AppMessages_DataAccess *w, const int16_t i16) {
     if (w->bufferSize < w->position + 2) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i16, 2);
+    memcpy(w->buffer + w->position, &i16, 2);
     w->position += 2;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteUInt16(AppMessages_DataAccess *w, const uint16_t *ui16) {
+AppMessages_err_t AppMessages__WriteUInt16(AppMessages_DataAccess *w, const uint16_t ui16) {
     if (w->bufferSize < w->position + 2) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui16, 2);
+    memcpy(w->buffer + w->position, &ui16, 2);
     w->position += 2;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteInt32(AppMessages_DataAccess *w, const int32_t *i32) {
+AppMessages_err_t AppMessages__WriteInt32(AppMessages_DataAccess *w, const int32_t i32) {
     if (w->bufferSize < w->position + 4) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i32, 4);
+    memcpy(w->buffer + w->position, &i32, 4);
     w->position += 4;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteUInt32(AppMessages_DataAccess *w, const uint32_t *ui32) {
+AppMessages_err_t AppMessages__WriteUInt32(AppMessages_DataAccess *w, const uint32_t ui32) {
     if (w->bufferSize < w->position + 4) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui32, 4);
+    memcpy(w->buffer + w->position, &ui32, 4);
     w->position += 4;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteInt64(AppMessages_DataAccess *w, const int64_t *i64) {
+AppMessages_err_t AppMessages__WriteInt64(AppMessages_DataAccess *w, const int64_t i64) {
     if (w->bufferSize < w->position + 8) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, i64, 8);
+    memcpy(w->buffer + w->position, &i64, 8);
     w->position += 8;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteUInt64(AppMessages_DataAccess *w, const uint64_t *ui64) {
+AppMessages_err_t AppMessages__WriteUInt64(AppMessages_DataAccess *w, const uint64_t ui64) {
     if (w->bufferSize < w->position + 8) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, ui64, 8);
+    memcpy(w->buffer + w->position, &ui64, 8);
     w->position += 8;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteFloat(AppMessages_DataAccess *w, const float *f) {
+AppMessages_err_t AppMessages__WriteFloat(AppMessages_DataAccess *w, const float f) {
     if (w->bufferSize < w->position + 4) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, f, 4);
+    memcpy(w->buffer + w->position, &f, 4);
     w->position += 4;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteDouble(AppMessages_DataAccess *w, const double *d) {
+AppMessages_err_t AppMessages__WriteDouble(AppMessages_DataAccess *w, const double d) {
     if (w->bufferSize < w->position + 8) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, d, 8);
+    memcpy(w->buffer + w->position, &d, 8);
     w->position += 8;
     return APPMESSAGES_ERR_OK;
 }
 
-AppMessages_err_t AppMessages__WriteString(AppMessages_DataAccess *w, char* const *s, const uint8_t *len) {
+AppMessages_err_t AppMessages__WriteString(AppMessages_DataAccess *w, char* const *s, const uint8_t len) {
     AppMessages_err_t err;
     err = AppMessages__WriteUInt8(w, len);
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    if (w->bufferSize < w->position + *len) {
+    if (w->bufferSize < w->position + len) {
         return APPMESSAGES_ERR_EOF;
     }
-    memcpy(w->buffer + w->position, *s, *len);
-    w->position += *len;
+    memcpy(w->buffer + w->position, *s, len);
+    w->position += len;
     return APPMESSAGES_ERR_OK;
 }
 
@@ -411,13 +426,43 @@ AppMessages_err_t AppMessages_GetSizeInBytes(const void* m, size_t* len) {
         break;
     case AppMessages_MessageType_Vector3Message:
         return AppMessages_Vector3Message_GetSizeInBytes((const AppMessages_Vector3Message*)m, len);
-        break;
     case AppMessages_MessageType_NewCharacterMessage:
         return AppMessages_NewCharacterMessage_GetSizeInBytes((const AppMessages_NewCharacterMessage*)m, len);
-        break;
     case AppMessages_MessageType_CharacterJoinedTeam:
         return AppMessages_CharacterJoinedTeam_GetSizeInBytes((const AppMessages_CharacterJoinedTeam*)m, len);
-        break;
+    }
+    return APPMESSAGES_ERR_INVALID_DATA;
+}
+
+AppMessages_err_t AppMessages_WriteBytes(AppMessages_DataAccess* w, const void* m, bool tag) {
+    AppMessages_MessageType msgType = AppMessages_GetMessageType(m);
+    switch (msgType) {
+    case AppMessages_MessageType___NullMessage:
+        return APPMESSAGES_ERR_INVALID_DATA;
+    case AppMessages_MessageType_Vector3Message:
+        return AppMessages_Vector3Message_WriteBytes(w, (const AppMessages_Vector3Message*)m, tag);
+    case AppMessages_MessageType_NewCharacterMessage:
+        return AppMessages_NewCharacterMessage_WriteBytes(w, (const AppMessages_NewCharacterMessage*)m, tag);
+    case AppMessages_MessageType_CharacterJoinedTeam:
+        return AppMessages_CharacterJoinedTeam_WriteBytes(w, (const AppMessages_CharacterJoinedTeam*)m, tag);
+    }
+    return APPMESSAGES_ERR_INVALID_DATA;
+}
+
+AppMessages_err_t AppMessages_Destroy(void* m) {
+    AppMessages_MessageType msgType = AppMessages_GetMessageType(m);
+    switch (msgType) {
+    case AppMessages_MessageType___NullMessage:
+        return APPMESSAGES_ERR_INVALID_DATA;
+    case AppMessages_MessageType_Vector3Message:
+        AppMessages_Vector3Message_Destroy((AppMessages_Vector3Message*)m);
+        return APPMESSAGES_ERR_OK;
+    case AppMessages_MessageType_NewCharacterMessage:
+        AppMessages_NewCharacterMessage_Destroy((AppMessages_NewCharacterMessage*)m);
+        return APPMESSAGES_ERR_OK;
+    case AppMessages_MessageType_CharacterJoinedTeam:
+        AppMessages_CharacterJoinedTeam_Destroy((AppMessages_CharacterJoinedTeam*)m);
+        return APPMESSAGES_ERR_OK;
     }
     return APPMESSAGES_ERR_INVALID_DATA;
 }
@@ -425,13 +470,13 @@ AppMessages_err_t AppMessages_GetSizeInBytes(const void* m, size_t* len) {
 AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void*** msgListDst, size_t* len) {
     AppMessages_err_t err = APPMESSAGES_ERR_OK;
     size_t currCapacity = 8;
-    *msgListDst = (void**)malloc(sizeof(void*) * currCapacity);
+    *msgListDst = (void**)APPMESSAGES_MALLOC(sizeof(void*) * currCapacity);
     if (*msgListDst == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
     *len = 0;
     while (!AppMessages_IsFinished(r)) {
         while (*len >= currCapacity) {
             currCapacity *= 2;
-            *msgListDst = (void**)realloc(*msgListDst, (sizeof(void*) * currCapacity));
+            *msgListDst = (void**)APPMESSAGES_REALLOC(*msgListDst, (sizeof(void*) * currCapacity));
             if (*msgListDst == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
         }
         uint8_t msgType;
@@ -442,8 +487,10 @@ AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void***
 
         void* out;
         switch (msgType) {
+        case AppMessages_MessageType___NullMessage:
+            return APPMESSAGES_ERR_OK;
         case AppMessages_MessageType_Vector3Message:
-            out = malloc(sizeof(AppMessages_Vector3Message));
+            out = APPMESSAGES_MALLOC(sizeof(AppMessages_Vector3Message));
             if (out == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
             err = AppMessages_Vector3Message_FromBytes(r, (AppMessages_Vector3Message*)out);
             (*msgListDst)[*len] = out;
@@ -453,7 +500,7 @@ AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void***
             }
             break;
         case AppMessages_MessageType_NewCharacterMessage:
-            out = malloc(sizeof(AppMessages_NewCharacterMessage));
+            out = APPMESSAGES_MALLOC(sizeof(AppMessages_NewCharacterMessage));
             if (out == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
             err = AppMessages_NewCharacterMessage_FromBytes(r, (AppMessages_NewCharacterMessage*)out);
             (*msgListDst)[*len] = out;
@@ -463,7 +510,7 @@ AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void***
             }
             break;
         case AppMessages_MessageType_CharacterJoinedTeam:
-            out = malloc(sizeof(AppMessages_CharacterJoinedTeam));
+            out = APPMESSAGES_MALLOC(sizeof(AppMessages_CharacterJoinedTeam));
             if (out == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
             err = AppMessages_CharacterJoinedTeam_FromBytes(r, (AppMessages_CharacterJoinedTeam*)out);
             (*msgListDst)[*len] = out;
@@ -497,7 +544,7 @@ AppMessages_err_t AppMessages_DestroyMessageList(void** msgList, size_t len) {
             return APPMESSAGES_ERR_INVALID_DATA;
         }
     }
-    free(msgList);
+    APPMESSAGES_FREE(msgList);
     return APPMESSAGES_ERR_OK;
 }
 
@@ -524,19 +571,19 @@ AppMessages_err_t AppMessages_Color_FromBytes(AppMessages_DataAccess* r, AppMess
 
 AppMessages_err_t AppMessages_Color_WriteBytes(AppMessages_DataAccess* w, const AppMessages_Color* src) {
     AppMessages_err_t err;
-    err = AppMessages__WriteFloat(w, &(src->red));
+    err = AppMessages__WriteFloat(w, (src->red));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteFloat(w, &(src->green));
+    err = AppMessages__WriteFloat(w, (src->green));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteFloat(w, &(src->blue));
+    err = AppMessages__WriteFloat(w, (src->blue));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteFloat(w, &(src->alpha));
+    err = AppMessages__WriteFloat(w, (src->alpha));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -553,7 +600,7 @@ AppMessages_err_t AppMessages_Spectrum_FromBytes(AppMessages_DataAccess* r, AppM
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    dst->colors = (AppMessages_Color*)malloc(sizeof(AppMessages_Color) * dst->colors_len);
+    dst->colors = (AppMessages_Color*)APPMESSAGES_MALLOC(sizeof(AppMessages_Color) * dst->colors_len);
     if (dst->colors == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
     for (uint16_t i1 = 0; i1 < dst->colors_len; i1++) {
         err = AppMessages_Color_FromBytes(r, &(dst->colors[i1]));
@@ -573,7 +620,7 @@ AppMessages_err_t AppMessages_Spectrum_WriteBytes(AppMessages_DataAccess* w, con
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->colors_len));
+    err = AppMessages__WriteUInt16(w, (src->colors_len));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -602,7 +649,7 @@ AppMessages_err_t AppMessages_Vector3Message_GetSizeInBytes(const AppMessages_Ve
 }
 
 AppMessages_Vector3Message* AppMessages_Vector3Message_Create(void) {
-    AppMessages_Vector3Message* out = (AppMessages_Vector3Message*)malloc(sizeof(AppMessages_Vector3Message));
+    AppMessages_Vector3Message* out = (AppMessages_Vector3Message*)APPMESSAGES_MALLOC(sizeof(AppMessages_Vector3Message));
     if (out == NULL) { return NULL; }
     out->_mt = AppMessages_MessageType_Vector3Message;
     out->x = AppMessages_Vector3Message_default.x;
@@ -612,7 +659,7 @@ AppMessages_Vector3Message* AppMessages_Vector3Message_Create(void) {
 }
 
 void AppMessages_Vector3Message_Destroy(AppMessages_Vector3Message *m) {
-    free(m);
+    APPMESSAGES_FREE(m);
 }
 
 AppMessages_err_t AppMessages_Vector3Message_FromBytes(AppMessages_DataAccess* r, AppMessages_Vector3Message* dst) {
@@ -636,20 +683,20 @@ AppMessages_err_t AppMessages_Vector3Message_FromBytes(AppMessages_DataAccess* r
 AppMessages_err_t AppMessages_Vector3Message_WriteBytes(AppMessages_DataAccess* w, const AppMessages_Vector3Message* src, bool tag) {
     AppMessages_err_t err;
     if (tag) {
-        err = AppMessages__WriteUInt8(w, (const uint8_t *)&(src->_mt));
+        err = AppMessages__WriteUInt8(w, (const uint8_t)(src->_mt));
         if (err != APPMESSAGES_ERR_OK) {
             return err;
         }
     }
-    err = AppMessages__WriteFloat(w, &(src->x));
+    err = AppMessages__WriteFloat(w, (src->x));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteFloat(w, &(src->y));
+    err = AppMessages__WriteFloat(w, (src->y));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteFloat(w, &(src->z));
+    err = AppMessages__WriteFloat(w, (src->z));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -681,7 +728,7 @@ AppMessages_err_t AppMessages_NewCharacterMessage_GetSizeInBytes(const AppMessag
 }
 
 AppMessages_NewCharacterMessage* AppMessages_NewCharacterMessage_Create(void) {
-    AppMessages_NewCharacterMessage* out = (AppMessages_NewCharacterMessage*)malloc(sizeof(AppMessages_NewCharacterMessage));
+    AppMessages_NewCharacterMessage* out = (AppMessages_NewCharacterMessage*)APPMESSAGES_MALLOC(sizeof(AppMessages_NewCharacterMessage));
     if (out == NULL) { return NULL; }
     out->_mt = AppMessages_MessageType_NewCharacterMessage;
     out->id = AppMessages_NewCharacterMessage_default.id;
@@ -695,13 +742,13 @@ AppMessages_NewCharacterMessage* AppMessages_NewCharacterMessage_Create(void) {
 }
 
 void AppMessages_NewCharacterMessage_Destroy(AppMessages_NewCharacterMessage *m) {
-    free(m->characterName);
+    APPMESSAGES_FREE(m->characterName);
     for (uint16_t i1 = 0; i1 < m->nicknames_len; i1++) {
-        free(m->nicknames[i1]);
+        APPMESSAGES_FREE(m->nicknames[i1]);
     }
-    free(m->nicknames_els_len);
-    free(m->nicknames);
-    free(m);
+    APPMESSAGES_FREE(m->nicknames_els_len);
+    APPMESSAGES_FREE(m->nicknames);
+    APPMESSAGES_FREE(m);
 }
 
 AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAccess* r, AppMessages_NewCharacterMessage* dst) {
@@ -735,9 +782,9 @@ AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    dst->nicknames = (char**)malloc(sizeof(char*) * dst->nicknames_len);
+    dst->nicknames = (char**)APPMESSAGES_MALLOC(sizeof(char*) * dst->nicknames_len);
     if (dst->nicknames == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
-    dst->nicknames_els_len = (uint8_t*)malloc(sizeof(uint8_t) * dst->nicknames_len);
+    dst->nicknames_els_len = (uint8_t*)APPMESSAGES_MALLOC(sizeof(uint8_t) * dst->nicknames_len);
     if (dst->nicknames == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
     for (uint16_t i1 = 0; i1 < dst->nicknames_len; i1++) {
         err = AppMessages__ReadString(r, &(dst->nicknames[i1]), &(dst->nicknames_els_len[i1]));
@@ -754,41 +801,41 @@ AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAcce
 AppMessages_err_t AppMessages_NewCharacterMessage_WriteBytes(AppMessages_DataAccess* w, const AppMessages_NewCharacterMessage* src, bool tag) {
     AppMessages_err_t err;
     if (tag) {
-        err = AppMessages__WriteUInt8(w, (const uint8_t *)&(src->_mt));
+        err = AppMessages__WriteUInt8(w, (const uint8_t)(src->_mt));
         if (err != APPMESSAGES_ERR_OK) {
             return err;
         }
     }
-    err = AppMessages__WriteUInt64(w, &(src->id));
+    err = AppMessages__WriteUInt64(w, (src->id));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteString(w, &(src->characterName), &(src->characterName_len));
+    err = AppMessages__WriteString(w, &(src->characterName), (src->characterName_len));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->strength));
+    err = AppMessages__WriteUInt16(w, (src->strength));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->intelligence));
+    err = AppMessages__WriteUInt16(w, (src->intelligence));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->dexterity));
+    err = AppMessages__WriteUInt16(w, (src->dexterity));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt32(w, &(src->goldInWallet));
+    err = AppMessages__WriteUInt32(w, (src->goldInWallet));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->nicknames_len));
+    err = AppMessages__WriteUInt16(w, (src->nicknames_len));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
     for (uint16_t i1 = 0; i1 < src->nicknames_len; i1++) {
-        err = AppMessages__WriteString(w, &(src->nicknames[i1]), &(src->nicknames_els_len[i1]));
+        err = AppMessages__WriteString(w, &(src->nicknames[i1]), (src->nicknames_els_len[i1]));
         if (err != APPMESSAGES_ERR_OK) {
             return err;
         }
@@ -817,7 +864,7 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_GetSizeInBytes(const AppMessag
 }
 
 AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void) {
-    AppMessages_CharacterJoinedTeam* out = (AppMessages_CharacterJoinedTeam*)malloc(sizeof(AppMessages_CharacterJoinedTeam));
+    AppMessages_CharacterJoinedTeam* out = (AppMessages_CharacterJoinedTeam*)APPMESSAGES_MALLOC(sizeof(AppMessages_CharacterJoinedTeam));
     if (out == NULL) { return NULL; }
     out->_mt = AppMessages_MessageType_CharacterJoinedTeam;
     out->characterID = AppMessages_CharacterJoinedTeam_default.characterID;
@@ -827,9 +874,9 @@ AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void) {
 }
 
 void AppMessages_CharacterJoinedTeam_Destroy(AppMessages_CharacterJoinedTeam *m) {
-    free(m->teamName);
-    free(m->teamColors);
-    free(m);
+    APPMESSAGES_FREE(m->teamName);
+    APPMESSAGES_FREE(m->teamColors);
+    APPMESSAGES_FREE(m);
 }
 
 AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAccess* r, AppMessages_CharacterJoinedTeam* dst) {
@@ -847,7 +894,7 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    dst->teamColors = (AppMessages_Color*)malloc(sizeof(AppMessages_Color) * dst->teamColors_len);
+    dst->teamColors = (AppMessages_Color*)APPMESSAGES_MALLOC(sizeof(AppMessages_Color) * dst->teamColors_len);
     if (dst->teamColors == NULL) { return APPMESSAGES_ERR_ALLOCATION_FAILURE; }
     for (uint16_t i1 = 0; i1 < dst->teamColors_len; i1++) {
         err = AppMessages_Color_FromBytes(r, &(dst->teamColors[i1]));
@@ -864,20 +911,20 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAcce
 AppMessages_err_t AppMessages_CharacterJoinedTeam_WriteBytes(AppMessages_DataAccess* w, const AppMessages_CharacterJoinedTeam* src, bool tag) {
     AppMessages_err_t err;
     if (tag) {
-        err = AppMessages__WriteUInt8(w, (const uint8_t *)&(src->_mt));
+        err = AppMessages__WriteUInt8(w, (const uint8_t)(src->_mt));
         if (err != APPMESSAGES_ERR_OK) {
             return err;
         }
     }
-    err = AppMessages__WriteUInt64(w, &(src->characterID));
+    err = AppMessages__WriteUInt64(w, (src->characterID));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteString(w, &(src->teamName), &(src->teamName_len));
+    err = AppMessages__WriteString(w, &(src->teamName), (src->teamName_len));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt16(w, &(src->teamColors_len));
+    err = AppMessages__WriteUInt16(w, (src->teamColors_len));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -904,9 +951,3 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_WriteBytes(AppMessages_DataAcc
 //////////////////////////////////////////////////////////////////////////////
 
 #endif // APPMESSAGES_IMPLEMENTATION
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // INCLUDE_APPMESSAGES_H

@@ -129,6 +129,7 @@ pub fn process_raw_bytes(reader: &mut BufferReader) -> Result<Vec<Message>, AppM
     while !reader.is_finished() {
         let msg_type = reader.take_byte()?;
         match msg_type {
+            0 => return Ok(msg_list),
             1 => msg_list.push(Message::Vector3Message(Vector3Message::from_bytes(reader)?)),
             2 => msg_list.push(Message::NewCharacterMessage(NewCharacterMessage::from_bytes(reader)?)),
             3 => msg_list.push(Message::CharacterJoinedTeam(CharacterJoinedTeam::from_bytes(reader)?)),

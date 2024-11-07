@@ -183,6 +183,12 @@ pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usiz
     return local_offset - offset;
 }
 
+pub fn writeBytes(m: *const Message, offset: usize, buffer: []u8, tag: bool) usize {
+    switch (m.*) {
+        inline else => |inner| return inner.writeBytes(offset, buffer, tag),
+    }
+}
+
 pub const MessageType = enum(u8) {
     Vector3Message,
     NewCharacterMessage,
@@ -203,6 +209,9 @@ pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8) ![]Mess
     while (local_offset < buffer.len) {
         const msg_type_byte = (try readNumber(u8, local_offset, buffer)).value;
         local_offset += 1;
+        if (msg_type_byte == 0) {
+            return msg_list.toOwnedSlice();
+        }
         const msg_type: MessageType = std.meta.intToEnum(MessageType, msg_type_byte - 1) catch return DataReaderError.InvalidData;
         switch(msg_type) {
             .Vector3Message => {

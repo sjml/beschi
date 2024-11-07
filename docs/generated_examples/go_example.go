@@ -58,6 +58,9 @@ func ProcessRawBytes(data io.Reader) ([]Message, error) {
 		if err == io.EOF {
 			break
 		}
+		if msgType == 0 {
+			return msgList, nil
+		}
 		switch msgType {
 		case Vector3MessageType:
 			msg, err := Vector3MessageFromBytes(data)

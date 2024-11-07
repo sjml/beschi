@@ -64,6 +64,8 @@ namespace AppMessages
                 byte msgType = br.ReadByte();
                 switch (msgType)
                 {
+                    case 0:
+                        return msgList.ToArray();
                     case (byte)MessageType.Vector3MessageType:
                         msgList.Add(Vector3Message.FromBytes(br));
                         break;

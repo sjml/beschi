@@ -241,6 +241,9 @@ public /* namespace */ enum AppMessages {
         let dr = DataReader(fromData: data)
         while !dr.IsFinished() {
             let msgTypeByte = try dr.GetUInt8()
+            if msgTypeByte == 0 {
+                return msgList
+            }
             guard let msgType = AppMessages.MessageType(rawValue: msgTypeByte)
             else {
                 throw DataReaderError.InvalidData
