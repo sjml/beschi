@@ -1,3 +1,10 @@
+#ifdef __cplusplus
+}
+#endif
+
+#endif // INCLUDE_BESCHI_H
+
+
 // end of struct/message declarations
 ///////////////////////////////////////
 
