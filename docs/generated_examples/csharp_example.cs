@@ -79,11 +79,12 @@ namespace AppMessages
         Cleric = 3,
     }
 
-    public enum TeamRole : byte
+    public enum TeamRole : short
     {
-        Minion = 0,
-        Ally = 1,
-        Leader = 2,
+        Minion = 256,
+        Ally = 512,
+        Leader = 1024,
+        Traitor = -1,
     }
 
     public class Color
@@ -255,7 +256,7 @@ namespace AppMessages
             byte[] characterName_Buffer = System.Text.Encoding.UTF8.GetBytes(this.characterName);
             bw.Write((byte)characterName_Buffer.Length);
             bw.Write(characterName_Buffer);
-            bw.Write((byte)this.job)
+            bw.Write((byte)this.job);
             bw.Write(this.strength);
             bw.Write(this.intelligence);
             bw.Write(this.dexterity);
@@ -286,7 +287,7 @@ namespace AppMessages
             int size = 0;
             size += this.teamName.Length;
             size += this.teamColors.Count * 16;
-            size += 12;
+            size += 13;
             return size;
         }
 
@@ -306,7 +307,7 @@ namespace AppMessages
                     Color el = Color.FromBytes(br);
                     _nCharacterJoinedTeam.teamColors.Add(el);
                 }
-                byte _role = br.ReadByte();
+                short _role = br.ReadInt16();
                 if (!Enum.IsDefined(typeof(TeamRole), _role))
                 {
                     throw new DataReadErrorException(String.Format("Enum {0} out of range for TeamRole", _role));
@@ -334,7 +335,7 @@ namespace AppMessages
             {
                 el.WriteBytes(bw);
             }
-            bw.Write((byte)this.role)
+            bw.Write((short)this.role);
         }
 
     }

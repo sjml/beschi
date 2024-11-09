@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"messages/SizedMessage"
+	"messages/sizedmessage"
 )
 
 var ok bool = true
@@ -19,7 +19,7 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var shortList SizedMessage.TextContainer
+	var shortList sizedmessage.TextContainer
 	shortList.Label = "list that fits in a byte"
 	shortList.Collection = []string{
 		"Lorem", "ipsum", "dolor", "sit", "amet", "consectetur",
@@ -60,7 +60,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		input, err := SizedMessage.TextContainerFromBytes(dat)
+		input, err := sizedmessage.TextContainerFromBytes(dat)
 		softAssert(err == nil, "reading sized message")
 
 		softAssert(input.Label == shortList.Label, "readback label comparison")

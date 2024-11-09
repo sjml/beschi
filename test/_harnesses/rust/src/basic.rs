@@ -29,6 +29,8 @@ fn main() {
         ui64: 18000000000000000000,
         f: 3.1415927410125732421875,
         d: 2.718281828459045090795598298427648842334747314453125,
+        ee: Enumerated::B,
+        es: Specified::Negative,
         s: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.".to_string(),
         v2: Vec2 {x: 256.512, y: 1024.768},
         v3: Vec3 {x: 128.64, y: 2048.4096, z: 16.32},
@@ -104,7 +106,7 @@ fn main() {
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
         example.write_bytes(&mut writer, false);
-        checker.soft_assert(writer.len() == 913, "size calculation check");
+        checker.soft_assert(writer.len() == 916, "size calculation check");
 
         let filename = args.get("generate").unwrap();
         fs::write(filename, writer).unwrap();
@@ -124,6 +126,8 @@ fn main() {
         checker.soft_assert(input.ui64 == example.ui64, "ui64");
         checker.soft_assert(input.f == example.f, "float");
         checker.soft_assert(input.d == example.d, "double");
+        checker.soft_assert(input.ee == example.ee, "enumerated");
+        checker.soft_assert(input.es == example.es, "specified");
         checker.soft_assert(input.s == example.s, "string");
         checker.soft_assert(input.v2.x == example.v2.x, "Vec2");
         checker.soft_assert(input.v2.y == example.v2.y, "Vec2");

@@ -35,6 +35,15 @@ fn _typeIsSimple(comptime T: type) bool {
     return false;
 }
 
+fn _isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
+    inline for (std.meta.fields(Te)) |f| {
+        if (value == f.value) {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {

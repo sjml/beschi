@@ -7,6 +7,8 @@ const TestingMessage = comprehensive.TestingMessage;
 const Vec2 = comprehensive.Vec2;
 const Vec3 = comprehensive.Vec3;
 const Color = comprehensive.Color;
+const Enumerated = comprehensive.Enumerated;
+const Specified = comprehensive.Specified;
 const ComplexData = comprehensive.ComplexData;
 
 // zig fmt: off
@@ -21,6 +23,8 @@ const example = TestingMessage{
     .ui64 = 18000000000000000000,
     .f = 3.1415927410125732421875,
     .d = 2.718281828459045090795598298427648842334747314453125,
+    .ee = Enumerated.B,
+    .es = Specified.Negative,
     .s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     .v2 = Vec2{
         .x = 256.512,
@@ -115,7 +119,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const written_bytes = example.writeBytes(0, buffer, false);
-        checker.softAssert(written_bytes == 913, "size calculation check");
+        checker.softAssert(written_bytes == 916, "size calculation check");
 
         var file = try std.fs.cwd().createFile(args[2], .{ .truncate = true });
         defer file.close();
@@ -129,7 +133,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const input_read = try TestingMessage.fromBytes(testAllocator, 0, buffer);
-        checker.softAssert(input_read.bytes_read == 913, "size read check");
+        checker.softAssert(input_read.bytes_read == 916, "size read check");
         var input = input_read.value;
         defer input.deinit(testAllocator);
         checker.softAssert(input.b == example.b, "byte");
@@ -142,6 +146,8 @@ pub fn main() !void {
         checker.softAssert(input.ui64 == example.ui64, "ui64");
         checker.softAssert(input.f == example.f, "float");
         checker.softAssert(input.d == example.d, "double");
+        checker.softAssert(input.ee == example.ee, "enumerated");
+        checker.softAssert(input.es == example.es, "specified");
         checker.softAssert(std.mem.eql(u8, input.s, example.s), "string");
         checker.softAssert(input.v2.x == example.v2.x, "Vec2");
         checker.softAssert(input.v2.y == example.v2.y, "Vec2");

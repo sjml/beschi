@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"messages/BrokenMessages"
+	"messages/brokenmessages"
 )
 
 var ok bool = true
@@ -20,11 +20,11 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var trunc BrokenMessages.TruncatedMessage
+	var trunc brokenmessages.TruncatedMessage
 	trunc.X = 1.0
 	trunc.Y = 2.0
 
-	var full BrokenMessages.FullMessage
+	var full brokenmessages.FullMessage
 	full.X = 1.0
 	full.Y = 2.0
 	full.Z = 3.0
@@ -46,7 +46,7 @@ func main() {
 		full.WriteBytes(dat, true)
 
 		// write a truncated message tagged as a full one
-		binary.Write(dat, binary.LittleEndian, BrokenMessages.FullMessageType)
+		binary.Write(dat, binary.LittleEndian, brokenmessages.FullMessageType)
 		trunc.WriteBytes(dat, false)
 
 		full.WriteBytes(dat, true)
@@ -67,7 +67,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		_, err = BrokenMessages.ProcessRawBytes(dat)
+		_, err = brokenmessages.ProcessRawBytes(dat)
 		softAssert(err != nil, "read broken stream")
 		softAssert(err.Error() == "Unknown message type: 63", "broken stream error message")
 	}

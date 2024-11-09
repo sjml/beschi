@@ -1,6 +1,6 @@
 from __future__ import annotations
 import string
-from collections import OrderedDict, Counter
+from collections import Counter
 
 import tomllib
 
@@ -63,20 +63,42 @@ class Variable():
             raise NotImplementedError(f"Can't determine simplicity of {self.name}.")
 
 class Enum():
-    def __init__(self, name: str, values: list[str]):
+    def __init__(self, name: str, value_spec: list[str | dict[str, int|str] ]):
         self.name = name
-        self.values = values
+        self.values: dict[str,int] = dict()
+
+        if all(isinstance(entry, str) for entry in value_spec):
+            self.values = dict((entry, idx) for idx, entry in enumerate(value_spec))
+        else:
+            od: dict[str,int] = dict()
+            for entry in value_spec:
+                if "_name" not in entry:
+                    raise TypeError("Missing _name in enum entry")
+                if not type(entry["_name"]) is str:
+                    raise TypeError(f"Enum entry _name is not a string: {entry["_name"]}")
+                if "_value" not in entry:
+                    raise TypeError("Missing _value in enum entry")
+                if not type(entry["_value"] is int):
+                    raise TypeError(f"Enum entry _value is not an integer: {entry["_value"]}")
+                od[entry["_name"]] = entry["_value"]
+            self.values = od
 
     def get_encoding(self) -> str:
+        min_value = min(self.values.values())
+        max_value = max(self.values.values())
+
         possible_options = ["byte", "int16", "int32"]
         for opt in possible_options:
-            if len(self.values) <= NUMERIC_TYPE_RANGES[opt][1]:
+            if min_value >= NUMERIC_TYPE_RANGES[opt][0] and max_value <= NUMERIC_TYPE_RANGES[opt][1]:
                 return opt
         # should be unreachable; load-time validation checked we were <= int32.max
-        raise ValueError("Cannot encode enum; too many values")
+        raise ValueError(f"Cannot encode enum; does not fit in one of {', '.join(possible_options)}")
 
     def get_encoding_size(self) -> int:
         return NUMERIC_TYPE_SIZES[self.get_encoding()]
+
+    def get_default_pair(self) -> tuple[str,int]:
+        return next(iter(self.values.items()))
 
 class Struct():
     def __init__(self, name: str):
@@ -92,9 +114,9 @@ class Protocol():
         self.namespace: str = None
         self.list_size_type: str = "uint32"
         self.string_size_type: str = "uint32"
-        self.structs: OrderedDict[str,Struct] = OrderedDict()
-        self.messages: OrderedDict[str,Struct] = OrderedDict()
-        self.enums: OrderedDict[str,Enum] = OrderedDict()
+        self.structs: dict[str,Struct] = {}
+        self.messages: dict[str,Struct] = {}
+        self.enums: dict[str,Enum] = {}
 
         if filename == None:
             return
@@ -162,11 +184,12 @@ class Protocol():
         def validate_enum(e: Enum):
             if len(e.values) == 0:
                 raise ValueError(f"No values given for enum {e.name}.")
-            if len(e.values) > NUMERIC_TYPE_RANGES["int32"][1]:
-                raise ValueError(f"Way too many values in enum {e.name}. What are you even *doing*?")
-            duplicate_values = [v for v, count in Counter(e.values).items() if count > 1]
-            if len(duplicate_values) > 0:
-                raise ValueError(f"Duplicate values in enum {e.name}: {", ".join(duplicate_values)}")
+            duplicate_entries = [v for v, count in Counter(e.values.keys()).items() if count > 1]
+            if len(duplicate_entries) > 0:
+                raise ValueError(f"Duplicate values in enum {e.name}: {", ".join(duplicate_entries)}")
+            duplicate_assignment = [v for v, count in Counter(e.values.values()).items() if count > 1]
+            if len(duplicate_assignment) > 0:
+                raise ValueError(f"Duplicate assignments in enum {e.name}: {", ".join(duplicate_assignment)}")
 
         def validate_struct(s: Struct):
             label = "Struct"

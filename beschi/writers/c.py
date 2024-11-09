@@ -87,6 +87,7 @@ class CWriter(Writer):
             self.deserializer(inner, accessor)
             self.indent_level -= 1
             self.write_line("}")
+            self.err_check_return()
         elif var.vartype == "string":
             idx_search = re.match(r"(.*)\[(i\d+)\]$", var.name)
             if idx_search != None:
@@ -95,21 +96,24 @@ class CWriter(Writer):
                 self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{name}_els_len[{idx}]));")
             else:
                 self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{var.name}_len));")
+            self.err_check_return()
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
             self.write_line(f"{self.type_mapping[e.get_encoding()]} _{var.name};")
             self.write_line(f"err = {self.prefix}_Read{self.base_serializers[e.get_encoding()]}(r, &(_{var.name}));")
             self.err_check_return()
-            self.write_line(f"if (_{var.name} < {e.values[0]} || _{var.name} > {e.values[-1]}) {{")
+            self.write_line(f"if (!{self.prefix}IsValid{var.vartype}(_{var.name})) {{")
             self.indent_level += 1
             self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
             self.indent_level -= 1
             self.write_line("}")
+            self.write_line(f"{accessor}{var.name} = ({self.prefix}{var.vartype})_{var.name};")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"err = {self.prefix}_Read{self.base_serializers[var.vartype]}(r, &({accessor}{var.name}));")
+            self.err_check_return()
         else:
             self.write_line(f"err = {self.prefix}{var.vartype}_FromBytes(r, &({accessor}{var.name}));")
-        self.err_check_return()
+            self.err_check_return()
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
@@ -197,7 +201,7 @@ class CWriter(Writer):
                 self.write_line(f".{var.name} = (char*)\"\",")
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
-                self.write_line(f".{var.name} = {e.values[0]},")
+                self.write_line(f".{var.name} = {self.prefix}{e.name}_{e.get_default_pair()[0]},")
             else:
                 self.write_line(f".{var.name} = {{")
                 self.indent_level += 1
@@ -228,12 +232,13 @@ class CWriter(Writer):
             [self.destructor(mem, f"{accessor}{var.name}.") for mem in self.protocol.structs[var.vartype].members]
 
     def gen_enum(self, ename: str, edata: Enum):
-        self.write_line(f"typedef enum {ename} {{")
+        self.write_line(f"typedef enum {self.prefix}{ename} {{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
-            self.write_line(f"{v} = {vi}{"," if vi < len(edata.values) - 1 else ""}")
+        for ei, (v, vi) in enumerate((edata.values.items())):
+            self.write_line(f"{self.prefix}{ename}_{v} = {vi}{"," if ei < len(edata.values) - 1 else ""}")
         self.indent_level -= 1
-        self.write_line(f"}} {ename};")
+        self.write_line(f"}} {self.prefix}{ename};")
+        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.get_encoding()]} value);")
         self.write_line()
 
     def gen_struct(self, sname: str, sdata: Struct):
@@ -255,6 +260,8 @@ class CWriter(Writer):
                 self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
             elif var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"{self.type_mapping[var.vartype]} {var.name};")
+            elif var.vartype in self.protocol.enums:
+                self.write_line(f"{self.prefix}{var.vartype} {var.name};")
             elif var.vartype in self.protocol.structs:
                 self.write_line(f"{self.prefix}{var.vartype} {var.name};")
         self.indent_level -= 1
@@ -273,6 +280,25 @@ class CWriter(Writer):
             self.write_line(f"{self.prefix}{sname}* {self.prefix}{sname}_Create(void);")
             self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m);")
         self.write_line()
+        self.write_line()
+
+    def gen_enum_implementation(self, ename: str, edata: Enum):
+        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.get_encoding()]} value) {{")
+        self.indent_level += 1
+        self.write_line("switch (value) {")
+        self.indent_level += 1
+        [self.write_line(f"case {self.prefix}{ename}_{entry}:") for entry in edata.values.keys()]
+        self.indent_level += 1
+        self.write_line("return true;")
+        self.indent_level -= 1
+        self.write_line("default:")
+        self.indent_level += 1
+        self.write_line("return false;")
+        self.indent_level -= 1
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line()
 
     def gen_implementation(self, sname: str, sdata: Struct):
@@ -547,6 +573,9 @@ class CWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum_implementation(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_implementation(sname, sdata)

@@ -41,6 +41,15 @@ fn _typeIsSimple(comptime T: type) bool {
     return false;
 }
 
+fn _isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
+    inline for (std.meta.fields(Te)) |f| {
+        if (value == f.value) {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
         if (!_numberTypeIsValid(T)) {
@@ -241,10 +250,11 @@ pub const CharacterClass = enum(u8) {
     Cleric = 3,
 };
 
-pub const TeamRole = enum(u8) {
-    Minion = 0,
-    Ally = 1,
-    Leader = 2,
+pub const TeamRole = enum(i16) {
+    Minion = 256,
+    Ally = 512,
+    Leader = 1024,
+    Traitor = -1,
 };
 
 pub const Color = struct {
@@ -390,7 +400,9 @@ pub const NewCharacterMessage = struct {
         local_offset += NewCharacterMessage_characterName_read.bytes_read;
 
         const NewCharacterMessage_job_check_read = try readNumber(u8, local_offset, buffer);
-        // TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first
+        if (!_isValidEnum(CharacterClass, u8, NewCharacterMessage_job_check_read.value)) {
+            return error.InvalidData;
+        }
         const NewCharacterMessage_job: CharacterClass = @enumFromInt(NewCharacterMessage_job_check_read.value);
         local_offset += NewCharacterMessage_job_check_read.bytes_read;
 
@@ -469,7 +481,7 @@ pub const CharacterJoinedTeam = struct {
         var size: usize = 0;
         size += self.teamName.len;
         size += self.teamColors.len * 16;
-        size += 12;
+        size += 13;
         return size;
     }
 
@@ -488,8 +500,10 @@ pub const CharacterJoinedTeam = struct {
         const CharacterJoinedTeam_teamColors = CharacterJoinedTeam_teamColors_read.value;
         local_offset += CharacterJoinedTeam_teamColors_read.bytes_read;
 
-        const CharacterJoinedTeam_role_check_read = try readNumber(u8, local_offset, buffer);
-        // TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first
+        const CharacterJoinedTeam_role_check_read = try readNumber(i16, local_offset, buffer);
+        if (!_isValidEnum(TeamRole, i16, CharacterJoinedTeam_role_check_read.value)) {
+            return error.InvalidData;
+        }
         const CharacterJoinedTeam_role: TeamRole = @enumFromInt(CharacterJoinedTeam_role_check_read.value);
         local_offset += CharacterJoinedTeam_role_check_read.bytes_read;
 
@@ -510,7 +524,7 @@ pub const CharacterJoinedTeam = struct {
         local_offset += writeNumber(u64, local_offset, buffer, self.characterID);
         local_offset += writeString(local_offset, buffer, self.teamName);
         local_offset += writeList(Color, local_offset, buffer, self.teamColors);
-        local_offset += writeNumber(u8, local_offset, buffer, @intFromEnum(self.role));
+        local_offset += writeNumber(i16, local_offset, buffer, @intFromEnum(self.role));
 
         return local_offset - offset;
     }

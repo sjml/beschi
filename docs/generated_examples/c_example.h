@@ -81,18 +81,21 @@ AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void***
 AppMessages_err_t AppMessages_Destroy(void* m);
 AppMessages_err_t AppMessages_DestroyMessageList(void** msgList, size_t len);
 
-typedef enum CharacterClass {
-    Fighter = 0,
-    Wizard = 1,
-    Rogue = 2,
-    Cleric = 3
-} CharacterClass;
+typedef enum AppMessages_CharacterClass {
+    AppMessages_CharacterClass_Fighter = 0,
+    AppMessages_CharacterClass_Wizard = 1,
+    AppMessages_CharacterClass_Rogue = 2,
+    AppMessages_CharacterClass_Cleric = 3
+} AppMessages_CharacterClass;
+bool AppMessages_IsValidCharacterClass(uint8_t value);
 
-typedef enum TeamRole {
-    Minion = 0,
-    Ally = 1,
-    Leader = 2
-} TeamRole;
+typedef enum AppMessages_TeamRole {
+    AppMessages_TeamRole_Minion = 256,
+    AppMessages_TeamRole_Ally = 512,
+    AppMessages_TeamRole_Leader = 1024,
+    AppMessages_TeamRole_Traitor = -1
+} AppMessages_TeamRole;
+bool AppMessages_IsValidTeamRole(int16_t value);
 
 typedef struct {
     float red;
@@ -135,6 +138,7 @@ typedef struct {
     uint64_t id;
     uint8_t characterName_len;
     char* characterName;
+    AppMessages_CharacterClass job;
     uint16_t strength;
     uint16_t intelligence;
     uint16_t dexterity;
@@ -160,6 +164,7 @@ typedef struct {
     char* teamName;
     uint16_t teamColors_len;
     AppMessages_Color* teamColors;
+    AppMessages_TeamRole role;
 } AppMessages_CharacterJoinedTeam;
 extern const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default;
 
@@ -562,6 +567,30 @@ AppMessages_err_t AppMessages_DestroyMessageList(void** msgList, size_t len) {
     return APPMESSAGES_ERR_OK;
 }
 
+bool AppMessages_IsValidCharacterClass(uint8_t value) {
+    switch (value) {
+        case AppMessages_CharacterClass_Fighter:
+        case AppMessages_CharacterClass_Wizard:
+        case AppMessages_CharacterClass_Rogue:
+        case AppMessages_CharacterClass_Cleric:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool AppMessages_IsValidTeamRole(int16_t value) {
+    switch (value) {
+        case AppMessages_TeamRole_Minion:
+        case AppMessages_TeamRole_Ally:
+        case AppMessages_TeamRole_Leader:
+        case AppMessages_TeamRole_Traitor:
+            return true;
+        default:
+            return false;
+    }
+}
+
 AppMessages_err_t AppMessages_Color_FromBytes(AppMessages_DataAccess* r, AppMessages_Color* dst) {
     AppMessages_err_t err;
     err = AppMessages__ReadFloat(r, &(dst->red));
@@ -722,7 +751,7 @@ const AppMessages_NewCharacterMessage AppMessages_NewCharacterMessage_default = 
     .id = 0,
     .characterName_len = 0,
     .characterName = (char*)"",
-    .job = Fighter,
+    .job = AppMessages_CharacterClass_Fighter,
     .strength = 0,
     .intelligence = 0,
     .dexterity = 0,
@@ -785,12 +814,10 @@ AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    if (_job < Fighter || _job > Cleric) {
+    if (!AppMessages_IsValidCharacterClass(_job)) {
         return APPMESSAGES_ERR_INVALID_DATA;
     }
-    if (err != APPMESSAGES_ERR_OK) {
-        return err;
-    }
+    dst->job = (AppMessages_CharacterClass)_job;
     err = AppMessages__ReadUInt16(r, &(dst->strength));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
@@ -894,14 +921,14 @@ const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default = 
     .teamName = (char*)"",
     .teamColors_len = 0,
     .teamColors = NULL,
-    .role = Minion,
+    .role = AppMessages_TeamRole_Minion,
 };
 
 AppMessages_err_t AppMessages_CharacterJoinedTeam_GetSizeInBytes(const AppMessages_CharacterJoinedTeam* m, size_t* size) {
     *size = 0;
     *size += m->teamName_len;
     *size += m->teamColors_len * 16;
-    *size += 12;
+    *size += 13;
     return APPMESSAGES_ERR_OK;
 }
 
@@ -948,17 +975,15 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    uint8_t _role;
-    err = AppMessages__ReadUInt8(r, &(_role));
+    int16_t _role;
+    err = AppMessages__ReadInt16(r, &(_role));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    if (_role < Minion || _role > Leader) {
+    if (!AppMessages_IsValidTeamRole(_role)) {
         return APPMESSAGES_ERR_INVALID_DATA;
     }
-    if (err != APPMESSAGES_ERR_OK) {
-        return err;
-    }
+    dst->role = (AppMessages_TeamRole)_role;
     return APPMESSAGES_ERR_OK;
 }
 
@@ -991,7 +1016,7 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_WriteBytes(AppMessages_DataAcc
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
-    err = AppMessages__WriteUInt8(w, (uint8_t)(src->role));
+    err = AppMessages__WriteInt16(w, (int16_t)(src->role));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }

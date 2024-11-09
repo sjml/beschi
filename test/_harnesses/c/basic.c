@@ -28,6 +28,8 @@ int main(int argc, char** argv) {
     example.ui64 = 18000000000000000000UL;
     example.f = 3.1415927410125732421875f;
     example.d = 2.718281828459045090795598298427648842334747314453125;
+    example.ee = ComprehensiveMessage_Enumerated_B;
+    example.es = ComprehensiveMessage_Specified_Negative;
     example.s = (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
     example.s_len = (uint32_t)strlen(example.s);
     example.v2.x = 256.512f;
@@ -188,6 +190,8 @@ int main(int argc, char** argv) {
         softAssert(input->ui64 == example.ui64, "ui64");
         softAssert(input->f == example.f, "float");
         softAssert(input->d == example.d, "double");
+        softAssert(input->ee == example.ee, "enumerated");
+        softAssert(input->es == example.es, "specified");
         softAssert(strcmp(input->s, example.s) == 0, "string");
         softAssert(input->v2.x == example.v2.x, "Vec2");
         softAssert(input->v2.y == example.v2.y, "Vec2");

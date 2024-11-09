@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"messages/BrokenMessages"
+	"messages/brokenmessages"
 )
 
 var ok bool = true
@@ -19,7 +19,7 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var lmsg BrokenMessages.ListMessage
+	var lmsg brokenmessages.ListMessage
 	lmsg.Ints = []int16{1, 2, 32767, 4, 5}
 
 	generatePathPtr := flag.String("generate", "", "")
@@ -54,7 +54,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		_, err = BrokenMessages.ListMessageFromBytes(dat)
+		_, err = brokenmessages.ListMessageFromBytes(dat)
 
 		softAssert(err != nil, "reading truncated message")
 		softAssert(err.Error() == "Could not read msg.Ints[i1] at offset 14 (EOF)", "truncated error message")

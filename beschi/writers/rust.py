@@ -69,12 +69,7 @@ class RustWriter(Writer):
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
             self.write_line(f"let {var.name} = reader.read_{self.type_mapping[e.get_encoding()]}()?;")
-            self.write_line(f"if !matches!({var.name}, {" | ".join([str(i) for i in range(len(e.values))])}) {{")
-            self.indent_level += 1
-            self.write_line(f"return Err({self.prefix}Error::InvalidData);")
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line(f"let {var.name} = {var.vartype}::try_from({var.name}).unwrap();")
+            self.write_line(f"let {var.name} = {var.vartype}::try_from({var.name})?;")
         else:
             self.write_line(f"let {var.name} = {var.vartype}::from_bytes(reader)?;")
 
@@ -100,9 +95,9 @@ class RustWriter(Writer):
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
             if e.get_encoding() == "byte":
-                self.write_line(f"writer.push({accessor}{var.name} as {e.get_encoding()});")
+                self.write_line(f"writer.push({accessor}{var.name} as {self.type_mapping[e.get_encoding()]});")
             else:
-                self.write_line(f"writer.extend(({accessor}{var.name} as {self.get_native_string_size()}).to_le_bytes());")
+                self.write_line(f"writer.extend(({accessor}{var.name} as {self.type_mapping[e.get_encoding()]}).to_le_bytes());")
         else:
             self.write_line(f"{accessor}{var.name}.write_bytes(writer);")
 
@@ -150,11 +145,34 @@ class RustWriter(Writer):
 
     def gen_enum(self, ename: str, edata: Enum):
         self.write_line(f"#[repr({self.type_mapping[edata.get_encoding()]})]")
-        self.write_line("#[derive(Debug)]")
+        self.write_line("#[derive(Debug, Copy, Clone, PartialEq, Eq)]")
         self.write_line(f"pub enum {ename} {{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
+        for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+        self.write_line(f"impl Default for {ename} {{")
+        self.indent_level += 1
+        self.write_line(f"fn default() -> Self {{ {ename}::{edata.get_default_pair()[0]} }}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+        self.write_line(f"impl TryFrom<{self.type_mapping[edata.get_encoding()]}> for {ename} {{")
+        self.indent_level += 1
+        self.write_line(f"type Error = {self.prefix}Error;")
+        self.write_line()
+        self.write_line(f"fn try_from(value: {self.type_mapping[edata.get_encoding()]}) -> Result<Self, {self.prefix}Error> {{")
+        self.indent_level += 1
+        self.write_line("match value {")
+        self.indent_level += 1
+        [self.write_line(f"{vi} => Ok({ename}::{v}),") for v, vi in edata.values.items()]
+        self.write_line(f"_ => Err({self.prefix}Error::InvalidData)")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -171,8 +189,11 @@ class RustWriter(Writer):
                     self.write_line(f"pub {var.name}: Vec<{var.vartype}>,")
             elif var.vartype in self.type_mapping:
                 self.write_line(f"pub {var.name}: {self.type_mapping[var.vartype]},")
+            elif var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"pub {var.name}: {var.vartype}")
             else:
-                self.write_line(f"{var.name}: {var.vartype},")
+                self.write_line(f"pub {var.name}: {var.vartype},")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

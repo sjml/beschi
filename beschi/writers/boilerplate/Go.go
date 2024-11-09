@@ -1,4 +1,4 @@
-package Beschi
+package beschi
 
 import (
 	"encoding/binary"

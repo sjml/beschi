@@ -139,7 +139,7 @@ class TypeScriptWriter(Writer):
     def gen_enum(self, ename: str, edata: Enum):
         self.write_line(f"export enum {ename} {{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
+        for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")
         self.indent_level -= 1
         self.write_line("}")
@@ -165,7 +165,7 @@ class TypeScriptWriter(Writer):
                     default_value = '""'
                 elif var.vartype in self.protocol.enums:
                     e = self.protocol.enums[var.vartype]
-                    default_value = f"{var.vartype}.{e.values[0]}"
+                    default_value = f"{var.vartype}.{e.get_default_pair()[0]}"
                 elif var.vartype in self.protocol.structs:
                     default_value = f"new {var.vartype}()"
                 self.write_line(f"{var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''};")

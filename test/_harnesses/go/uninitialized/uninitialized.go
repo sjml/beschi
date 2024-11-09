@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"messages/ComprehensiveMessage"
+	"messages/comprehensivemessage"
 )
 
 var ok bool = true
@@ -18,7 +18,7 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var example ComprehensiveMessage.TestingMessage
+	example := comprehensivemessage.NewTestingMessageDefault()
 
 	readPathPtr := flag.String("read", "", "path to message file for verification")
 	generatePathPtr := flag.String("generate", "", "path to message file for generation")
@@ -40,7 +40,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		input, err := ComprehensiveMessage.TestingMessageFromBytes(dat)
+		input, err := comprehensivemessage.TestingMessageFromBytes(dat)
 		softAssert(err == nil, "parsing test message")
 		softAssert(input != nil, "parsing test message")
 
@@ -54,6 +54,8 @@ func main() {
 		softAssert(input.Ui64 == example.Ui64, "ui64")
 		softAssert(input.F == example.F, "float")
 		softAssert(input.D == example.D, "double")
+		softAssert(input.Ee == example.Ee, "enumerated")
+		softAssert(input.Es == example.Es, "specified")
 		softAssert(input.S == example.S, "string")
 		softAssert(input.V2.X == example.V2.X, "Vec2")
 		softAssert(input.V2.Y == example.V2.Y, "Vec2")

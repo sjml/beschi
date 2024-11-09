@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"messages/ComprehensiveMessage"
+	"messages/comprehensivemessage"
 )
 
 var ok bool = true
@@ -19,7 +19,7 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var example ComprehensiveMessage.TestingMessage
+	var example comprehensivemessage.TestingMessage
 	example.B = 250
 	example.Tf = true
 	example.I16 = -32000
@@ -30,6 +30,8 @@ func main() {
 	example.Ui64 = 18000000000000000000
 	example.F = 3.1415927410125732421875
 	example.D = 2.718281828459045090795598298427648842334747314453125
+	example.Ee = comprehensivemessage.EnumeratedB
+	example.Es = comprehensivemessage.SpecifiedNegative
 	example.S = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 	example.V2.X = 256.512
 	example.V2.Y = 1024.768
@@ -49,67 +51,67 @@ func main() {
 		"用ねぼ雪入文モ段足リフケ報通ンさーを応細めい気川ヤセ車不古6治ニフサコ悩段をご青止ぽっ期年ト量報驚テルユ役1家埋詰軟きぎ。",
 		"لآخر نشجب ونستنكر هؤلاء الرجال المفتونون بنشوة اللحظة الهائمون في رغبات",
 	}
-	var v21 ComprehensiveMessage.Vec2
+	var v21 comprehensivemessage.Vec2
 	v21.X = 10.0
 	v21.Y = 15.0
-	var v22 ComprehensiveMessage.Vec2
+	var v22 comprehensivemessage.Vec2
 	v22.X = 20.0
 	v22.Y = 25.0
-	var v23 ComprehensiveMessage.Vec2
+	var v23 comprehensivemessage.Vec2
 	v23.X = 30.0
 	v23.Y = 35.0
-	var v24 ComprehensiveMessage.Vec2
+	var v24 comprehensivemessage.Vec2
 	v24.X = 40.0
 	v24.Y = 45.0
-	example.V2l = []ComprehensiveMessage.Vec2{v21, v22, v23, v24}
-	var v31 ComprehensiveMessage.Vec3
+	example.V2l = []comprehensivemessage.Vec2{v21, v22, v23, v24}
+	var v31 comprehensivemessage.Vec3
 	v31.X = 10.0
 	v31.Y = 15.0
 	v31.Z = 17.5
-	var v32 ComprehensiveMessage.Vec3
+	var v32 comprehensivemessage.Vec3
 	v32.X = 20.0
 	v32.Y = 25.0
 	v32.Z = 27.5
-	var v33 ComprehensiveMessage.Vec3
+	var v33 comprehensivemessage.Vec3
 	v33.X = 30.0
 	v33.Y = 35.0
 	v33.Z = 37.5
-	var v34 ComprehensiveMessage.Vec3
+	var v34 comprehensivemessage.Vec3
 	v34.X = 40.0
 	v34.Y = 45.0
 	v34.Z = 47.5
-	example.V3l = []ComprehensiveMessage.Vec3{v31, v32, v33, v34}
-	var c1 ComprehensiveMessage.Color
+	example.V3l = []comprehensivemessage.Vec3{v31, v32, v33, v34}
+	var c1 comprehensivemessage.Color
 	c1.R = 255
 	c1.G = 0
 	c1.B = 0
-	var c2 ComprehensiveMessage.Color
+	var c2 comprehensivemessage.Color
 	c2.R = 0
 	c2.G = 255
 	c2.B = 0
-	var c3 ComprehensiveMessage.Color
+	var c3 comprehensivemessage.Color
 	c3.R = 0
 	c3.G = 0
 	c3.B = 255
-	example.Cl = []ComprehensiveMessage.Color{c1, c2, c3}
+	example.Cl = []comprehensivemessage.Color{c1, c2, c3}
 	example.Cx.Identifier = 127
 	example.Cx.Label = "ComplexDataObject"
 	example.Cx.BackgroundColor = c1
 	example.Cx.TextColor = c2
-	example.Cx.Spectrum = []ComprehensiveMessage.Color{c3, c2, c1}
-	var cx1 ComprehensiveMessage.ComplexData
+	example.Cx.Spectrum = []comprehensivemessage.Color{c3, c2, c1}
+	var cx1 comprehensivemessage.ComplexData
 	cx1.Identifier = 255
 	cx1.Label = "Complex1"
 	cx1.BackgroundColor = c3
 	cx1.TextColor = c1
-	cx1.Spectrum = []ComprehensiveMessage.Color{c3, c2, c1, c2, c3}
-	var cx2 ComprehensiveMessage.ComplexData
+	cx1.Spectrum = []comprehensivemessage.Color{c3, c2, c1, c2, c3}
+	var cx2 comprehensivemessage.ComplexData
 	cx2.Identifier = 63
 	cx2.Label = "Complex2"
 	cx2.BackgroundColor = c1
 	cx2.TextColor = c3
-	cx2.Spectrum = []ComprehensiveMessage.Color{c1, c2, c3, c2, c1}
-	example.Cxl = []ComprehensiveMessage.ComplexData{cx1, cx2}
+	cx2.Spectrum = []comprehensivemessage.Color{c1, c2, c3, c2, c1}
+	example.Cxl = []comprehensivemessage.ComplexData{cx1, cx2}
 
 	readPathPtr := flag.String("read", "", "path to message file for verification")
 	generatePathPtr := flag.String("generate", "", "path to message file for generation")
@@ -125,7 +127,7 @@ func main() {
 
 		example.WriteBytes(dat, false)
 
-		softAssert(example.GetSizeInBytes() == 913, "size calculation check")
+		softAssert(example.GetSizeInBytes() == 916, "size calculation check")
 		seek, _ := dat.Seek(0, io.SeekCurrent)
 		softAssert(example.GetSizeInBytes() == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
@@ -135,7 +137,7 @@ func main() {
 		}
 		defer dat.Close()
 
-		input, err := ComprehensiveMessage.TestingMessageFromBytes(dat)
+		input, err := comprehensivemessage.TestingMessageFromBytes(dat)
 		softAssert(err == nil, "parsing test message")
 
 		softAssert(input.B == example.B, "byte")
@@ -148,6 +150,8 @@ func main() {
 		softAssert(input.Ui64 == example.Ui64, "ui64")
 		softAssert(input.F == example.F, "float")
 		softAssert(input.D == example.D, "double")
+		softAssert(input.Ee == example.Ee, "enumerated")
+		softAssert(input.Es == example.Es, "specified")
 		softAssert(input.S == example.S, "string")
 		softAssert(input.V2.X == example.V2.X, "Vec2")
 		softAssert(input.V2.Y == example.V2.Y, "Vec2")

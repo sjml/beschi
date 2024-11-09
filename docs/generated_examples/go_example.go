@@ -2,7 +2,7 @@
 // <https://github.com/sjml/beschi>
 // Do not edit directly.
 
-package AppMessages
+package appmessages
 
 import (
 	"encoding/binary"
@@ -90,19 +90,38 @@ func ProcessRawBytes(data io.Reader) ([]Message, error) {
 type CharacterClass byte
 
 const (
-	Fighter CharacterClass = iota
-	Wizard
-	Rogue
-	Cleric
+	CharacterClassFighter CharacterClass = 0
+	CharacterClassWizard  CharacterClass = 1
+	CharacterClassRogue   CharacterClass = 2
+	CharacterClassCleric  CharacterClass = 3
 )
 
-type TeamRole byte
+func isValidCharacterClass(value CharacterClass) bool {
+	switch value {
+	case CharacterClassFighter, CharacterClassWizard, CharacterClassRogue, CharacterClassCleric:
+		return true
+	default:
+		return false
+	}
+}
+
+type TeamRole int16
 
 const (
-	Minion TeamRole = iota
-	Ally
-	Leader
+	TeamRoleMinion  TeamRole = 256
+	TeamRoleAlly    TeamRole = 512
+	TeamRoleLeader  TeamRole = 1024
+	TeamRoleTraitor TeamRole = -1
 )
+
+func isValidTeamRole(value TeamRole) bool {
+	switch value {
+	case TeamRoleMinion, TeamRoleAlly, TeamRoleLeader, TeamRoleTraitor:
+		return true
+	default:
+		return false
+	}
+}
 
 type Color struct {
 	Red float32
@@ -111,6 +130,9 @@ type Color struct {
 	Alpha float32
 }
 
+func NewColorDefault() Color {
+	return Color{}
+}
 func ColorFromBytes(data io.Reader, input *Color) error {
 	if err := binary.Read(data, binary.LittleEndian, &input.Red); err != nil {
 		return fmt.Errorf("Could not read input.Red at offset %d (%w)", getDataOffset(data), err)
@@ -139,6 +161,9 @@ type Spectrum struct {
 	Colors []Color
 }
 
+func NewSpectrumDefault() Spectrum {
+	return Spectrum{}
+}
 func SpectrumFromBytes(data io.Reader, input *Spectrum) error {
 	if err := binary.Read(data, binary.LittleEndian, &input.DefaultColor); err != nil {
 		return fmt.Errorf("Could not read input.DefaultColor at offset %d (%w)", getDataOffset(data), err)
@@ -171,6 +196,9 @@ type Vector3Message struct {
 	Z float32
 }
 
+func NewVector3MessageDefault() Vector3Message {
+	return Vector3Message{}
+}
 func (output Vector3Message) GetMessageType() MessageType {
 	return Vector3MessageType
 }
@@ -216,6 +244,11 @@ type NewCharacterMessage struct {
 	Nicknames []string
 }
 
+func NewNewCharacterMessageDefault() NewCharacterMessage {
+	return NewCharacterMessage{
+		Job: CharacterClassFighter,
+	}
+}
 func (output NewCharacterMessage) GetMessageType() MessageType {
 	return NewCharacterMessageType
 }
@@ -243,7 +276,7 @@ func NewCharacterMessageFromBytes(data io.Reader) (*NewCharacterMessage, error) 
 	if err := binary.Read(data, binary.LittleEndian, &_Job); err != nil {
 		return nil, fmt.Errorf("Could not read msg.Job at offset %d (%w)", getDataOffset(data), err)
 	}
-	if _Job < (byte)Fighter || _Job > (byte)Cleric {
+	if !isValidCharacterClass(_Job) {
 		return nil, fmt.Errorf("Enum %d out of range for CharacterClass", _Job)
 	}
 	msg.Job = _Job
@@ -302,6 +335,11 @@ type CharacterJoinedTeam struct {
 	Role TeamRole
 }
 
+func NewCharacterJoinedTeamDefault() CharacterJoinedTeam {
+	return CharacterJoinedTeam{
+		Role: TeamRoleMinion,
+	}
+}
 func (output CharacterJoinedTeam) GetMessageType() MessageType {
 	return CharacterJoinedTeamType
 }
@@ -310,7 +348,7 @@ func (output CharacterJoinedTeam) GetSizeInBytes() int {
 	size := 0
 	size += len(output.TeamName)
 	size += len(output.TeamColors) * 16
-	size += 12
+	size += 13
 	return size
 }
 
@@ -337,7 +375,7 @@ func CharacterJoinedTeamFromBytes(data io.Reader) (*CharacterJoinedTeam, error) 
 	if err := binary.Read(data, binary.LittleEndian, &_Role); err != nil {
 		return nil, fmt.Errorf("Could not read msg.Role at offset %d (%w)", getDataOffset(data), err)
 	}
-	if _Role < (byte)Minion || _Role > (byte)Leader {
+	if !isValidTeamRole(_Role) {
 		return nil, fmt.Errorf("Enum %d out of range for TeamRole", _Role)
 	}
 	msg.Role = _Role

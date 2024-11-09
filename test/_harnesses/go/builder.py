@@ -12,8 +12,8 @@ import builder_util
 class GoBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("go")
-        self.lib_src_dirs = [f"messages/{ln}" for ln in self.libnames]
-        self.local_libfiles = [os.path.join(lsd, lf) for lsd, lf in zip(self.lib_src_dirs, self.libfiles)]
+        self.lib_src_dirs = [f"messages/{ln.lower()}" for ln in self.libnames]
+        self.local_libfiles = [os.path.join(lsd, lf.lower()) for lsd, lf in zip(self.lib_src_dirs, self.libfiles)]
 
 
 

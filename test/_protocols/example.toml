@@ -27,6 +27,24 @@ textColor = "Color"
 backgroundColor = "Color"
 spectrum = "[Color]"
 
+[[enums]]
+_name = "Enumerated"
+_values = [
+    "A",
+    "B",
+    "C",
+    "D",
+    "E",
+]
+
+[[enums]]
+_name = "Specified"
+_values = [
+    { _name = "Negative", _value = -2048 },
+    { _name = "Zero",     _value = 0 },
+    { _name = "Positive", _value =  2048 },
+]
+
 
 [[messages]]
 _name = "TestingMessage"
@@ -40,6 +58,8 @@ i64 = "int64"
 ui64 = "uint64"
 f = "float"
 d = "double"
+ee = "Enumerated"
+es = "Specified"
 s = "string"
 v2 = "Vec2"
 v3 = "Vec3"

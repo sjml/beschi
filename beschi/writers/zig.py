@@ -65,7 +65,11 @@ class ZigWriter(Writer):
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
                 self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.get_encoding()]}, local_offset, buffer);")
-                self.write_line("// TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first")
+                self.write_line(f"if (!_isValidEnum({e.name}, {self.type_mapping[e.get_encoding()]}, {accessor}_{var.name}_check_read.value)) {{")
+                self.indent_level += 1
+                self.write_line("return error.InvalidData;")
+                self.indent_level -= 1
+                self.write_line("}")
                 self.write_line(f"const {accessor}_{var.name}: {e.name} = @enumFromInt({accessor}_{var.name}_check_read.value);")
                 self.write_line(f"local_offset += {accessor}_{var.name}_check_read.bytes_read;")
             elif var.vartype == "string":
@@ -162,7 +166,7 @@ class ZigWriter(Writer):
     def gen_enum(self, ename: str, edata: Enum):
         self.write_line(f"pub const {ename} = enum({self.type_mapping[edata.get_encoding()]}) {{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
+        for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")
         self.indent_level -= 1
         self.write_line("};")
@@ -179,7 +183,7 @@ class ZigWriter(Writer):
                 if default_value == None:
                     if var.vartype in self.protocol.enums:
                         e = self.protocol.enums[var.vartype]
-                        default_value = f"{e.name}.{e.values[0]}"
+                        default_value = f"{e.name}.{e.get_default_pair()[0]}"
                     else:
                         default_value = f"{var.vartype}{{}}"
                 self.write_line(f"{var.name}: {self.type_mapping[var.vartype]} = {default_value},")

@@ -267,10 +267,11 @@ public /* namespace */ enum AppMessages {
         case Cleric = 3
     }
 
-    public enum TeamRole: UInt8 {
-        case Minion = 0
-        case Ally = 1
-        case Leader = 2
+    public enum TeamRole: Int16 {
+        case Minion = 256
+        case Ally = 512
+        case Leader = 1024
+        case Traitor = -1
     }
 
     public struct Color {
@@ -459,7 +460,7 @@ public /* namespace */ enum AppMessages {
             var size = 0
             size += self.teamName.data(using: String.Encoding.utf8)!.count
             size += self.teamColors.count * 16
-            size += 12;
+            size += 13;
             return UInt32(size)
         }
 
@@ -478,7 +479,7 @@ public /* namespace */ enum AppMessages {
                 let teamColors_el = try Color.FromBytes(dataReader: dataReader)
                 nCharacterJoinedTeam.teamColors.append(teamColors_el)
             }
-            let _roleRead = try dataReader.GetUInt8()
+            let _roleRead = try dataReader.GetInt16()
             guard let _role = TeamRole(rawValue: _roleRead) else {
                 throw DataReaderError.InvalidData
             }
@@ -497,7 +498,7 @@ public /* namespace */ enum AppMessages {
             for el in self.teamColors {
                 el.WriteBytes(dataWriter)
             }
-            dataWriter.WriteUInt8(self.role.rawValue)
+            dataWriter.WriteInt16(self.role.rawValue)
 
             data = dataWriter.data
         }

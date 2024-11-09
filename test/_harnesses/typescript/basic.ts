@@ -13,6 +13,8 @@ example.i64 = -9000000000000000000n;
 example.ui64 = 18000000000000000000n;
 example.f = 3.1415927410125732421875;
 example.d = 2.718281828459045090795598298427648842334747314453125;
+example.ee = ComprehensiveMessage.Enumerated.B;
+example.es = ComprehensiveMessage.Specified.Negative;
 example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
 example.v2 = new ComprehensiveMessage.Vec2();
 example.v2.x = 256.512;
@@ -111,7 +113,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(example.getSizeInBytes() == 913, "size calculation check");
+    softAssert(example.getSizeInBytes() == 916, "size calculation check");
     softAssert(example.getSizeInBytes() == da.currentOffset, "written bytes check");
 }
 
@@ -130,6 +132,8 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
     softAssert(input.ui64 == example.ui64, "ui64");
     softAssert(input.f == Math.fround(example.f), "float");
     softAssert(input.d == example.d, "double");
+    softAssert(input.ee == example.ee, "enumerated");
+    softAssert(input.es == example.es, "specified");
     softAssert(input.s == example.s, "string");
     softAssert(input.v2.x == Math.fround(example.v2.x), "Vec2.x");
     softAssert(input.v2.y == Math.fround(example.v2.y), "Vec2.y");

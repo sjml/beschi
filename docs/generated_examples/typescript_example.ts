@@ -202,9 +202,10 @@ export enum CharacterClass {
 }
 
 export enum TeamRole {
-  Minion = 0,
-  Ally = 1,
-  Leader = 2,
+  Minion = 256,
+  Ally = 512,
+  Leader = 1024,
+  Traitor = -1,
 }
 
 export class Color {
@@ -417,7 +418,7 @@ export class CharacterJoinedTeam extends Message {
     let size: number = 0;
     size += _textEnc.encode(this.teamName).byteLength;
     size += this.teamColors.length * 16;
-    size += 12;
+    size += 13;
     return size;
   }
 
@@ -441,7 +442,7 @@ export class CharacterJoinedTeam extends Message {
       for (let i3 = 0; i3 < teamColors_Length; i3++) {
         nCharacterJoinedTeam.teamColors[i3] = Color.fromBytes(da);
       }
-      const _role = da.getByte();
+      const _role = da.getInt16();
       if (TeamRole[_role] === undefined) {
         throw new Error(`Enum (${_role}) out of range for TeamRole`);
       }
@@ -475,7 +476,7 @@ export class CharacterJoinedTeam extends Message {
       let el = this.teamColors[i];
       el.writeBytes(da);
     }
-    da.setByte(this.role);
+    da.setInt16(this.role);
   }
 
 }

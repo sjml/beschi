@@ -87,7 +87,7 @@ class CSharpWriter(Writer):
             self.write_line(f"bw.Write({var.name}_Buffer);")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"bw.Write(({e.get_encoding()}){accessor}{var.name})")
+            self.write_line(f"bw.Write(({self.type_mapping[e.get_encoding()]}){accessor}{var.name});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"bw.Write({accessor}{var.name});")
         else:
@@ -143,7 +143,7 @@ class CSharpWriter(Writer):
         self.write_line(f"public enum {ename} : {self.type_mapping[edata.get_encoding()]}")
         self.write_line("{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
+        for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")
         self.indent_level -= 1
         self.write_line("}")
@@ -166,7 +166,7 @@ class CSharpWriter(Writer):
                     default = '""'
                 elif var.vartype in self.protocol.enums:
                     e = self.protocol.enums[var.vartype]
-                    default = f"{var.vartype}.{e.values[0]}"
+                    default = f"{var.vartype}.{e.get_default_pair()[0]}"
                 elif var.vartype in self.protocol.structs:
                     default = f"new {var.vartype}()"
                 self.write_line(f"public {self.type_mapping[var.vartype]} {var.name}{f' = {default}' if default else ''};")

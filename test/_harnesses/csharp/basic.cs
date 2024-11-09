@@ -18,6 +18,8 @@ class BasicHarness: TestHarness {
         example.ui64 = 18000000000000000000;
         example.f = 3.1415927410125732421875f;
         example.d = 2.718281828459045090795598298427648842334747314453125;
+        example.ee = ComprehensiveMessage.Enumerated.B;
+        example.es = ComprehensiveMessage.Specified.Negative;
         example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
         example.v2 = new ComprehensiveMessage.Vec2();
         example.v2.x = 256.512f;
@@ -122,7 +124,7 @@ class BasicHarness: TestHarness {
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw, false);
 
-            softAssert(example.GetSizeInBytes() == 913, "size calculation check");
+            softAssert(example.GetSizeInBytes() == 916, "size calculation check");
             softAssert(example.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
@@ -142,6 +144,8 @@ class BasicHarness: TestHarness {
             softAssert(input.ui64 == example.ui64, "ui64");
             softAssert(input.f == example.f, "float");
             softAssert(input.d == example.d, "double");
+            softAssert(input.ee == example.ee, "enumerated");
+            softAssert(input.es == example.es, "specified");
             softAssert(input.s == example.s, "string");
             softAssert(input.v2.x == example.v2.x, "Vec2");
             softAssert(input.v2.y == example.v2.y, "Vec2");

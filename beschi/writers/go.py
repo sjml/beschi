@@ -17,12 +17,13 @@ class GoWriter(Writer):
         group.add_argument("--go-no-rename", action="store_const", const=True, default=False, help="don't rename data members to Uppercase")
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
-        rename = not extra_args["go_no_rename"]
+        self.rename = not extra_args["go_no_rename"]
 
-        if rename:
+        if self.rename:
             for _, e in p.enums.items():
-                for vi, v in enumerate(e.values):
-                    e.values[vi] = TextUtil.capitalize(v)
+                new_vals: dict[str,int] = {}
+                for v, vi in e.values.items():
+                    new_vals[TextUtil.capitalize(v)] = vi
             for _, s in p.structs.items():
                 for var in s.members:
                     var.name = TextUtil.capitalize(var.name)
@@ -75,7 +76,7 @@ class GoWriter(Writer):
             self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
-            self.write_line(f"if _{var.name} < ({self.type_mapping[e.get_encoding()]}){e.values[0]} || _{var.name} > ({self.type_mapping[e.get_encoding()]}){e.values[-1]} {{")
+            self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
             self.indent_level += 1
             self.write_line(f"return nil, fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
             self.indent_level -= 1
@@ -153,14 +154,30 @@ class GoWriter(Writer):
         return lines, accum
 
     def gen_enum(self, ename: str, edata: Enum):
+        longest_entry = max(len(e) for e in edata.values.keys())
         self.write_line(f"type {ename} {self.type_mapping[edata.get_encoding()]}")
         self.write_line()
         self.write_line("const (")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
-            self.write_line(f"{v}{"" if vi > 0 else f' {ename} = iota'}")
+        for v, vi in edata.values.items():
+            self.write_line(f"{ename}{v:<{longest_entry}} {ename} = {vi}")
         self.indent_level -= 1
         self.write_line(")")
+        self.write_line()
+        self.write_line(f"func isValid{ename}(value {ename}) bool {{")
+        self.indent_level += 1
+        self.write_line("switch value {")
+        self.write_line(f"case {", ".join([f'{ename}{k}' for k in edata.values.keys()])}:")
+        self.indent_level += 1
+        self.write_line("return true")
+        self.indent_level -= 1
+        self.write_line("default:")
+        self.indent_level += 1
+        self.write_line("return false")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line()
 
     def gen_struct(self, sname: str, sdata: Struct):
@@ -174,6 +191,23 @@ class GoWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        self.write_line(f"func New{sname}Default() {sname} {{")
+        self.indent_level += 1
+        has_enums = any([var.vartype in self.protocol.enums for var in sdata.members])
+        if not has_enums:
+            self.write_line(f"return {sname}{{}}")
+        else:
+            self.write_line(f"return {sname}{{")
+            self.indent_level += 1
+            for var in sdata.members:
+                if var.vartype in self.protocol.enums:
+                    e = self.protocol.enums[var.vartype]
+                    self.write_line(f"{var.name}: {var.vartype}{e.get_default_pair()[0]},")
+            self.indent_level -= 1
+            self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
 
         if sdata.is_message:
             self.write_line(f"func (output {sname}) GetMessageType() MessageType {{")
@@ -256,6 +290,8 @@ class GoWriter(Writer):
         subs = [("{# STRING_SIZE_TYPE #}", self.get_native_string_size())]
         if self.protocol.namespace:
             subs.append(("Beschi", self.protocol.namespace))
+            if self.rename:
+                subs.append(("beschi", self.protocol.namespace.lower()))
 
         self.add_boilerplate(subs)
         self.write_line()

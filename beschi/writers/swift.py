@@ -126,7 +126,7 @@ class SwiftWriter(Writer):
     def gen_enum(self, ename: str, edata: Enum):
         self.write_line(f"public enum {ename}: {self.type_mapping[edata.get_encoding()]} {{")
         self.indent_level += 1
-        for vi, v in enumerate(edata.values):
+        for v, vi in edata.values.items():
             self.write_line(f"case {v} = {vi}")
         self.indent_level -= 1
         self.write_line("}")
@@ -150,7 +150,7 @@ class SwiftWriter(Writer):
                 if default_value == None:
                     if var.vartype in self.protocol.enums:
                         e = self.protocol.enums[var.vartype]
-                        default_value = f"{var.vartype}.{e.values[0]}"
+                        default_value = f"{var.vartype}.{e.get_default_pair()[0]}"
                     else:
                         default_value = f"{var.vartype}()"
                 self.write_line(f"public var {var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''}")

@@ -141,7 +141,7 @@ pub fn process_raw_bytes(reader: &mut BufferReader) -> Result<Vec<Message>, AppM
 }
 
 #[repr(u8)]
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum CharacterClass {
     Fighter = 0,
     Wizard = 1,
@@ -149,12 +149,49 @@ pub enum CharacterClass {
     Cleric = 3,
 }
 
-#[repr(u8)]
-#[derive(Debug)]
+impl Default for CharacterClass {
+    fn default() -> Self { CharacterClass::Fighter }
+}
+
+impl TryFrom<u8> for CharacterClass {
+    type Error = AppMessagesError;
+
+    fn try_from(value: u8) -> Result<Self, AppMessagesError> {
+        match value {
+            0 => Ok(CharacterClass::Fighter),
+            1 => Ok(CharacterClass::Wizard),
+            2 => Ok(CharacterClass::Rogue),
+            3 => Ok(CharacterClass::Cleric),
+            _ => Err(AppMessagesError::InvalidData)
+        }
+    }
+}
+
+#[repr(i16)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TeamRole {
-    Minion = 0,
-    Ally = 1,
-    Leader = 2,
+    Minion = 256,
+    Ally = 512,
+    Leader = 1024,
+    Traitor = -1,
+}
+
+impl Default for TeamRole {
+    fn default() -> Self { TeamRole::Minion }
+}
+
+impl TryFrom<i16> for TeamRole {
+    type Error = AppMessagesError;
+
+    fn try_from(value: i16) -> Result<Self, AppMessagesError> {
+        match value {
+            256 => Ok(TeamRole::Minion),
+            512 => Ok(TeamRole::Ally),
+            1024 => Ok(TeamRole::Leader),
+            -1 => Ok(TeamRole::Traitor),
+            _ => Err(AppMessagesError::InvalidData)
+        }
+    }
 }
 
 #[derive(Default)]
@@ -277,10 +314,7 @@ impl NewCharacterMessage {
         let id = reader.read_u64()?;
         let character_name = reader.read_string()?;
         let job = reader.read_u8()?;
-        if !matches!(job, 0 | 1 | 2 | 3) {
-            return Err(AppMessagesError::InvalidData);
-        }
-        let job = CharacterClass::try_from(job).unwrap();
+        let job = CharacterClass::try_from(job)?;
         let strength = reader.read_u16()?;
         let intelligence = reader.read_u16()?;
         let dexterity = reader.read_u16()?;
@@ -302,7 +336,7 @@ impl NewCharacterMessage {
         writer.extend(self.id.to_le_bytes());
         writer.extend((self.character_name.len() as u8).to_le_bytes());
         writer.extend(self.character_name.as_bytes());
-        writer.push(self.job as byte);
+        writer.push(self.job as u8);
         writer.extend(self.strength.to_le_bytes());
         writer.extend(self.intelligence.to_le_bytes());
         writer.extend(self.dexterity.to_le_bytes());
@@ -329,7 +363,7 @@ impl CharacterJoinedTeam {
         let mut size: u32 = 0;
         size += self.team_name.len() as u32;
         size += (self.team_colors.len() as u32) * 16;
-        size += 12;
+        size += 13;
         size
     }
 
@@ -342,11 +376,8 @@ impl CharacterJoinedTeam {
             let el = Color::from_bytes(reader)?;
             team_colors.push(el);
         }
-        let role = reader.read_u8()?;
-        if !matches!(role, 0 | 1 | 2) {
-            return Err(AppMessagesError::InvalidData);
-        }
-        let role = TeamRole::try_from(role).unwrap();
+        let role = reader.read_i16()?;
+        let role = TeamRole::try_from(role)?;
         Ok(CharacterJoinedTeam {character_id, team_name, team_colors, role})
     }
 
@@ -361,6 +392,6 @@ impl CharacterJoinedTeam {
         for el in &self.team_colors {
             el.write_bytes(writer);
         }
-        writer.push(self.role as byte);
+        writer.extend((self.role as i16).to_le_bytes());
     }
 }
