@@ -10,23 +10,16 @@ This file is a rough todo list for the tool itself.
   - do not use on untrusted input
 
 ## enum notes
-- make note in documentation that enums are only sequential (for portability because Go)
-    - also that they will default to their zero (first) value so keep that in mind
-    - haha nope we're gonna do optional specification
+- enum documentation
     - show both ways of doing it
+    - Go enums mean you have to use the New*Default junk :(
 - test cases, beyond just read/write:
-  - invalid protocols: no name, no values, empty list of values, duplicate values, name duplicating struct or message
-  - values neither a list of strings or a map of strings to ints
-    - values subtable that is nonsense (missing name, missing value, wrong types for each)
-  - values that pass a number that can't fit in `int32`
   - corrupted message with invalid value throws error
   - Go and Rust renames (are those tested on other protocol things?)
     - (are they happening to struct and message names?!)
   - enum in a struct in another struct
     - (gonna be a problem for Go; initiators need to nest)
   - list of enums
-- not the most efficient thing, but for protocols I make it generates code in < 40ms which is fine
-- Go enums mean you have to use the New*Default junk :(
 
 
 ## possible future protocol features:

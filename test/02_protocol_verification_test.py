@@ -90,3 +90,81 @@ def test_protocol_size_values():
 def test_protocol_list_of_lists():
     with pytest.raises(ValueError):
         _ = Protocol("test/_protocols/intentionally_bad/list_of_lists.toml")
+
+def test_protocol_enum_missing_name():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_missing_name.toml")
+
+def test_protocol_enum_whitespace_in_name():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_whitespace_in_name.toml")
+
+def test_protocol_enum_reserved_name():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_reserved_name.toml")
+
+def test_protocol_enum_missing_values():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_missing_values.toml")
+
+def test_protocol_enum_empty_values():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_empty_values.toml")
+
+def test_protocol_enum_non_string_values():
+    with pytest.raises(TypeError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_non_string_values.toml")
+
+def test_protocol_enum_duplicate_values_names():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_duplicate_values_names.toml")
+
+def test_protocol_enum_duplicate_values_numbers():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_duplicate_values_numbers.toml")
+
+def test_protocol_enum_value_shadows_struct():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_shadows_struct.toml")
+
+def test_protocol_enum_value_shadows_message():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_shadows_message.toml")
+
+def test_protocol_enum_value_subtable_missing_name():
+    with pytest.raises(TypeError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_subtable_missing_name.toml")
+
+def test_protocol_enum_value_subtable_missing_value():
+    with pytest.raises(TypeError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_subtable_missing_value.toml")
+
+def test_protocol_enum_value_subtable_wrong_type_name():
+    with pytest.raises(TypeError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_subtable_wrong_type_name.toml")
+
+def test_protocol_enum_value_subtable_wrong_type_value():
+    with pytest.raises(TypeError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_subtable_wrong_type_value.toml")
+
+def test_protocol_enum_value_number_out_of_range_high():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_number_out_of_range_high.toml")
+
+def test_protocol_enum_value_number_out_of_range_low():
+    with pytest.raises(ValueError):
+        _ = Protocol("test/_protocols/intentionally_bad/enum_value_number_out_of_range_low.toml")
+
+def test_protocol_enum_i16_values():
+    p = Protocol("test/_protocols/enum_256.toml")
+    assert(len(p.enums) == 1)
+    assert(next(iter(p.enums.items()))[1].encoding == "int16")
+
+def test_protocol_enum_i32_values():
+    p = Protocol("test/_protocols/enum_32768.toml")
+    assert(len(p.enums) == 1)
+    assert(next(iter(p.enums.items()))[1].encoding == "int32")
+
+## actually testing the int32 limit would involve a 15 GB protocol file, so no.
+##   (when limiting the possible types to just byte and int16, the last test
+##   here properly failed, so gonna just say the int32 one would also.)

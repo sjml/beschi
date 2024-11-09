@@ -1,0 +1,11 @@
+[meta]
+namespace = "EnumValueSubtableWrongTypeName"
+
+[[enums]]
+_name = "Alphabet"
+_values = [
+    { _name = "A", _value = 5 },
+    { _name = "B", _value = 10 },
+    { _name = 2.4, _value = 15 },
+    { _name = "D", _value = 25 }
+]

@@ -1,0 +1,6 @@
+[meta]
+namespace = "EnumReservedName"
+
+[[enums]]
+_name = "list"
+_values = ["A", "B", "C"]

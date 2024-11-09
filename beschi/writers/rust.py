@@ -68,7 +68,7 @@ class RustWriter(Writer):
             self.write_line(f"let {var.name} = reader.read_string()?;")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"let {var.name} = reader.read_{self.type_mapping[e.get_encoding()]}()?;")
+            self.write_line(f"let {var.name} = reader.read_{self.type_mapping[e.encoding]}()?;")
             self.write_line(f"let {var.name} = {var.vartype}::try_from({var.name})?;")
         else:
             self.write_line(f"let {var.name} = {var.vartype}::from_bytes(reader)?;")
@@ -94,10 +94,10 @@ class RustWriter(Writer):
             self.write_line(f"writer.extend({accessor}{var.name}.as_bytes());")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            if e.get_encoding() == "byte":
-                self.write_line(f"writer.push({accessor}{var.name} as {self.type_mapping[e.get_encoding()]});")
+            if e.encoding == "byte":
+                self.write_line(f"writer.push({accessor}{var.name} as {self.type_mapping[e.encoding]});")
             else:
-                self.write_line(f"writer.extend(({accessor}{var.name} as {self.type_mapping[e.get_encoding()]}).to_le_bytes());")
+                self.write_line(f"writer.extend(({accessor}{var.name} as {self.type_mapping[e.encoding]}).to_le_bytes());")
         else:
             self.write_line(f"{accessor}{var.name}.write_bytes(writer);")
 
@@ -144,7 +144,7 @@ class RustWriter(Writer):
         return lines, accum
 
     def gen_enum(self, ename: str, edata: Enum):
-        self.write_line(f"#[repr({self.type_mapping[edata.get_encoding()]})]")
+        self.write_line(f"#[repr({self.type_mapping[edata.encoding]})]")
         self.write_line("#[derive(Debug, Copy, Clone, PartialEq, Eq)]")
         self.write_line(f"pub enum {ename} {{")
         self.indent_level += 1
@@ -159,11 +159,11 @@ class RustWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
-        self.write_line(f"impl TryFrom<{self.type_mapping[edata.get_encoding()]}> for {ename} {{")
+        self.write_line(f"impl TryFrom<{self.type_mapping[edata.encoding]}> for {ename} {{")
         self.indent_level += 1
         self.write_line(f"type Error = {self.prefix}Error;")
         self.write_line()
-        self.write_line(f"fn try_from(value: {self.type_mapping[edata.get_encoding()]}) -> Result<Self, {self.prefix}Error> {{")
+        self.write_line(f"fn try_from(value: {self.type_mapping[edata.encoding]}) -> Result<Self, {self.prefix}Error> {{")
         self.indent_level += 1
         self.write_line("match value {")
         self.indent_level += 1

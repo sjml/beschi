@@ -99,8 +99,8 @@ class CWriter(Writer):
             self.err_check_return()
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"{self.type_mapping[e.get_encoding()]} _{var.name};")
-            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[e.get_encoding()]}(r, &(_{var.name}));")
+            self.write_line(f"{self.type_mapping[e.encoding]} _{var.name};")
+            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[e.encoding]}(r, &(_{var.name}));")
             self.err_check_return()
             self.write_line(f"if (!{self.prefix}IsValid{var.vartype}(_{var.name})) {{")
             self.indent_level += 1
@@ -136,7 +136,7 @@ class CWriter(Writer):
                 self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), ({accessor}{var.name}_len));")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[e.get_encoding()]}(w, ({self.type_mapping[e.get_encoding()]})({accessor}{var.name}));")
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[e.encoding]}(w, ({self.type_mapping[e.encoding]})({accessor}{var.name}));")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"err = {self.prefix}_Write{self.base_serializers[var.vartype]}(w, ({accessor}{var.name}));")
         else:
@@ -238,7 +238,7 @@ class CWriter(Writer):
             self.write_line(f"{self.prefix}{ename}_{v} = {vi}{"," if ei < len(edata.values) - 1 else ""}")
         self.indent_level -= 1
         self.write_line(f"}} {self.prefix}{ename};")
-        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.get_encoding()]} value);")
+        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.encoding]} value);")
         self.write_line()
 
     def gen_struct(self, sname: str, sdata: Struct):
@@ -283,7 +283,7 @@ class CWriter(Writer):
         self.write_line()
 
     def gen_enum_implementation(self, ename: str, edata: Enum):
-        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.get_encoding()]} value) {{")
+        self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.encoding]} value) {{")
         self.indent_level += 1
         self.write_line("switch (value) {")
         self.indent_level += 1

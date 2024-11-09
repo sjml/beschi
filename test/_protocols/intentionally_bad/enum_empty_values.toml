@@ -1,0 +1,6 @@
+[meta]
+namespace = "EnumEmptyValues"
+
+[[enums]]
+_name = "Alphabet"
+_values = []

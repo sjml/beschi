@@ -1,0 +1,12 @@
+[meta]
+namespace = "EnumValueShadowsStruct"
+
+[[structs]]
+_name = "Normal"
+x = "float"
+y = "float"
+z = "float"
+
+[[enums]]
+_name = "Vibes"
+_values = ["Normal", "Oblique", "Wild", "Off-Kilter"]

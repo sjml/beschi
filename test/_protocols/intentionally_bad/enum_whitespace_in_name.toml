@@ -1,0 +1,6 @@
+[meta]
+namespace = "EnumWhitespaceInName"
+
+[[enums]]
+_name = "An Enum For the Ages"
+_values = ["A", "B", "C"]

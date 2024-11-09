@@ -155,7 +155,7 @@ class GoWriter(Writer):
 
     def gen_enum(self, ename: str, edata: Enum):
         longest_entry = max(len(e) for e in edata.values.keys())
-        self.write_line(f"type {ename} {self.type_mapping[edata.get_encoding()]}")
+        self.write_line(f"type {ename} {self.type_mapping[edata.encoding]}")
         self.write_line()
         self.write_line("const (")
         self.indent_level += 1

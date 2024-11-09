@@ -62,7 +62,7 @@ class TypeScriptWriter(Writer):
             self.write_line(f"{accessor}{var.name} = da.getString();")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.get_encoding()]}();")
+            self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.encoding]}();")
             self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
             self.indent_level += 1
             self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
@@ -88,7 +88,7 @@ class TypeScriptWriter(Writer):
             self.write_line(f"da.setString({accessor}{var.name});")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"da.set{self.base_serializers[e.get_encoding()]}({accessor}{var.name});")
+            self.write_line(f"da.set{self.base_serializers[e.encoding]}({accessor}{var.name});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"da.set{self.base_serializers[var.vartype]}({accessor}{var.name});")
         else:

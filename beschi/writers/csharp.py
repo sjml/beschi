@@ -58,7 +58,7 @@ class CSharpWriter(Writer):
             self.write_line(f"{accessor}{var.name} = System.Text.Encoding.UTF8.GetString({var_clean}_Buffer);")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"{self.type_mapping[e.get_encoding()]} _{var.name} = br.{self.base_deserializers[e.get_encoding()]}();")
+            self.write_line(f"{self.type_mapping[e.encoding]} _{var.name} = br.{self.base_deserializers[e.encoding]}();")
             self.write_line(f"if (!Enum.IsDefined(typeof({var.vartype}), _{var.name}))")
             self.write_line("{")
             self.indent_level += 1
@@ -87,7 +87,7 @@ class CSharpWriter(Writer):
             self.write_line(f"bw.Write({var.name}_Buffer);")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"bw.Write(({self.type_mapping[e.get_encoding()]}){accessor}{var.name});")
+            self.write_line(f"bw.Write(({self.type_mapping[e.encoding]}){accessor}{var.name});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"bw.Write({accessor}{var.name});")
         else:
@@ -140,7 +140,7 @@ class CSharpWriter(Writer):
         return lines, accum
 
     def gen_enum(self, ename: str, edata: Enum):
-        self.write_line(f"public enum {ename} : {self.type_mapping[edata.get_encoding()]}")
+        self.write_line(f"public enum {ename} : {self.type_mapping[edata.encoding]}")
         self.write_line("{")
         self.indent_level += 1
         for v, vi in edata.values.items():

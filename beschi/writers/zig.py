@@ -48,7 +48,7 @@ class ZigWriter(Writer):
                 self.write_line(f"const {accessor}_{var.name} = (try readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer)).value;")
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
-                self.write_line(f"const {accessor}_{var.name}_check = (try readNumber({self.type_mapping[e.get_encoding()]}, offset + {simple_offset}, buffer)).value;")
+                self.write_line(f"const {accessor}_{var.name}_check = (try readNumber({self.type_mapping[e.encoding]}, offset + {simple_offset}, buffer)).value;")
                 self.write_line(f"")
             else:
                 self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes({simple_offset}, buffer);")
@@ -64,8 +64,8 @@ class ZigWriter(Writer):
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
-                self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.get_encoding()]}, local_offset, buffer);")
-                self.write_line(f"if (!_isValidEnum({e.name}, {self.type_mapping[e.get_encoding()]}, {accessor}_{var.name}_check_read.value)) {{")
+                self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.encoding]}, local_offset, buffer);")
+                self.write_line(f"if (!_isValidEnum({e.name}, {self.type_mapping[e.encoding]}, {accessor}_{var.name}_check_read.value)) {{")
                 self.indent_level += 1
                 self.write_line("return error.InvalidData;")
                 self.indent_level -= 1
@@ -94,7 +94,7 @@ class ZigWriter(Writer):
                 self.write_line(f"local_offset += writeNumber({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
-                self.write_line(f"local_offset += writeNumber({self.type_mapping[e.get_encoding()]}, local_offset, buffer, @intFromEnum({accessor}{var.name}));")
+                self.write_line(f"local_offset += writeNumber({self.type_mapping[e.encoding]}, local_offset, buffer, @intFromEnum({accessor}{var.name}));")
             elif var.vartype == "string":
                 self.write_line(f"local_offset += writeString(local_offset, buffer, {accessor}{var.name});")
             else:
@@ -164,7 +164,7 @@ class ZigWriter(Writer):
             self.write_line(f"{accessor}{var.name}.deinit(allocator);")
 
     def gen_enum(self, ename: str, edata: Enum):
-        self.write_line(f"pub const {ename} = enum({self.type_mapping[edata.get_encoding()]}) {{")
+        self.write_line(f"pub const {ename} = enum({self.type_mapping[edata.encoding]}) {{")
         self.indent_level += 1
         for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")

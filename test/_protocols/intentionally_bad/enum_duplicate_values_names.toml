@@ -1,0 +1,6 @@
+[meta]
+namespace = "EnumDuplicateValuesNames"
+
+[[enums]]
+_name = "Alphabet"
+_values = ["A", "B", "C", "A", "E"]

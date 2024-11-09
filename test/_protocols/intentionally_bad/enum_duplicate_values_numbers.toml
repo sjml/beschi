@@ -1,0 +1,10 @@
+[meta]
+namespace = "EnumDuplicateValuesNumbers"
+
+[[enums]]
+_name = "Alphabet"
+_values = [
+    { _name = "A", _value = 5 },
+    { _name = "B", _value = 10 },
+    { _name = "C", _value = 5 }
+]

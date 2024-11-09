@@ -68,7 +68,12 @@ class Enum():
         self.values: dict[str,int] = dict()
 
         if all(isinstance(entry, str) for entry in value_spec):
+            duplicate_entries = [v for v, count in Counter(value_spec).items() if count > 1]
+            if len(duplicate_entries) > 0:
+                raise ValueError(f"Duplicate values in enum {name}: {", ".join(duplicate_entries)}")
             self.values = dict((entry, idx) for idx, entry in enumerate(value_spec))
+        elif not all(isinstance(entry, dict) for entry in value_spec):
+            raise TypeError(f"Values list for enum {name} is neither all strings nor all tables")
         else:
             od: dict[str,int] = dict()
             for entry in value_spec:
@@ -78,24 +83,21 @@ class Enum():
                     raise TypeError(f"Enum entry _name is not a string: {entry["_name"]}")
                 if "_value" not in entry:
                     raise TypeError("Missing _value in enum entry")
-                if not type(entry["_value"] is int):
+                if not type(entry["_value"]) is int:
                     raise TypeError(f"Enum entry _value is not an integer: {entry["_value"]}")
                 od[entry["_name"]] = entry["_value"]
             self.values = od
 
-    def get_encoding(self) -> str:
         min_value = min(self.values.values())
         max_value = max(self.values.values())
 
         possible_options = ["byte", "int16", "int32"]
         for opt in possible_options:
             if min_value >= NUMERIC_TYPE_RANGES[opt][0] and max_value <= NUMERIC_TYPE_RANGES[opt][1]:
-                return opt
-        # should be unreachable; load-time validation checked we were <= int32.max
-        raise ValueError(f"Cannot encode enum; does not fit in one of {', '.join(possible_options)}")
-
-    def get_encoding_size(self) -> int:
-        return NUMERIC_TYPE_SIZES[self.get_encoding()]
+                self.encoding = opt
+                break
+        else:
+            raise ValueError(f"Cannot encode enum; does not fit in one of {', '.join(possible_options)}")
 
     def get_default_pair(self) -> tuple[str,int]:
         return next(iter(self.values.items()))
@@ -180,24 +182,37 @@ class Protocol():
             e = Enum(enum_data["_name"], enum_data["_values"])
             self.enums[e.name] = e
 
-
         def validate_enum(e: Enum):
+            if len(e.name) == 0:
+                raise ValueError("Enum _name cannot be empty!")
+            if _contains_whitespace(e.name):
+                raise ValueError(f"Enum _name cannot contain whitespace: '{e.name}'")
+            if e.name.lower() in RESERVED_WORDS:
+                raise ValueError(f"Enum _name is reserved word: '{e.name}'")
             if len(e.values) == 0:
                 raise ValueError(f"No values given for enum {e.name}.")
-            duplicate_entries = [v for v, count in Counter(e.values.keys()).items() if count > 1]
-            if len(duplicate_entries) > 0:
-                raise ValueError(f"Duplicate values in enum {e.name}: {", ".join(duplicate_entries)}")
             duplicate_assignment = [v for v, count in Counter(e.values.values()).items() if count > 1]
             if len(duplicate_assignment) > 0:
-                raise ValueError(f"Duplicate assignments in enum {e.name}: {", ".join(duplicate_assignment)}")
+                raise ValueError(f"Duplicate assignments in enum {e.name}: {", ".join([str(v) for v in duplicate_assignment])}")
+            if e.name in self.structs:
+                raise ValueError(f"Enum name cannot shadow struct: '{e.name}'")
+            if e.name in self.messages:
+                raise ValueError(f"Enum name cannot shadow message: '{e.name}'")
+            for v in e.values.keys():
+                if v in self.structs:
+                    raise ValueError(f"Enum value cannot shadow struct: '{e.name}.{v}'")
+                if v in self.messages:
+                    raise ValueError(f"Enum value cannot shadow message: '{e.name}.{v}'")
 
         def validate_struct(s: Struct):
             label = "Struct"
             if s.is_message:
                 label = "Message"
+            if len(s.name) == 0:
+                raise ValueError(f"{label} _name cannot be empty!")
             if _contains_whitespace(s.name):
                 raise ValueError(f"{label} _name cannot contain whitespace: '{s.name}'")
-            if s.name in RESERVED_WORDS:
+            if s.name.lower() in RESERVED_WORDS:
                 raise ValueError(f"{label} _name is reserved word: '{s.name}'")
             if s.is_message and s.name in self.structs:
                 raise ValueError(f"Message name cannot shadow struct: '{s.name}'")
@@ -240,7 +255,7 @@ class Protocol():
         if var_type in NUMERIC_TYPE_SIZES:
             return NUMERIC_TYPE_SIZES[var_type]
         elif var_type in self.enums:
-            return self.enums[var_type].get_encoding_size()
+            return NUMERIC_TYPE_SIZES[self.enums[var_type].encoding]
         elif var_type == "string":
             raise NotImplementedError("Cannot pre-calculate size of string")
         else:

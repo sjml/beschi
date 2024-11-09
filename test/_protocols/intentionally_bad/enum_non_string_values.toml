@@ -1,0 +1,6 @@
+[meta]
+namespace = "EnumNonStringValues"
+
+[[enums]]
+_name = "Alphabet"
+_values = ["A", "B", "C", 4, "E"]

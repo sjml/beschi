@@ -1,0 +1,5 @@
+[meta]
+namespace = "EnumMissingValues"
+
+[[enums]]
+_name = "Alphabet"
