@@ -87,6 +87,23 @@ func ProcessRawBytes(data io.Reader) ([]Message, error) {
 	return msgList, nil
 }
 
+type CharacterClass byte
+
+const (
+	Fighter CharacterClass = iota
+	Wizard
+	Rogue
+	Cleric
+)
+
+type TeamRole byte
+
+const (
+	Minion TeamRole = iota
+	Ally
+	Leader
+)
+
 type Color struct {
 	Red float32
 	Green float32
@@ -161,6 +178,7 @@ func (output Vector3Message) GetMessageType() MessageType {
 func (output Vector3Message) GetSizeInBytes() int {
 	return 12
 }
+
 func Vector3MessageFromBytes(data io.Reader) (*Vector3Message, error) {
 	msg := &Vector3Message{}
 
@@ -189,9 +207,11 @@ func (output Vector3Message) WriteBytes(data io.Writer, tag bool) {
 type NewCharacterMessage struct {
 	Id uint64
 	CharacterName string
+	Job CharacterClass
 	Strength uint16
 	Intelligence uint16
 	Dexterity uint16
+	Wisdom uint16
 	GoldInWallet uint32
 	Nicknames []string
 }
@@ -206,9 +226,10 @@ func (output NewCharacterMessage) GetSizeInBytes() int {
 	for _, s := range output.Nicknames {
 		size += 1 + len(s)
 	}
-	size += 21
+	size += 24
 	return size
 }
+
 func NewCharacterMessageFromBytes(data io.Reader) (*NewCharacterMessage, error) {
 	msg := &NewCharacterMessage{}
 
@@ -218,6 +239,14 @@ func NewCharacterMessageFromBytes(data io.Reader) (*NewCharacterMessage, error) 
 	if err := readString(data, &msg.CharacterName); err != nil {
 		return nil, fmt.Errorf("Could not read string at offset %d (%w)", getDataOffset(data), err)
 	}
+	var _Job CharacterClass
+	if err := binary.Read(data, binary.LittleEndian, &_Job); err != nil {
+		return nil, fmt.Errorf("Could not read msg.Job at offset %d (%w)", getDataOffset(data), err)
+	}
+	if _Job < (byte)Fighter || _Job > (byte)Cleric {
+		return nil, fmt.Errorf("Enum %d out of range for CharacterClass", _Job)
+	}
+	msg.Job = _Job
 	if err := binary.Read(data, binary.LittleEndian, &msg.Strength); err != nil {
 		return nil, fmt.Errorf("Could not read msg.Strength at offset %d (%w)", getDataOffset(data), err)
 	}
@@ -226,6 +255,9 @@ func NewCharacterMessageFromBytes(data io.Reader) (*NewCharacterMessage, error) 
 	}
 	if err := binary.Read(data, binary.LittleEndian, &msg.Dexterity); err != nil {
 		return nil, fmt.Errorf("Could not read msg.Dexterity at offset %d (%w)", getDataOffset(data), err)
+	}
+	if err := binary.Read(data, binary.LittleEndian, &msg.Wisdom); err != nil {
+		return nil, fmt.Errorf("Could not read msg.Wisdom at offset %d (%w)", getDataOffset(data), err)
 	}
 	if err := binary.Read(data, binary.LittleEndian, &msg.GoldInWallet); err != nil {
 		return nil, fmt.Errorf("Could not read msg.GoldInWallet at offset %d (%w)", getDataOffset(data), err)
@@ -250,9 +282,11 @@ func (output NewCharacterMessage) WriteBytes(data io.Writer, tag bool) {
 	}
 	binary.Write(data, binary.LittleEndian, &output.Id)
 	writeString(data, &output.CharacterName)
+	binary.Write(data, binary.LittleEndian, &output.Job)
 	binary.Write(data, binary.LittleEndian, &output.Strength)
 	binary.Write(data, binary.LittleEndian, &output.Intelligence)
 	binary.Write(data, binary.LittleEndian, &output.Dexterity)
+	binary.Write(data, binary.LittleEndian, &output.Wisdom)
 	binary.Write(data, binary.LittleEndian, &output.GoldInWallet)
 	Nicknames_Len := (uint16)(len(output.Nicknames))
 	binary.Write(data, binary.LittleEndian, Nicknames_Len)
@@ -265,6 +299,7 @@ type CharacterJoinedTeam struct {
 	CharacterID uint64
 	TeamName string
 	TeamColors []Color
+	Role TeamRole
 }
 
 func (output CharacterJoinedTeam) GetMessageType() MessageType {
@@ -275,9 +310,10 @@ func (output CharacterJoinedTeam) GetSizeInBytes() int {
 	size := 0
 	size += len(output.TeamName)
 	size += len(output.TeamColors) * 16
-	size += 11
+	size += 12
 	return size
 }
+
 func CharacterJoinedTeamFromBytes(data io.Reader) (*CharacterJoinedTeam, error) {
 	msg := &CharacterJoinedTeam{}
 
@@ -297,6 +333,14 @@ func CharacterJoinedTeamFromBytes(data io.Reader) (*CharacterJoinedTeam, error) 
 			return nil, fmt.Errorf("Could not read msg.TeamColors[i1] at offset %d (%w)", getDataOffset(data), err)
 		}
 	}
+	var _Role TeamRole
+	if err := binary.Read(data, binary.LittleEndian, &_Role); err != nil {
+		return nil, fmt.Errorf("Could not read msg.Role at offset %d (%w)", getDataOffset(data), err)
+	}
+	if _Role < (byte)Minion || _Role > (byte)Leader {
+		return nil, fmt.Errorf("Enum %d out of range for TeamRole", _Role)
+	}
+	msg.Role = _Role
 
 	return msg, nil
 }
@@ -312,5 +356,6 @@ func (output CharacterJoinedTeam) WriteBytes(data io.Writer, tag bool) {
 	for i1 := (uint16)(0); i1 < TeamColors_Len; i1++ {
 		binary.Write(data, binary.LittleEndian, &output.TeamColors[i1])
 	}
+	binary.Write(data, binary.LittleEndian, &output.Role)
 }
 

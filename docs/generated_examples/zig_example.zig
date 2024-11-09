@@ -234,6 +234,19 @@ pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8) ![]Mess
     return msg_list.toOwnedSlice();
 }
 
+pub const CharacterClass = enum(u8) {
+    Fighter = 0,
+    Wizard = 1,
+    Rogue = 2,
+    Cleric = 3,
+};
+
+pub const TeamRole = enum(u8) {
+    Minion = 0,
+    Ally = 1,
+    Leader = 2,
+};
+
 pub const Color = struct {
     red: f32 = 0.0,
     green: f32 = 0.0,
@@ -347,9 +360,11 @@ pub const Vector3Message = struct {
 pub const NewCharacterMessage = struct {
     id: u64 = 0,
     characterName: []const u8 = "",
+    job: CharacterClass = CharacterClass.Fighter,
     strength: u16 = 0,
     intelligence: u16 = 0,
     dexterity: u16 = 0,
+    wisdom: u16 = 0,
     goldInWallet: u32 = 0,
     nicknames: [][]const u8 = &.{},
 
@@ -359,7 +374,7 @@ pub const NewCharacterMessage = struct {
         for (self.nicknames) |s| {
             size += 1 + s.len;
         }
-        size += 21;
+        size += 24;
         return size;
     }
 
@@ -374,6 +389,11 @@ pub const NewCharacterMessage = struct {
         const NewCharacterMessage_characterName = NewCharacterMessage_characterName_read.value;
         local_offset += NewCharacterMessage_characterName_read.bytes_read;
 
+        const NewCharacterMessage_job_check_read = try readNumber(u8, local_offset, buffer);
+        // TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first
+        const NewCharacterMessage_job: CharacterClass = @enumFromInt(NewCharacterMessage_job_check_read.value);
+        local_offset += NewCharacterMessage_job_check_read.bytes_read;
+
         const NewCharacterMessage_strength_read = try readNumber(u16, local_offset, buffer);
         const NewCharacterMessage_strength = NewCharacterMessage_strength_read.value;
         local_offset += NewCharacterMessage_strength_read.bytes_read;
@@ -386,6 +406,10 @@ pub const NewCharacterMessage = struct {
         const NewCharacterMessage_dexterity = NewCharacterMessage_dexterity_read.value;
         local_offset += NewCharacterMessage_dexterity_read.bytes_read;
 
+        const NewCharacterMessage_wisdom_read = try readNumber(u16, local_offset, buffer);
+        const NewCharacterMessage_wisdom = NewCharacterMessage_wisdom_read.value;
+        local_offset += NewCharacterMessage_wisdom_read.bytes_read;
+
         const NewCharacterMessage_goldInWallet_read = try readNumber(u32, local_offset, buffer);
         const NewCharacterMessage_goldInWallet = NewCharacterMessage_goldInWallet_read.value;
         local_offset += NewCharacterMessage_goldInWallet_read.bytes_read;
@@ -397,9 +421,11 @@ pub const NewCharacterMessage = struct {
         return .{ .value = NewCharacterMessage{
             .id = NewCharacterMessage_id,
             .characterName = NewCharacterMessage_characterName,
+            .job = NewCharacterMessage_job,
             .strength = NewCharacterMessage_strength,
             .intelligence = NewCharacterMessage_intelligence,
             .dexterity = NewCharacterMessage_dexterity,
+            .wisdom = NewCharacterMessage_wisdom,
             .goldInWallet = NewCharacterMessage_goldInWallet,
             .nicknames = NewCharacterMessage_nicknames,
         }, .bytes_read = local_offset - offset };
@@ -413,9 +439,11 @@ pub const NewCharacterMessage = struct {
 
         local_offset += writeNumber(u64, local_offset, buffer, self.id);
         local_offset += writeString(local_offset, buffer, self.characterName);
+        local_offset += writeNumber(u8, local_offset, buffer, @intFromEnum(self.job));
         local_offset += writeNumber(u16, local_offset, buffer, self.strength);
         local_offset += writeNumber(u16, local_offset, buffer, self.intelligence);
         local_offset += writeNumber(u16, local_offset, buffer, self.dexterity);
+        local_offset += writeNumber(u16, local_offset, buffer, self.wisdom);
         local_offset += writeNumber(u32, local_offset, buffer, self.goldInWallet);
         local_offset += writeList([]const u8, local_offset, buffer, self.nicknames);
 
@@ -435,12 +463,13 @@ pub const CharacterJoinedTeam = struct {
     characterID: u64 = 0,
     teamName: []const u8 = "",
     teamColors: []Color = &.{},
+    role: TeamRole = TeamRole.Minion,
 
     pub fn getSizeInBytes(self: *const CharacterJoinedTeam) usize {
         var size: usize = 0;
         size += self.teamName.len;
         size += self.teamColors.len * 16;
-        size += 11;
+        size += 12;
         return size;
     }
 
@@ -459,10 +488,16 @@ pub const CharacterJoinedTeam = struct {
         const CharacterJoinedTeam_teamColors = CharacterJoinedTeam_teamColors_read.value;
         local_offset += CharacterJoinedTeam_teamColors_read.bytes_read;
 
+        const CharacterJoinedTeam_role_check_read = try readNumber(u8, local_offset, buffer);
+        // TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first
+        const CharacterJoinedTeam_role: TeamRole = @enumFromInt(CharacterJoinedTeam_role_check_read.value);
+        local_offset += CharacterJoinedTeam_role_check_read.bytes_read;
+
         return .{ .value = CharacterJoinedTeam{
             .characterID = CharacterJoinedTeam_characterID,
             .teamName = CharacterJoinedTeam_teamName,
             .teamColors = CharacterJoinedTeam_teamColors,
+            .role = CharacterJoinedTeam_role,
         }, .bytes_read = local_offset - offset };
     }
 
@@ -475,6 +510,7 @@ pub const CharacterJoinedTeam = struct {
         local_offset += writeNumber(u64, local_offset, buffer, self.characterID);
         local_offset += writeString(local_offset, buffer, self.teamName);
         local_offset += writeList(Color, local_offset, buffer, self.teamColors);
+        local_offset += writeNumber(u8, local_offset, buffer, @intFromEnum(self.role));
 
         return local_offset - offset;
     }

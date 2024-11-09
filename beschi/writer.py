@@ -44,6 +44,8 @@ class Writer:
             self.type_mapping[struct_type] = struct_type
         for msg_type in self.protocol.messages:
             self.type_mapping[msg_type] = msg_type
+        for enum_type in self.protocol.enums:
+            self.type_mapping[enum_type] = enum_type
 
     # inserts any boilerplate code, indented at the current level
     def add_boilerplate(self, substitutions: list[tuple[str,str]] = [], index: int =-1):

@@ -1,6 +1,6 @@
 import argparse
 
-from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Variable, Struct, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -60,6 +60,15 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
         elif var.vartype == "string":
             self.write_line(f"{accessor}{var.name} = da.getString();")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.get_encoding()]}();")
+            self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
+            self.indent_level += 1
+            self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"{accessor}{var.name} = _{var.name};")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"{accessor}{var.name} = da.get{self.base_serializers[var.vartype]}();")
         else:
@@ -77,6 +86,9 @@ class TypeScriptWriter(Writer):
             self.write_line("}")
         elif var.vartype == "string":
             self.write_line(f"da.setString({accessor}{var.name});")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"da.set{self.base_serializers[e.get_encoding()]}({accessor}{var.name});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"da.set{self.base_serializers[var.vartype]}({accessor}{var.name});")
         else:
@@ -124,6 +136,15 @@ class TypeScriptWriter(Writer):
                         accum += caccum
         return lines, accum
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"export enum {ename} {{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v} = {vi},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         if sdata.is_message:
             self.write_line(f"export class {sname} extends Message {{")
@@ -142,6 +163,9 @@ class TypeScriptWriter(Writer):
                     default_value = "false"
                 elif self.type_mapping[var.vartype] == "string":
                     default_value = '""'
+                elif var.vartype in self.protocol.enums:
+                    e = self.protocol.enums[var.vartype]
+                    default_value = f"{var.vartype}.{e.values[0]}"
                 elif var.vartype in self.protocol.structs:
                     default_value = f"new {var.vartype}()"
                 self.write_line(f"{var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''};")
@@ -315,6 +339,9 @@ class TypeScriptWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

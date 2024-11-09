@@ -22,6 +22,7 @@ pub struct BufferReader {
     buffer: Vec<u8>,
     current_position: usize,
 }
+
 impl BufferReader {
     pub fn new(buffer: Vec<u8>) -> Self {
         BufferReader { buffer, current_position: 0 }

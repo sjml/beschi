@@ -18,36 +18,24 @@ namespace AppMessages
 
     public class DataReadErrorException : Exception
     {
-        public DataReadErrorException()
-        {
-        }
+        public DataReadErrorException() { }
 
         public DataReadErrorException(string msg)
-            : base(msg)
-        {
-        }
+            : base(msg) { }
 
         public DataReadErrorException(string msg, Exception inner)
-            : base(msg, inner)
-        {
-        }
+            : base(msg, inner) { }
     }
 
     public class UnknownMessageTypeException : Exception
     {
-        public UnknownMessageTypeException()
-        {
-        }
+        public UnknownMessageTypeException() { }
 
         public UnknownMessageTypeException(string msg)
-            : base(msg)
-        {
-        }
+            : base(msg) { }
 
         public UnknownMessageTypeException(string msg, Exception inner)
-            : base(msg, inner)
-        {
-        }
+            : base(msg, inner) { }
     }
 
     public abstract class Message
@@ -83,6 +71,21 @@ namespace AppMessages
         }
     }
 
+    public enum CharacterClass : byte
+    {
+        Fighter = 0,
+        Wizard = 1,
+        Rogue = 2,
+        Cleric = 3,
+    }
+
+    public enum TeamRole : byte
+    {
+        Minion = 0,
+        Ally = 1,
+        Leader = 2,
+    }
+
     public class Color
     {
         public float red;
@@ -92,12 +95,12 @@ namespace AppMessages
 
         public static Color FromBytes(BinaryReader br)
         {
-            Color nColor = new Color();
-            nColor.red = br.ReadSingle();
-            nColor.green = br.ReadSingle();
-            nColor.blue = br.ReadSingle();
-            nColor.alpha = br.ReadSingle();
-            return nColor;
+            Color _nColor = new Color();
+            _nColor.red = br.ReadSingle();
+            _nColor.green = br.ReadSingle();
+            _nColor.blue = br.ReadSingle();
+            _nColor.alpha = br.ReadSingle();
+            return _nColor;
         }
         public void WriteBytes(BinaryWriter bw)
         {
@@ -116,16 +119,16 @@ namespace AppMessages
 
         public static Spectrum FromBytes(BinaryReader br)
         {
-            Spectrum nSpectrum = new Spectrum();
-            nSpectrum.defaultColor = Color.FromBytes(br);
+            Spectrum _nSpectrum = new Spectrum();
+            _nSpectrum.defaultColor = Color.FromBytes(br);
             ushort colors_Length = br.ReadUInt16();
-            nSpectrum.colors = new List<Color>();
+            _nSpectrum.colors = new List<Color>();
             for (int i3 = 0; i3 < colors_Length; i3++)
             {
                 Color el = Color.FromBytes(br);
-                nSpectrum.colors.Add(el);
+                _nSpectrum.colors.Add(el);
             }
-            return nSpectrum;
+            return _nSpectrum;
         }
         public void WriteBytes(BinaryWriter bw)
         {
@@ -156,11 +159,11 @@ namespace AppMessages
         {
             try
             {
-                Vector3Message nVector3Message = new Vector3Message();
-                nVector3Message.x = br.ReadSingle();
-                nVector3Message.y = br.ReadSingle();
-                nVector3Message.z = br.ReadSingle();
-                return nVector3Message;
+                Vector3Message _nVector3Message = new Vector3Message();
+                _nVector3Message.x = br.ReadSingle();
+                _nVector3Message.y = br.ReadSingle();
+                _nVector3Message.z = br.ReadSingle();
+                return _nVector3Message;
             }
             catch (System.IO.EndOfStreamException)
             {
@@ -184,9 +187,11 @@ namespace AppMessages
     {
         public ulong id;
         public string characterName = "";
+        public CharacterClass job = CharacterClass.Fighter;
         public ushort strength;
         public ushort intelligence;
         public ushort dexterity;
+        public ushort wisdom;
         public uint goldInWallet;
         public List<string> nicknames = new List<string>();
 
@@ -200,7 +205,7 @@ namespace AppMessages
             {
                 size += 1 + System.Text.Encoding.UTF8.GetBytes(s).Length;
             }
-            size += 21;
+            size += 24;
             return size;
         }
 
@@ -208,25 +213,32 @@ namespace AppMessages
         {
             try
             {
-                NewCharacterMessage nNewCharacterMessage = new NewCharacterMessage();
-                nNewCharacterMessage.id = br.ReadUInt64();
+                NewCharacterMessage _nNewCharacterMessage = new NewCharacterMessage();
+                _nNewCharacterMessage.id = br.ReadUInt64();
                 byte characterName_Length = br.ReadByte();
                 byte[] characterName_Buffer = br.ReadBytes((int)characterName_Length);
-                nNewCharacterMessage.characterName = System.Text.Encoding.UTF8.GetString(characterName_Buffer);
-                nNewCharacterMessage.strength = br.ReadUInt16();
-                nNewCharacterMessage.intelligence = br.ReadUInt16();
-                nNewCharacterMessage.dexterity = br.ReadUInt16();
-                nNewCharacterMessage.goldInWallet = br.ReadUInt32();
+                _nNewCharacterMessage.characterName = System.Text.Encoding.UTF8.GetString(characterName_Buffer);
+                byte _job = br.ReadByte();
+                if (!Enum.IsDefined(typeof(CharacterClass), _job))
+                {
+                    throw new DataReadErrorException(String.Format("Enum {0} out of range for CharacterClass", _job));
+                }
+                _nNewCharacterMessage.job = (CharacterClass)_job;
+                _nNewCharacterMessage.strength = br.ReadUInt16();
+                _nNewCharacterMessage.intelligence = br.ReadUInt16();
+                _nNewCharacterMessage.dexterity = br.ReadUInt16();
+                _nNewCharacterMessage.wisdom = br.ReadUInt16();
+                _nNewCharacterMessage.goldInWallet = br.ReadUInt32();
                 ushort nicknames_Length = br.ReadUInt16();
-                nNewCharacterMessage.nicknames = new List<string>();
+                _nNewCharacterMessage.nicknames = new List<string>();
                 for (int i4 = 0; i4 < nicknames_Length; i4++)
                 {
                     byte string_el_Length = br.ReadByte();
                     byte[] string_el_Buffer = br.ReadBytes((int)string_el_Length);
                     string el = System.Text.Encoding.UTF8.GetString(string_el_Buffer);
-                    nNewCharacterMessage.nicknames.Add(el);
+                    _nNewCharacterMessage.nicknames.Add(el);
                 }
-                return nNewCharacterMessage;
+                return _nNewCharacterMessage;
             }
             catch (System.IO.EndOfStreamException)
             {
@@ -243,9 +255,11 @@ namespace AppMessages
             byte[] characterName_Buffer = System.Text.Encoding.UTF8.GetBytes(this.characterName);
             bw.Write((byte)characterName_Buffer.Length);
             bw.Write(characterName_Buffer);
+            bw.Write((byte)this.job)
             bw.Write(this.strength);
             bw.Write(this.intelligence);
             bw.Write(this.dexterity);
+            bw.Write(this.wisdom);
             bw.Write(this.goldInWallet);
             bw.Write((ushort)this.nicknames.Count);
             foreach (string el in this.nicknames)
@@ -263,6 +277,7 @@ namespace AppMessages
         public ulong characterID;
         public string teamName = "";
         public List<Color> teamColors = new List<Color>();
+        public TeamRole role = TeamRole.Minion;
 
         public override MessageType GetMessageType() { return MessageType.CharacterJoinedTeamType; }
 
@@ -271,7 +286,7 @@ namespace AppMessages
             int size = 0;
             size += this.teamName.Length;
             size += this.teamColors.Count * 16;
-            size += 11;
+            size += 12;
             return size;
         }
 
@@ -279,19 +294,25 @@ namespace AppMessages
         {
             try
             {
-                CharacterJoinedTeam nCharacterJoinedTeam = new CharacterJoinedTeam();
-                nCharacterJoinedTeam.characterID = br.ReadUInt64();
+                CharacterJoinedTeam _nCharacterJoinedTeam = new CharacterJoinedTeam();
+                _nCharacterJoinedTeam.characterID = br.ReadUInt64();
                 byte teamName_Length = br.ReadByte();
                 byte[] teamName_Buffer = br.ReadBytes((int)teamName_Length);
-                nCharacterJoinedTeam.teamName = System.Text.Encoding.UTF8.GetString(teamName_Buffer);
+                _nCharacterJoinedTeam.teamName = System.Text.Encoding.UTF8.GetString(teamName_Buffer);
                 ushort teamColors_Length = br.ReadUInt16();
-                nCharacterJoinedTeam.teamColors = new List<Color>();
+                _nCharacterJoinedTeam.teamColors = new List<Color>();
                 for (int i4 = 0; i4 < teamColors_Length; i4++)
                 {
                     Color el = Color.FromBytes(br);
-                    nCharacterJoinedTeam.teamColors.Add(el);
+                    _nCharacterJoinedTeam.teamColors.Add(el);
                 }
-                return nCharacterJoinedTeam;
+                byte _role = br.ReadByte();
+                if (!Enum.IsDefined(typeof(TeamRole), _role))
+                {
+                    throw new DataReadErrorException(String.Format("Enum {0} out of range for TeamRole", _role));
+                }
+                _nCharacterJoinedTeam.role = (TeamRole)_role;
+                return _nCharacterJoinedTeam;
             }
             catch (System.IO.EndOfStreamException)
             {
@@ -313,6 +334,7 @@ namespace AppMessages
             {
                 el.WriteBytes(bw);
             }
+            bw.Write((byte)this.role)
         }
 
     }

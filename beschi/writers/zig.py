@@ -1,6 +1,6 @@
 import argparse
 
-from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Struct, Variable, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer
 from .. import LIB_NAME, LIB_VERSION
 
@@ -44,8 +44,12 @@ class ZigWriter(Writer):
 
     def deserializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
         if parent_is_simple: # also means that *var* is simple because recursion!
-            if var.vartype in NUMERIC_TYPE_SIZES.keys():
+            if var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"const {accessor}_{var.name} = (try readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer)).value;")
+            elif var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"const {accessor}_{var.name}_check = (try readNumber({self.type_mapping[e.get_encoding()]}, offset + {simple_offset}, buffer)).value;")
+                self.write_line(f"")
             else:
                 self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes({simple_offset}, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
@@ -54,10 +58,16 @@ class ZigWriter(Writer):
                 self.write_line(f"const {accessor}_{var.name}_read = try readList({self.type_mapping[var.vartype]}, allocator, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
-            elif var.vartype in NUMERIC_TYPE_SIZES.keys():
+            elif var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"const {accessor}_{var.name}_read = try readNumber({self.type_mapping[var.vartype]}, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
+            elif var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.get_encoding()]}, local_offset, buffer);")
+                self.write_line("// TODO: check for validity of integer; not implemented for now since going to add non-sequentiality first")
+                self.write_line(f"const {accessor}_{var.name}: {e.name} = @enumFromInt({accessor}_{var.name}_check_read.value);")
+                self.write_line(f"local_offset += {accessor}_{var.name}_check_read.bytes_read;")
             elif var.vartype == "string":
                 self.write_line(f"const {accessor}_{var.name}_read = try readString(allocator, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
@@ -71,13 +81,16 @@ class ZigWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str, parent_is_simple: bool, simple_offset: int):
         if parent_is_simple:
-            if var.vartype in NUMERIC_TYPE_SIZES.keys():
+            if var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"_ = writeNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer, {accessor}{var.name});")
         else:
             if var.is_list:
                 self.write_line(f"local_offset += writeList({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
-            elif var.vartype in NUMERIC_TYPE_SIZES.keys():
+            elif var.vartype in NUMERIC_TYPE_SIZES:
                 self.write_line(f"local_offset += writeNumber({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
+            elif var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"local_offset += writeNumber({self.type_mapping[e.get_encoding()]}, local_offset, buffer, @intFromEnum({accessor}{var.name}));")
             elif var.vartype == "string":
                 self.write_line(f"local_offset += writeString(local_offset, buffer, {accessor}{var.name});")
             else:
@@ -146,6 +159,15 @@ class ZigWriter(Writer):
         else:
             self.write_line(f"{accessor}{var.name}.deinit(allocator);")
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"pub const {ename} = enum({self.type_mapping[edata.get_encoding()]}) {{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v} = {vi},")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         self.write_line(f"pub const {sname} = struct {{")
         self.indent_level += 1
@@ -155,7 +177,11 @@ class ZigWriter(Writer):
             else:
                 default_value = self.base_defaults.get(var.vartype)
                 if default_value == None:
-                    default_value = f"{var.vartype}{{}}"
+                    if var.vartype in self.protocol.enums:
+                        e = self.protocol.enums[var.vartype]
+                        default_value = f"{e.name}.{e.values[0]}"
+                    else:
+                        default_value = f"{var.vartype}{{}}"
                 self.write_line(f"{var.name}: {self.type_mapping[var.vartype]} = {default_value},")
         self.write_line()
 
@@ -346,6 +372,9 @@ class ZigWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

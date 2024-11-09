@@ -1,6 +1,6 @@
 import re # two problems
 
-from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Variable, Struct, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -95,6 +95,16 @@ class CWriter(Writer):
                 self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{name}_els_len[{idx}]));")
             else:
                 self.write_line(f"err = {self.prefix}_ReadString(r, &({accessor}{var.name}), &({accessor}{var.name}_len));")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"{self.type_mapping[e.get_encoding()]} _{var.name};")
+            self.write_line(f"err = {self.prefix}_Read{self.base_serializers[e.get_encoding()]}(r, &(_{var.name}));")
+            self.err_check_return()
+            self.write_line(f"if (_{var.name} < {e.values[0]} || _{var.name} > {e.values[-1]}) {{")
+            self.indent_level += 1
+            self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+            self.indent_level -= 1
+            self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"err = {self.prefix}_Read{self.base_serializers[var.vartype]}(r, &({accessor}{var.name}));")
         else:
@@ -120,6 +130,9 @@ class CWriter(Writer):
                 self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), ({accessor}{name}_els_len[{idx}]));")
             else:
                 self.write_line(f"err = {self.prefix}_WriteString(w, &({accessor}{var.name}), ({accessor}{var.name}_len));")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"err = {self.prefix}_Write{self.base_serializers[e.get_encoding()]}(w, ({self.type_mapping[e.get_encoding()]})({accessor}{var.name}));")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"err = {self.prefix}_Write{self.base_serializers[var.vartype]}(w, ({accessor}{var.name}));")
         else:
@@ -182,6 +195,9 @@ class CWriter(Writer):
             elif var.vartype == "string":
                 self.write_line(f".{var.name}_len = 0,")
                 self.write_line(f".{var.name} = (char*)\"\",")
+            elif var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f".{var.name} = {e.values[0]},")
             else:
                 self.write_line(f".{var.name} = {{")
                 self.indent_level += 1
@@ -210,6 +226,15 @@ class CWriter(Writer):
             self.write_line(f"{self.prefix.upper()}FREE({accessor}{var.name});")
         else:
             [self.destructor(mem, f"{accessor}{var.name}.") for mem in self.protocol.structs[var.vartype].members]
+
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"typedef enum {ename} {{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v} = {vi}{"," if vi < len(edata.values) - 1 else ""}")
+        self.indent_level -= 1
+        self.write_line(f"}} {ename};")
+        self.write_line()
 
     def gen_struct(self, sname: str, sdata: Struct):
         self.write_line("typedef struct {")
@@ -361,6 +386,9 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}err_t {self.prefix}Destroy(void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len);")
         self.write_line()
+
+        for enum, edata in self.protocol.enums.items():
+            self.gen_enum(enum, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

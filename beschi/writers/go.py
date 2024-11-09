@@ -1,6 +1,6 @@
 import argparse
 
-from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Struct, Variable, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -20,6 +20,9 @@ class GoWriter(Writer):
         rename = not extra_args["go_no_rename"]
 
         if rename:
+            for _, e in p.enums.items():
+                for vi, v in enumerate(e.values):
+                    e.values[vi] = TextUtil.capitalize(v)
             for _, s in p.structs.items():
                 for var in s.members:
                     var.name = TextUtil.capitalize(var.name)
@@ -64,6 +67,20 @@ class GoWriter(Writer):
             self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read string at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"var _{var.name} {var.vartype}")
+            self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &_{var.name}); err != nil {{")
+            self.indent_level += 1
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"if _{var.name} < ({self.type_mapping[e.get_encoding()]}){e.values[0]} || _{var.name} > ({self.type_mapping[e.get_encoding()]}){e.values[-1]} {{")
+            self.indent_level += 1
+            self.write_line(f"return nil, fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"{accessor}.{var.name} = _{var.name}")
         elif var.is_simple():
             self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &{accessor}.{var.name}); err != nil {{")
             self.indent_level += 1
@@ -86,6 +103,9 @@ class GoWriter(Writer):
             self.write_line("}")
         elif var.vartype == "string":
             self.write_line(f"writeString(data, &{accessor}.{var.name})")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"binary.Write(data, binary.LittleEndian, &{accessor}.{var.name})")
         elif var.is_simple():
             self.write_line(f"binary.Write(data, binary.LittleEndian, &{accessor}.{var.name})")
         else:
@@ -132,6 +152,17 @@ class GoWriter(Writer):
                         accum += caccum
         return lines, accum
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"type {ename} {self.type_mapping[edata.get_encoding()]}")
+        self.write_line()
+        self.write_line("const (")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v}{"" if vi > 0 else f' {ename} = iota'}")
+        self.indent_level -= 1
+        self.write_line(")")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         self.write_line(f"type {sname} struct {{")
         self.indent_level += 1
@@ -162,6 +193,7 @@ class GoWriter(Writer):
                 self.write_line(f"return size")
             self.indent_level -=1
             self.write_line("}")
+            self.write_line()
 
             self.write_line(f"func {sdata.name}FromBytes(data io.Reader) (*{sname}, error) {{")
             self.indent_level += 1
@@ -286,6 +318,9 @@ class GoWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

@@ -140,17 +140,7 @@ var bw = new BinaryWriter(fs);
 msg.WriteBytes(bw, false);
 ```
 
-And then read it back in TypeScript:
-```typescript
-const data = fs.readFileSync("./vec3.msg");
-const dv = new DataView(new Uint8Array(data).buffer);
-const msg = AppMessages.Vector3Message.fromBytes(dv, 0).val;
-if (msg.y == Math.fround(4096.1234)) {
-    console.log("Ready to go!");
-}
-```
-
-Or Go:
+And then read it back in Go:
 ```golang
 dat, _ := os.Open("./vec3.msg")
 defer dat.Close()
@@ -159,6 +149,17 @@ if msg.X == 1.0 && msg.Y == 4096.1234 && msg.Z < 0.0 {
 	print("Ready to go!\n")
 }
 ```
+
+Or TypeScript:
+```typescript
+const data = fs.readFileSync("./vec3.msg");
+const dv = new DataView(new Uint8Array(data).buffer);
+const msg = AppMessages.Vector3Message.fromBytes(dv, 0).val;
+if (msg.y == Math.fround(4096.1234)) {
+    console.log("Ready to... typescript?");
+}
+```
+
 
 For the most part, Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference [outlined on the various language pages](./docs/languages). Notice in the example above, for instance, that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. (Doing equality comparisons on floats is usually a bad idea, but in this instance we *want* to check that they are actually bitwise identical.) Similarly, see how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to make working across languages feel seamless, but there are some differences that we adapt to as much as possible. 
 

@@ -2,18 +2,31 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
-- rethink C memory story -- destroy functions work, but only on `malloc`ed memory, and sometimes need to clean up stack variables that contain allocations
-- processrawmessage documentation
-- analyze use of const (data access structs especially)
+- rethink C memory story -- destroy functions work, but only on `malloc`ed memory, and might need to clean up stack variables that contain allocations
 - test suite for destroying messages
+- add notes about trustworthiness
+  - all reading code assumes it's reading stuff that was written by a corresponding writer
+  - no security checks
+  - do not use on untrusted input
 
-## protocol features:
+## enum notes
+- make note in documentation that enums are only sequential (for portability because Go)
+    - also that they will default to their zero (first) value so keep that in mind
+    - haha nope we're gonna do optional specification
+    - show both ways of doing it
+- test cases, beyond just read/write:
+  - invalid protocols: no name, no values, empty list of values, duplicate values, name duplicating struct or message
+  - corrupted message with invalid value throws error
+  - Go and Rust renames (are those tested on other protocol things?)
+    - (are they happening to struct and message names?!)
+
+## possible future protocol features:
 - enums!
     - new table type, specced like this
         ```toml
         [[enums]]
         _name = "GameState"
-        values = [
+        _values = [
             "Setup",
             "Ready",
             "Running",
@@ -26,9 +39,9 @@ This file is a rough todo list for the tool itself.
         _name = "MyStruct"
         state_I_care_about = "GameState"
         ```
-    - beschi will choose the underlying numeric type; if <= 255 values, `byte`; if < 65,535, `uint16`, etc. 
+    - beschi will choose the underlying numeric type; if <= 255 values, `byte`; if < 65,535, `uint16`, etc. (will top out at the int32 max, but what the heck are you even doing with that many values?!)
     - will be read into proper enum value in the target language, if applicable, and written into memory as a number
-- static values, so you can, say, version a message and it will be automatically written to every instance of it
+- ?? static values, so you can, say, version a message and it will be automatically written to every instance of it
     - maybe like:
         ```toml
         [[structs]]
@@ -41,7 +54,7 @@ This file is a rough todo list for the tool itself.
         - statics are allowed for numeric types (and lists of numeric types) only
         - statics cannot be set from target language; will be overwritten with static value when put into the buffer
             - note that this might lead to leaked memory or trashed pointers if you're not careful in C
-- inline string and array length types so they don't have to be protocol-wide like they are now
+- ?? inline string and array length types so they don't have to be protocol-wide like they are now
     - not pressing, but worth thinking of
         ```toml
         [[structs]]

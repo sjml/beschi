@@ -26,6 +26,7 @@ pub struct BufferReader {
     buffer: Vec<u8>,
     current_position: usize,
 }
+
 impl BufferReader {
     pub fn new(buffer: Vec<u8>) -> Self {
         BufferReader { buffer, current_position: 0 }
@@ -138,6 +139,24 @@ pub fn process_raw_bytes(reader: &mut BufferReader) -> Result<Vec<Message>, AppM
     }
     Ok(msg_list)
 }
+
+#[repr(u8)]
+#[derive(Debug)]
+pub enum CharacterClass {
+    Fighter = 0,
+    Wizard = 1,
+    Rogue = 2,
+    Cleric = 3,
+}
+
+#[repr(u8)]
+#[derive(Debug)]
+pub enum TeamRole {
+    Minion = 0,
+    Ally = 1,
+    Leader = 2,
+}
+
 #[derive(Default)]
 pub struct Color {
     pub red: f32,
@@ -145,6 +164,7 @@ pub struct Color {
     pub blue: f32,
     pub alpha: f32,
 }
+
 impl Color {
     pub fn get_size_in_bytes(&self) -> u32 {
         16
@@ -171,6 +191,7 @@ pub struct Spectrum {
     pub default_color: Color,
     pub colors: Vec<Color>,
 }
+
 impl Spectrum {
     pub fn get_size_in_bytes(&self) -> u32 {
         let mut size: u32 = 0;
@@ -205,6 +226,7 @@ pub struct Vector3Message {
     pub y: f32,
     pub z: f32,
 }
+
 impl Vector3Message {
     pub fn get_size_in_bytes(&self) -> u32 {
         12
@@ -231,12 +253,15 @@ impl Vector3Message {
 pub struct NewCharacterMessage {
     pub id: u64,
     pub character_name: String,
+    pub job: CharacterClass,
     pub strength: u16,
     pub intelligence: u16,
     pub dexterity: u16,
+    pub wisdom: u16,
     pub gold_in_wallet: u32,
     pub nicknames: Vec<String>,
 }
+
 impl NewCharacterMessage {
     pub fn get_size_in_bytes(&self) -> u32 {
         let mut size: u32 = 0;
@@ -244,16 +269,22 @@ impl NewCharacterMessage {
         for s in &self.nicknames {
             size += 1 + (s.len() as u32);
         }
-        size += 21;
+        size += 24;
         size
     }
 
     pub fn from_bytes(reader: &mut BufferReader) -> Result<NewCharacterMessage, AppMessagesError> {
         let id = reader.read_u64()?;
         let character_name = reader.read_string()?;
+        let job = reader.read_u8()?;
+        if !matches!(job, 0 | 1 | 2 | 3) {
+            return Err(AppMessagesError::InvalidData);
+        }
+        let job = CharacterClass::try_from(job).unwrap();
         let strength = reader.read_u16()?;
         let intelligence = reader.read_u16()?;
         let dexterity = reader.read_u16()?;
+        let wisdom = reader.read_u16()?;
         let gold_in_wallet = reader.read_u32()?;
         let nicknames_len = reader.read_u16()?;
         let mut nicknames: Vec<String> = Vec::new();
@@ -261,7 +292,7 @@ impl NewCharacterMessage {
             let el = reader.read_string()?;
             nicknames.push(el);
         }
-        Ok(NewCharacterMessage {id, character_name, strength, intelligence, dexterity, gold_in_wallet, nicknames})
+        Ok(NewCharacterMessage {id, character_name, job, strength, intelligence, dexterity, wisdom, gold_in_wallet, nicknames})
     }
 
     pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {
@@ -271,9 +302,11 @@ impl NewCharacterMessage {
         writer.extend(self.id.to_le_bytes());
         writer.extend((self.character_name.len() as u8).to_le_bytes());
         writer.extend(self.character_name.as_bytes());
+        writer.push(self.job as byte);
         writer.extend(self.strength.to_le_bytes());
         writer.extend(self.intelligence.to_le_bytes());
         writer.extend(self.dexterity.to_le_bytes());
+        writer.extend(self.wisdom.to_le_bytes());
         writer.extend(self.gold_in_wallet.to_le_bytes());
         writer.extend((self.nicknames.len() as u16).to_le_bytes());
         for el in &self.nicknames {
@@ -288,13 +321,15 @@ pub struct CharacterJoinedTeam {
     pub character_id: u64,
     pub team_name: String,
     pub team_colors: Vec<Color>,
+    pub role: TeamRole,
 }
+
 impl CharacterJoinedTeam {
     pub fn get_size_in_bytes(&self) -> u32 {
         let mut size: u32 = 0;
         size += self.team_name.len() as u32;
         size += (self.team_colors.len() as u32) * 16;
-        size += 11;
+        size += 12;
         size
     }
 
@@ -307,7 +342,12 @@ impl CharacterJoinedTeam {
             let el = Color::from_bytes(reader)?;
             team_colors.push(el);
         }
-        Ok(CharacterJoinedTeam {character_id, team_name, team_colors})
+        let role = reader.read_u8()?;
+        if !matches!(role, 0 | 1 | 2) {
+            return Err(AppMessagesError::InvalidData);
+        }
+        let role = TeamRole::try_from(role).unwrap();
+        Ok(CharacterJoinedTeam {character_id, team_name, team_colors, role})
     }
 
     pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {
@@ -321,5 +361,6 @@ impl CharacterJoinedTeam {
         for el in &self.team_colors {
             el.write_bytes(writer);
         }
+        writer.push(self.role as byte);
     }
 }

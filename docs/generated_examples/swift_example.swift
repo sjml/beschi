@@ -260,6 +260,19 @@ public /* namespace */ enum AppMessages {
         return msgList
     }
 
+    public enum CharacterClass: UInt8 {
+        case Fighter = 0
+        case Wizard = 1
+        case Rogue = 2
+        case Cleric = 3
+    }
+
+    public enum TeamRole: UInt8 {
+        case Minion = 0
+        case Ally = 1
+        case Leader = 2
+    }
+
     public struct Color {
         public var red: Float32 = 0.0
         public var green: Float32 = 0.0
@@ -356,9 +369,11 @@ public /* namespace */ enum AppMessages {
     public struct NewCharacterMessage : AppMessages_Message {
         public var id: UInt64 = 0
         public var characterName: String = ""
+        public var job: CharacterClass = CharacterClass.Fighter
         public var strength: UInt16 = 0
         public var intelligence: UInt16 = 0
         public var dexterity: UInt16 = 0
+        public var wisdom: UInt16 = 0
         public var goldInWallet: UInt32 = 0
         public var nicknames: [String] = []
 
@@ -374,7 +389,7 @@ public /* namespace */ enum AppMessages {
             for s in self.nicknames {
                 size += 1 + s.data(using: String.Encoding.utf8)!.count
             }
-            size += 21;
+            size += 24;
             return UInt32(size)
         }
 
@@ -387,9 +402,15 @@ public /* namespace */ enum AppMessages {
             var nNewCharacterMessage = NewCharacterMessage()
             nNewCharacterMessage.id = try dataReader.GetUInt64()
             nNewCharacterMessage.characterName = try dataReader.GetString()
+            let _jobRead = try dataReader.GetUInt8()
+            guard let _job = CharacterClass(rawValue: _jobRead) else {
+                throw DataReaderError.InvalidData
+            }
+            nNewCharacterMessage.job = _job
             nNewCharacterMessage.strength = try dataReader.GetUInt16()
             nNewCharacterMessage.intelligence = try dataReader.GetUInt16()
             nNewCharacterMessage.dexterity = try dataReader.GetUInt16()
+            nNewCharacterMessage.wisdom = try dataReader.GetUInt16()
             nNewCharacterMessage.goldInWallet = try dataReader.GetUInt32()
             let nicknames_Length = try dataReader.GetUInt16()
             nNewCharacterMessage.nicknames = []
@@ -407,9 +428,11 @@ public /* namespace */ enum AppMessages {
             }
             dataWriter.WriteUInt64(self.id)
             dataWriter.WriteString(self.characterName)
+            dataWriter.WriteUInt8(self.job.rawValue)
             dataWriter.WriteUInt16(self.strength)
             dataWriter.WriteUInt16(self.intelligence)
             dataWriter.WriteUInt16(self.dexterity)
+            dataWriter.WriteUInt16(self.wisdom)
             dataWriter.WriteUInt32(self.goldInWallet)
             dataWriter.WriteUInt16(UInt16(self.nicknames.count))
             for el in self.nicknames {
@@ -424,6 +447,7 @@ public /* namespace */ enum AppMessages {
         public var characterID: UInt64 = 0
         public var teamName: String = ""
         public var teamColors: [Color] = []
+        public var role: TeamRole = TeamRole.Minion
 
         public init() {}
 
@@ -435,7 +459,7 @@ public /* namespace */ enum AppMessages {
             var size = 0
             size += self.teamName.data(using: String.Encoding.utf8)!.count
             size += self.teamColors.count * 16
-            size += 11;
+            size += 12;
             return UInt32(size)
         }
 
@@ -454,6 +478,11 @@ public /* namespace */ enum AppMessages {
                 let teamColors_el = try Color.FromBytes(dataReader: dataReader)
                 nCharacterJoinedTeam.teamColors.append(teamColors_el)
             }
+            let _roleRead = try dataReader.GetUInt8()
+            guard let _role = TeamRole(rawValue: _roleRead) else {
+                throw DataReaderError.InvalidData
+            }
+            nCharacterJoinedTeam.role = _role
             return nCharacterJoinedTeam
         }
 
@@ -468,6 +497,7 @@ public /* namespace */ enum AppMessages {
             for el in self.teamColors {
                 el.WriteBytes(dataWriter)
             }
+            dataWriter.WriteUInt8(self.role.rawValue)
 
             data = dataWriter.data
         }

@@ -1,6 +1,6 @@
 from __future__ import annotations
 import string
-from collections import OrderedDict
+from collections import OrderedDict, Counter
 
 import toml
 
@@ -53,12 +53,30 @@ class Variable():
             return True
         elif self.vartype == "string":
             return False
+        elif self.vartype in self.protocol.enums:
+            return True
         elif self.vartype in self.protocol.structs:
             return self.protocol.structs[self.vartype].is_simple()
         elif self.vartype in self.protocol.messages:
             return self.protocol.messages[self.vartype].is_simple()
         else:
             raise NotImplementedError(f"Can't determine simplicity of {self.name}.")
+
+class Enum():
+    def __init__(self, name: str, values: list[str]):
+        self.name = name
+        self.values = values
+
+    def get_encoding(self) -> str:
+        possible_options = ["byte", "int16", "int32"]
+        for opt in possible_options:
+            if len(self.values) <= NUMERIC_TYPE_RANGES[opt][1]:
+                return opt
+        # should be unreachable; load-time validation checked we were <= int32.max
+        raise ValueError("Cannot encode enum; too many values")
+
+    def get_encoding_size(self) -> int:
+        return NUMERIC_TYPE_SIZES[self.get_encoding()]
 
 class Struct():
     def __init__(self, name: str):
@@ -76,6 +94,7 @@ class Protocol():
         self.string_size_type: str = "uint32"
         self.structs: OrderedDict[str,Struct] = OrderedDict()
         self.messages: OrderedDict[str,Struct] = OrderedDict()
+        self.enums: OrderedDict[str,Enum] = OrderedDict()
 
         if filename == None:
             return
@@ -100,6 +119,7 @@ class Protocol():
 
         if "structs" not in protocol_data: protocol_data["structs"] = []
         if "messages" not in protocol_data: protocol_data["messages"] = []
+        if "enums" not in protocol_data: protocol_data["enums"] = []
 
         def build_struct(data: dict[str,any], is_message: bool = False):
             if "_name" not in data:
@@ -128,6 +148,25 @@ class Protocol():
             if m.name in self.messages:
                 raise ValueError(f"Duplicate _name on {message_data}")
             self.messages[m.name] = m
+        for enum_data in protocol_data["enums"]:
+            if "_name" not in enum_data:
+                raise ValueError(f"Missing _name on {enum_data}")
+            if "_values" not in enum_data:
+                raise ValueError(f"Missing _values on {enum_data}")
+            if not type(enum_data["_values"]) is list:
+                raise ValueError(f"Values is not list on {enum_data}")
+            e = Enum(enum_data["_name"], enum_data["_values"])
+            self.enums[e.name] = e
+
+
+        def validate_enum(e: Enum):
+            if len(e.values) == 0:
+                raise ValueError(f"No values given for enum {e.name}.")
+            if len(e.values) > NUMERIC_TYPE_RANGES["int32"][1]:
+                raise ValueError(f"Way too many values in enum {e.name}. What are you even *doing*?")
+            duplicate_values = [v for v, count in Counter(e.values).items() if count > 1]
+            if len(duplicate_values) > 0:
+                raise ValueError(f"Duplicate values in enum {e.name}: {", ".join(duplicate_values)}")
 
         def validate_struct(s: Struct):
             label = "Struct"
@@ -142,7 +181,7 @@ class Protocol():
             for var in s.members:
                 if _contains_whitespace(var.name):
                     raise ValueError(f"Member name cannot contain whitespace: '{var.name}'")
-                valid_types: list[str] = list(self.structs) + list(NUMERIC_TYPE_SIZES.keys()) + ["string"]
+                valid_types: list[str] = list(self.structs) + list(self.enums) + list(NUMERIC_TYPE_SIZES.keys()) + ["string"]
                 if var.vartype not in valid_types:
                     if s.is_message and var.vartype in self.messages:
                         raise ValueError(f"Messages cannot contain other messages ({s.name} contains {var.vartype})")
@@ -150,6 +189,7 @@ class Protocol():
 
         [validate_struct(s) for s in self.structs.values()]
         [validate_struct(m) for m in self.messages.values()]
+        [  validate_enum(e) for e in self.enums.values()]
 
         if len(self.messages) > 255:
             raise ValueError("Cannot, at present, have more than 255 types of messages. Sorry. :(")
@@ -176,8 +216,10 @@ class Protocol():
     def get_size_of(self, var_type: str) -> int:
         if var_type in NUMERIC_TYPE_SIZES:
             return NUMERIC_TYPE_SIZES[var_type]
+        elif var_type in self.enums:
+            return self.enums[var_type].get_encoding_size()
         elif var_type == "string":
-            raise NotImplementedError(f"Cannot pre-calculate size of string")
+            raise NotImplementedError("Cannot pre-calculate size of string")
         else:
             size = 0
             if var_type in self.structs:

@@ -1,4 +1,4 @@
-from ..protocol import Protocol, Variable, Struct, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Variable, Struct, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer
 from .. import LIB_NAME, LIB_VERSION
 
@@ -53,6 +53,15 @@ class SwiftWriter(Writer):
             self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
             self.write_line(f"{accessor}{var.name} = try dataReader.Get{self.type_mapping[var.vartype]}()")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"let _{var.name}Read = try dataReader.Get{self.type_mapping[e.get_encoding()]}()")
+            self.write_line(f"guard let _{var.name} = {var.vartype}(rawValue: _{var.name}Read) else {{")
+            self.indent_level += 1
+            self.write_line("throw DataReaderError.InvalidData")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"{accessor}{var.name} = _{var.name}")
         else:
             self.write_line(f"{accessor}{var.name} = try {var.vartype}.FromBytes(dataReader: dataReader)")
 
@@ -67,6 +76,9 @@ class SwiftWriter(Writer):
             self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
             self.write_line(f"dataWriter.Write{self.type_mapping[var.vartype]}({accessor}{var.name})")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"dataWriter.Write{self.type_mapping[e.get_encoding()]}({accessor}{var.name}.rawValue)")
         else:
             self.write_line(f"{accessor}{var.name}.WriteBytes(dataWriter)")
 
@@ -111,6 +123,15 @@ class SwiftWriter(Writer):
                         accum += caccum
         return lines, accum
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"public enum {ename}: {self.type_mapping[edata.get_encoding()]} {{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"case {v} = {vi}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         if sdata.is_message:
             if self.protocol.namespace != None:
@@ -127,7 +148,11 @@ class SwiftWriter(Writer):
             else:
                 default_value = self.base_defaults.get(var.vartype, None)
                 if default_value == None:
-                    default_value = f"{var.vartype}()"
+                    if var.vartype in self.protocol.enums:
+                        e = self.protocol.enums[var.vartype]
+                        default_value = f"{var.vartype}.{e.values[0]}"
+                    else:
+                        default_value = f"{var.vartype}()"
                 self.write_line(f"public var {var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''}")
         self.write_line()
 
@@ -297,6 +322,9 @@ class SwiftWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

@@ -28,14 +28,28 @@ z = "float"
 _name = "NewCharacterMessage"
 id = "uint64"
 characterName = "string"
+job = "CharacterClass" # an enum! (see below)
 strength = "uint16"
 intelligence = "uint16"
 dexterity = "uint16"
+wisdom = "uint16"
 goldInWallet = "uint32"
 nicknames = "[string]" # brackets indicate a list/array
 
-# You can also define structs, collections of data
-#  that go together, but are not themselves a message.
+# You can also define enumerated values which will be
+#  translated into the target language's enum / integer
+#  types as appropriate.
+[[enums]]
+_name = "CharacterClass"
+_values = [
+    "Fighter",
+    "Wizard",
+    "Rogue",
+    "Cleric"
+]
+
+# There are also structs, collections of data that go
+#   together, but are not themselves a message.
 [[structs]]
 _name = "Color"
 red = "float"
@@ -49,9 +63,19 @@ _name = "Spectrum"
 defaultColor = "Color"
 colors = "[Color]"
 
-# Structs can then be used in messages.
+# Structs and enums can then be used in messages
+#  (which can also have lists of structs, of course).
 [[messages]]
 _name = "CharacterJoinedTeam"
 characterID = "uint64"
 teamName = "string"
 teamColors = "[Color]"
+role = "TeamRole"
+
+[[enums]]
+_name = "TeamRole"
+_values = [
+    "Minion",
+    "Ally",
+    "Leader"
+]

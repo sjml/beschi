@@ -1,6 +1,6 @@
 import argparse
 
-from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Struct, Variable, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -66,6 +66,15 @@ class RustWriter(Writer):
                 self.write_line(f"let {var.name} = reader.read_{self.type_mapping[var.vartype]}()?;")
         elif var.vartype == "string":
             self.write_line(f"let {var.name} = reader.read_string()?;")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"let {var.name} = reader.read_{self.type_mapping[e.get_encoding()]}()?;")
+            self.write_line(f"if !matches!({var.name}, {" | ".join([str(i) for i in range(len(e.values))])}) {{")
+            self.indent_level += 1
+            self.write_line(f"return Err({self.prefix}Error::InvalidData);")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"let {var.name} = {var.vartype}::try_from({var.name}).unwrap();")
         else:
             self.write_line(f"let {var.name} = {var.vartype}::from_bytes(reader)?;")
 
@@ -88,6 +97,12 @@ class RustWriter(Writer):
         elif var.vartype == "string":
             self.write_line(f"writer.extend(({accessor}{var.name}.len() as {self.get_native_string_size()}).to_le_bytes());")
             self.write_line(f"writer.extend({accessor}{var.name}.as_bytes());")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            if e.get_encoding() == "byte":
+                self.write_line(f"writer.push({accessor}{var.name} as {e.get_encoding()});")
+            else:
+                self.write_line(f"writer.extend(({accessor}{var.name} as {self.get_native_string_size()}).to_le_bytes());")
         else:
             self.write_line(f"{accessor}{var.name}.write_bytes(writer);")
 
@@ -133,6 +148,17 @@ class RustWriter(Writer):
                     accum += caccum
         return lines, accum
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"#[repr({self.type_mapping[edata.get_encoding()]})]")
+        self.write_line("#[derive(Debug)]")
+        self.write_line(f"pub enum {ename} {{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v} = {vi},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         self.write_line("#[derive(Default)]")
         self.write_line(f"pub struct {sname} {{")
@@ -149,6 +175,7 @@ class RustWriter(Writer):
                 self.write_line(f"{var.name}: {var.vartype},")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         self.write_line(f"impl {sname} {{")
         self.indent_level += 1
@@ -246,6 +273,10 @@ class RustWriter(Writer):
         self.write_line("Ok(msg_list)")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

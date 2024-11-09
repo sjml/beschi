@@ -194,6 +194,19 @@ export function ProcessRawBytes(data: DataView|DataAccess): Message[] {
   return msgList;
 }
 
+export enum CharacterClass {
+  Fighter = 0,
+  Wizard = 1,
+  Rogue = 2,
+  Cleric = 3,
+}
+
+export enum TeamRole {
+  Minion = 0,
+  Ally = 1,
+  Leader = 2,
+}
+
 export class Color {
   red: number = 0;
   green: number = 0;
@@ -303,9 +316,11 @@ export class Vector3Message extends Message {
 export class NewCharacterMessage extends Message {
   id: bigint = 0n;
   characterName: string = "";
+  job: CharacterClass = CharacterClass.Fighter;
   strength: number = 0;
   intelligence: number = 0;
   dexterity: number = 0;
+  wisdom: number = 0;
   goldInWallet: number = 0;
   nicknames: string[] = [];
 
@@ -317,7 +332,7 @@ export class NewCharacterMessage extends Message {
     for (let nicknames_i=0; nicknames_i < this.nicknames.length; nicknames_i++) {
       size += 1 + _textEnc.encode(this.nicknames[nicknames_i]).byteLength;
     }
-    size += 21;
+    size += 24;
     return size;
   }
 
@@ -336,9 +351,15 @@ export class NewCharacterMessage extends Message {
       const nNewCharacterMessage = new NewCharacterMessage();
       nNewCharacterMessage.id = da.getUint64();
       nNewCharacterMessage.characterName = da.getString();
+      const _job = da.getByte();
+      if (CharacterClass[_job] === undefined) {
+        throw new Error(`Enum (${_job}) out of range for CharacterClass`);
+      }
+      nNewCharacterMessage.job = _job;
       nNewCharacterMessage.strength = da.getUint16();
       nNewCharacterMessage.intelligence = da.getUint16();
       nNewCharacterMessage.dexterity = da.getUint16();
+      nNewCharacterMessage.wisdom = da.getUint16();
       nNewCharacterMessage.goldInWallet = da.getUint32();
       const nicknames_Length = da.getUint16();
       nNewCharacterMessage.nicknames = Array<string>(nicknames_Length);
@@ -369,9 +390,11 @@ export class NewCharacterMessage extends Message {
     }
     da.setUint64(this.id);
     da.setString(this.characterName);
+    da.setByte(this.job);
     da.setUint16(this.strength);
     da.setUint16(this.intelligence);
     da.setUint16(this.dexterity);
+    da.setUint16(this.wisdom);
     da.setUint32(this.goldInWallet);
     da.setUint16(this.nicknames.length);
     for (let i = 0; i < this.nicknames.length; i++) {
@@ -386,6 +409,7 @@ export class CharacterJoinedTeam extends Message {
   characterID: bigint = 0n;
   teamName: string = "";
   teamColors: Color[] = [];
+  role: TeamRole = TeamRole.Minion;
 
   getMessageType() : MessageType { return MessageType.CharacterJoinedTeamType; }
 
@@ -393,7 +417,7 @@ export class CharacterJoinedTeam extends Message {
     let size: number = 0;
     size += _textEnc.encode(this.teamName).byteLength;
     size += this.teamColors.length * 16;
-    size += 11;
+    size += 12;
     return size;
   }
 
@@ -417,6 +441,11 @@ export class CharacterJoinedTeam extends Message {
       for (let i3 = 0; i3 < teamColors_Length; i3++) {
         nCharacterJoinedTeam.teamColors[i3] = Color.fromBytes(da);
       }
+      const _role = da.getByte();
+      if (TeamRole[_role] === undefined) {
+        throw new Error(`Enum (${_role}) out of range for TeamRole`);
+      }
+      nCharacterJoinedTeam.role = _role;
       return nCharacterJoinedTeam;
     }
     catch (err) {
@@ -446,6 +475,7 @@ export class CharacterJoinedTeam extends Message {
       let el = this.teamColors[i];
       el.writeBytes(da);
     }
+    da.setByte(this.role);
   }
 
 }

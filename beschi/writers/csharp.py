@@ -1,4 +1,4 @@
-from ..protocol import Protocol, Struct, Variable, NUMERIC_TYPE_SIZES
+from ..protocol import Protocol, Struct, Variable, Enum, NUMERIC_TYPE_SIZES
 from ..writer import Writer, TextUtil
 from .. import LIB_NAME, LIB_VERSION
 
@@ -56,6 +56,16 @@ class CSharpWriter(Writer):
             self.write_line(f"{self.get_native_string_size()} {var_clean}_Length = br.{self.base_deserializers[self.protocol.string_size_type]}();")
             self.write_line(f"byte[] {var_clean}_Buffer = br.ReadBytes((int){var_clean}_Length);")
             self.write_line(f"{accessor}{var.name} = System.Text.Encoding.UTF8.GetString({var_clean}_Buffer);")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"{self.type_mapping[e.get_encoding()]} _{var.name} = br.{self.base_deserializers[e.get_encoding()]}();")
+            self.write_line(f"if (!Enum.IsDefined(typeof({var.vartype}), _{var.name}))")
+            self.write_line("{")
+            self.indent_level += 1
+            self.write_line(f"throw new DataReadErrorException(String.Format(\"Enum {{0}} out of range for {var.vartype}\", _{var.name}));")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line(f"{accessor}{var.name} = ({var.vartype})_{var.name};")
         elif var.vartype in self.base_deserializers:
             self.write_line(f"{accessor}{var.name} = br.{self.base_deserializers[var.vartype]}();")
         else:
@@ -75,6 +85,9 @@ class CSharpWriter(Writer):
             self.write_line(f"byte[] {var.name}_Buffer = System.Text.Encoding.UTF8.GetBytes({accessor}{var.name});")
             self.write_line(f"bw.Write(({self.get_native_string_size()}){var.name}_Buffer.Length);")
             self.write_line(f"bw.Write({var.name}_Buffer);")
+        elif var.vartype in self.protocol.enums:
+            e = self.protocol.enums[var.vartype]
+            self.write_line(f"bw.Write(({e.get_encoding()}){accessor}{var.name})")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"bw.Write({accessor}{var.name});")
         else:
@@ -126,6 +139,16 @@ class CSharpWriter(Writer):
                         accum += caccum
         return lines, accum
 
+    def gen_enum(self, ename: str, edata: Enum):
+        self.write_line(f"public enum {ename} : {self.type_mapping[edata.get_encoding()]}")
+        self.write_line("{")
+        self.indent_level += 1
+        for vi, v in enumerate(edata.values):
+            self.write_line(f"{v} = {vi},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
     def gen_struct(self, sname: str, sdata: Struct):
         if sdata.is_message:
             self.write_line(f"public class {sname} : Message")
@@ -141,6 +164,9 @@ class CSharpWriter(Writer):
                 default = None
                 if var.vartype == "string":
                     default = '""'
+                elif var.vartype in self.protocol.enums:
+                    e = self.protocol.enums[var.vartype]
+                    default = f"{var.vartype}.{e.values[0]}"
                 elif var.vartype in self.protocol.structs:
                     default = f"new {var.vartype}()"
                 self.write_line(f"public {self.type_mapping[var.vartype]} {var.name}{f' = {default}' if default else ''};")
@@ -169,9 +195,9 @@ class CSharpWriter(Writer):
             self.write_line("try")
             self.write_line("{")
             self.indent_level += 1
-        self.write_line(f"{sname} n{sname} = new {sname}();")
-        [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
-        self.write_line(f"return n{sname};")
+        self.write_line(f"{sname} _n{sname} = new {sname}();")
+        [self.deserializer(mem, f"_n{sname}.") for mem in sdata.members]
+        self.write_line(f"return _n{sname};")
         if sdata.is_message:
             self.indent_level -= 1
             self.write_line("}")
@@ -250,29 +276,17 @@ class CSharpWriter(Writer):
             self.write_line(f"public class {wrapped}Exception : Exception")
             self.write_line("{")
             self.indent_level += 1
-            self.write_line(f"public {wrapped}Exception()")
-            self.write_line("{")
-            self.indent_level += 1
-            self.indent_level -= 1
-            self.write_line("}")
+            self.write_line(f"public {wrapped}Exception() {{ }}")
             self.write_line()
             self.write_line(f"public {wrapped}Exception(string msg)")
             self.indent_level += 1
-            self.write_line(": base(msg)")
+            self.write_line(": base(msg) { }")
             self.indent_level -= 1
-            self.write_line("{")
-            self.indent_level += 1
-            self.indent_level -= 1
-            self.write_line("}")
             self.write_line()
             self.write_line(f"public {wrapped}Exception(string msg, Exception inner)")
             self.indent_level += 1
-            self.write_line(": base(msg, inner)")
+            self.write_line(": base(msg, inner) { }")
             self.indent_level -= 1
-            self.write_line("{")
-            self.indent_level += 1
-            self.indent_level -= 1
-            self.write_line("}")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
@@ -320,6 +334,9 @@ class CSharpWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
+
+        for ename, edata in self.protocol.enums.items():
+            self.gen_enum(ename, edata)
 
         for sname, sdata in self.protocol.structs.items():
             self.gen_struct(sname, sdata)

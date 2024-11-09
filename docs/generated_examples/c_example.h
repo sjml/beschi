@@ -81,6 +81,19 @@ AppMessages_err_t AppMessages_ProcessRawBytes(AppMessages_DataAccess* r, void***
 AppMessages_err_t AppMessages_Destroy(void* m);
 AppMessages_err_t AppMessages_DestroyMessageList(void** msgList, size_t len);
 
+typedef enum CharacterClass {
+    Fighter = 0,
+    Wizard = 1,
+    Rogue = 2,
+    Cleric = 3
+} CharacterClass;
+
+typedef enum TeamRole {
+    Minion = 0,
+    Ally = 1,
+    Leader = 2
+} TeamRole;
+
 typedef struct {
     float red;
     float green;
@@ -125,6 +138,7 @@ typedef struct {
     uint16_t strength;
     uint16_t intelligence;
     uint16_t dexterity;
+    uint16_t wisdom;
     uint32_t goldInWallet;
     uint16_t nicknames_len;
     uint16_t* nicknames_els_len;
@@ -708,9 +722,11 @@ const AppMessages_NewCharacterMessage AppMessages_NewCharacterMessage_default = 
     .id = 0,
     .characterName_len = 0,
     .characterName = (char*)"",
+    .job = Fighter,
     .strength = 0,
     .intelligence = 0,
     .dexterity = 0,
+    .wisdom = 0,
     .goldInWallet = 0,
     .nicknames_len = 0,
     .nicknames_els_len = NULL,
@@ -723,7 +739,7 @@ AppMessages_err_t AppMessages_NewCharacterMessage_GetSizeInBytes(const AppMessag
     for (uint16_t i1 = 0; i1 < m->nicknames_len; i1++) {
         *size += 1 + m->nicknames_els_len[i1];
     }
-    *size += 21;
+    *size += 24;
     return APPMESSAGES_ERR_OK;
 }
 
@@ -733,9 +749,11 @@ AppMessages_NewCharacterMessage* AppMessages_NewCharacterMessage_Create(void) {
     out->_mt = AppMessages_MessageType_NewCharacterMessage;
     out->id = AppMessages_NewCharacterMessage_default.id;
     out->characterName = AppMessages_NewCharacterMessage_default.characterName;
+    out->job = AppMessages_NewCharacterMessage_default.job;
     out->strength = AppMessages_NewCharacterMessage_default.strength;
     out->intelligence = AppMessages_NewCharacterMessage_default.intelligence;
     out->dexterity = AppMessages_NewCharacterMessage_default.dexterity;
+    out->wisdom = AppMessages_NewCharacterMessage_default.wisdom;
     out->goldInWallet = AppMessages_NewCharacterMessage_default.goldInWallet;
     out->nicknames = AppMessages_NewCharacterMessage_default.nicknames;
     return out;
@@ -762,6 +780,17 @@ AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
+    uint8_t _job;
+    err = AppMessages__ReadUInt8(r, &(_job));
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
+    if (_job < Fighter || _job > Cleric) {
+        return APPMESSAGES_ERR_INVALID_DATA;
+    }
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
     err = AppMessages__ReadUInt16(r, &(dst->strength));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
@@ -771,6 +800,10 @@ AppMessages_err_t AppMessages_NewCharacterMessage_FromBytes(AppMessages_DataAcce
         return err;
     }
     err = AppMessages__ReadUInt16(r, &(dst->dexterity));
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
+    err = AppMessages__ReadUInt16(r, &(dst->wisdom));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -814,6 +847,10 @@ AppMessages_err_t AppMessages_NewCharacterMessage_WriteBytes(AppMessages_DataAcc
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
+    err = AppMessages__WriteUInt8(w, (uint8_t)(src->job));
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
     err = AppMessages__WriteUInt16(w, (src->strength));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
@@ -823,6 +860,10 @@ AppMessages_err_t AppMessages_NewCharacterMessage_WriteBytes(AppMessages_DataAcc
         return err;
     }
     err = AppMessages__WriteUInt16(w, (src->dexterity));
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
+    err = AppMessages__WriteUInt16(w, (src->wisdom));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
@@ -853,13 +894,14 @@ const AppMessages_CharacterJoinedTeam AppMessages_CharacterJoinedTeam_default = 
     .teamName = (char*)"",
     .teamColors_len = 0,
     .teamColors = NULL,
+    .role = Minion,
 };
 
 AppMessages_err_t AppMessages_CharacterJoinedTeam_GetSizeInBytes(const AppMessages_CharacterJoinedTeam* m, size_t* size) {
     *size = 0;
     *size += m->teamName_len;
     *size += m->teamColors_len * 16;
-    *size += 11;
+    *size += 12;
     return APPMESSAGES_ERR_OK;
 }
 
@@ -870,6 +912,7 @@ AppMessages_CharacterJoinedTeam* AppMessages_CharacterJoinedTeam_Create(void) {
     out->characterID = AppMessages_CharacterJoinedTeam_default.characterID;
     out->teamName = AppMessages_CharacterJoinedTeam_default.teamName;
     out->teamColors = AppMessages_CharacterJoinedTeam_default.teamColors;
+    out->role = AppMessages_CharacterJoinedTeam_default.role;
     return out;
 }
 
@@ -905,6 +948,17 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_FromBytes(AppMessages_DataAcce
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
+    uint8_t _role;
+    err = AppMessages__ReadUInt8(r, &(_role));
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
+    if (_role < Minion || _role > Leader) {
+        return APPMESSAGES_ERR_INVALID_DATA;
+    }
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
     return APPMESSAGES_ERR_OK;
 }
 
@@ -934,6 +988,10 @@ AppMessages_err_t AppMessages_CharacterJoinedTeam_WriteBytes(AppMessages_DataAcc
             return err;
         }
     }
+    if (err != APPMESSAGES_ERR_OK) {
+        return err;
+    }
+    err = AppMessages__WriteUInt8(w, (uint8_t)(src->role));
     if (err != APPMESSAGES_ERR_OK) {
         return err;
     }
