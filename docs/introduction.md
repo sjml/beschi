@@ -73,7 +73,7 @@ Each namespace (or generated file) contains a function for handling a buffer con
 
 ## Caveats and Limitations
 
-Beschi is a little fast and loose with how it does does code generation. This allows for simpler generator code (each language writer is around just 200-500 lines of fairly readable [if somewhat belabored] imperative code without layers of templates) and necessitates fewer dependencies (only TOML so far!), but it does mean that there are some situations it can't handle. 
+Beschi is a little fast and loose with how it does does code generation. This allows for simpler generator code (each language writer is around just 200-500 lines of fairly readable [if somewhat belabored] imperative code without layers of templates) without dependencies, but it does mean that there are some situations it can't handle. 
 
 * I make no claims that the generated code is optimal or necessarily even good. It passes [a test suite](./../test/), and I've used it "in production" for personal projects; it seems to work pretty well, but I'm not an expert programmer in all the target languages, so am very open to feedback if there's something that could be improved. 
 * It makes efforts to follow the best practices of each language as much as possible, but the generated code probably won't win any awards from the linters. The test suite runs with warnings as high as possible, but there are a few very specific warnings in each language that it suppresses.

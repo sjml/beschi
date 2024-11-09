@@ -2,7 +2,7 @@ from __future__ import annotations
 import string
 from collections import OrderedDict, Counter
 
-import toml
+import tomllib
 
 NUMERIC_TYPE_SIZES: dict[str, int] = {
     "byte":   1,
@@ -100,7 +100,7 @@ class Protocol():
             return
 
         self.protocol_string = open(filename, "r", encoding="utf-8").read()
-        protocol_data = toml.loads(self.protocol_string)
+        protocol_data = tomllib.loads(self.protocol_string)
 
         if "meta" in protocol_data:
             if "namespace" in protocol_data["meta"]:

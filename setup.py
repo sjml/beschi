@@ -22,7 +22,7 @@ setup(
         'Environment :: Console',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Code Generators',
     ],
@@ -32,9 +32,7 @@ setup(
         include=['beschi', 'beschi.writers'],
         exclude=['test'], # seems to include test_util no matter what. ¯\_(ツ)_/¯
     ),
-    install_requires=[
-        'toml',
-    ],
+    install_requires=[],
     extras_require={
         'dev': [
             'pytest',
