@@ -29,7 +29,7 @@ fn main() {
         ui64: 18000000000000000000,
         f: 3.1415927410125732421875,
         d: 2.718281828459045090795598298427648842334747314453125,
-        ee: Enumerated::B,
+        ee: Enumerated::Beta,
         es: Specified::Negative,
         s: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.".to_string(),
         v2: Vec2 {x: 256.512, y: 1024.768},
@@ -79,7 +79,11 @@ fn main() {
                 Color {r: 0, g: 0, b: 255},
                 Color {r: 0, g: 255, b: 0},
                 Color {r: 255, g: 0, b: 0},
-            ]
+            ],
+            ranges: vec![
+                Specified::Negative,
+                Specified::Positive,
+            ],
         },
         cxl: vec![
             ComplexData {
@@ -93,7 +97,11 @@ fn main() {
                     Color {r: 255, g: 0, b: 0},
                     Color {r: 0, g: 255, b: 0},
                     Color {r: 0, g: 0, b: 255},
-                ]
+                ],
+                ranges: vec![
+                    Specified::Zero,
+                    Specified::Positive,
+                ],
             },
             ComplexData {
                 identifier: 63,
@@ -106,7 +114,11 @@ fn main() {
                     Color {r: 0, g: 0, b: 255},
                     Color {r: 0, g: 255, b: 0},
                     Color {r: 255, g: 0, b: 0},
-                ]
+                ],
+                ranges: vec![
+                    Specified::Negative,
+                    Specified::Zero,
+                ],
             },
         ]
     };
@@ -114,7 +126,7 @@ fn main() {
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
         example.write_bytes(&mut writer, false);
-        checker.soft_assert(writer.len() == 932, "size calculation check");
+        checker.soft_assert(writer.len() == 956, "size calculation check");
 
         let filename = args.get("generate").unwrap();
         fs::write(filename, writer).unwrap();
@@ -188,6 +200,10 @@ fn main() {
             checker.soft_assert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g");
             checker.soft_assert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b");
         }
+        checker.soft_assert(input.cx.ranges.len() == example.cx.ranges.len(), "ComplexData.ranges.length");
+        for i in 0..input.cx.ranges.len() {
+            checker.soft_assert(input.cx.ranges[i] == example.cx.ranges[i], "ComplexData.ranges");
+        }
         checker.soft_assert(input.cxl.len() == example.cxl.len(), "[ComplexData].length");
         for i in 0..input.cxl.len() {
             checker.soft_assert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
@@ -203,6 +219,10 @@ fn main() {
                 checker.soft_assert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
                 checker.soft_assert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
                 checker.soft_assert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+            }
+            checker.soft_assert(input.cxl[i].ranges.len() == example.cxl[i].ranges.len(), "[ComplexData].ranges.length");
+            for j in 0..input.cxl[i].ranges.len() {
+                checker.soft_assert(input.cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
             }
         }
     }

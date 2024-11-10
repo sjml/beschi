@@ -30,7 +30,7 @@ func main() {
 	example.Ui64 = 18000000000000000000
 	example.F = 3.1415927410125732421875
 	example.D = 2.718281828459045090795598298427648842334747314453125
-	example.Ee = comprehensivemessage.EnumeratedB
+	example.Ee = comprehensivemessage.EnumeratedBeta
 	example.Es = comprehensivemessage.SpecifiedNegative
 	example.S = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 	example.V2.X = 256.512
@@ -107,18 +107,30 @@ func main() {
 	example.Cx.BackgroundColor = c1
 	example.Cx.TextColor = c2
 	example.Cx.Spectrum = []comprehensivemessage.Color{c3, c2, c1}
+	example.Cx.Ranges = []comprehensivemessage.Specified{
+		comprehensivemessage.SpecifiedNegative,
+		comprehensivemessage.SpecifiedPositive,
+	}
 	var cx1 comprehensivemessage.ComplexData
 	cx1.Identifier = 255
 	cx1.Label = "Complex1"
 	cx1.BackgroundColor = c3
 	cx1.TextColor = c1
 	cx1.Spectrum = []comprehensivemessage.Color{c3, c2, c1, c2, c3}
+	cx1.Ranges = []comprehensivemessage.Specified{
+		comprehensivemessage.SpecifiedZero,
+		comprehensivemessage.SpecifiedPositive,
+	}
 	var cx2 comprehensivemessage.ComplexData
 	cx2.Identifier = 63
 	cx2.Label = "Complex2"
 	cx2.BackgroundColor = c1
 	cx2.TextColor = c3
 	cx2.Spectrum = []comprehensivemessage.Color{c1, c2, c3, c2, c1}
+	cx2.Ranges = []comprehensivemessage.Specified{
+		comprehensivemessage.SpecifiedNegative,
+		comprehensivemessage.SpecifiedZero,
+	}
 	example.Cxl = []comprehensivemessage.ComplexData{cx1, cx2}
 
 	readPathPtr := flag.String("read", "", "path to message file for verification")
@@ -135,7 +147,7 @@ func main() {
 
 		example.WriteBytes(dat, false)
 
-		softAssert(example.GetSizeInBytes() == 932, "size calculation check")
+		softAssert(example.GetSizeInBytes() == 956, "size calculation check")
 		seek, _ := dat.Seek(0, io.SeekCurrent)
 		softAssert(example.GetSizeInBytes() == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
@@ -212,6 +224,10 @@ func main() {
 			softAssert(input.Cx.Spectrum[i].G == example.Cx.Spectrum[i].G, "ComplexData.spectrum.g")
 			softAssert(input.Cx.Spectrum[i].B == example.Cx.Spectrum[i].B, "ComplexData.spectrum.b")
 		}
+		softAssert(len(input.Cx.Ranges) == len(example.Cx.Ranges), "ComplexData.ranges.length")
+		for i := 0; i < len(input.Cx.Ranges); i++ {
+			softAssert(input.Cx.Ranges[i] == example.Cx.Ranges[i], "ComplexData.ranges")
+		}
 		softAssert(len(input.Cxl) == len(example.Cxl), "[ComplexData].length")
 		for i := 0; i < len(input.Cxl); i++ {
 			softAssert(input.Cxl[i].Identifier == example.Cxl[i].Identifier, "[ComplexData].identifier")
@@ -222,11 +238,9 @@ func main() {
 			softAssert(input.Cxl[i].TextColor.R == example.Cxl[i].TextColor.R, "[ComplexData].textColor.r")
 			softAssert(input.Cxl[i].TextColor.G == example.Cxl[i].TextColor.G, "[ComplexData].textColor.g")
 			softAssert(input.Cxl[i].TextColor.B == example.Cxl[i].TextColor.B, "[ComplexData].textColor.b")
-			softAssert(len(input.Cxl[i].Spectrum) == len(example.Cxl[i].Spectrum), "[ComplexData].spectrum.length")
-			for j := 0; j < len(input.Cxl[i].Spectrum); j++ {
-				softAssert(input.Cxl[i].Spectrum[j].R == example.Cxl[i].Spectrum[j].R, "[ComplexData].spectrum.r")
-				softAssert(input.Cxl[i].Spectrum[j].G == example.Cxl[i].Spectrum[j].G, "[ComplexData].spectrum.g")
-				softAssert(input.Cxl[i].Spectrum[j].B == example.Cxl[i].Spectrum[j].B, "[ComplexData].spectrum.b")
+			softAssert(len(input.Cxl[i].Ranges) == len(example.Cxl[i].Ranges), "[ComplexData].ranges.length")
+			for j := 0; j < len(input.Cxl[i].Ranges); j++ {
+				softAssert(input.Cxl[i].Ranges[j] == example.Cxl[i].Ranges[j], "[ComplexData].ranges")
 			}
 		}
 

@@ -13,34 +13,10 @@ This file is a rough todo list for the tool itself.
 - enum documentation
     - show both ways of doing it
     - Go enums mean you have to use the New*Default junk :(
-- test cases, beyond just read/write:
-  - enum in a struct in another struct
-    - (gonna be a problem for Go; initiators need to nest)
-  - list of enums
-      - done on most; still need to do for zig
+- make sure go initializers nest properly
 
 
 ## possible future protocol features:
-- enums!
-    - new table type, specced like this
-        ```toml
-        [[enums]]
-        _name = "GameState"
-        _values = [
-            "Setup",
-            "Ready",
-            "Running",
-            "Paused",
-            "Shutdown",
-            "Crashed",
-        ]
-
-        [[structs]]
-        _name = "MyStruct"
-        state_I_care_about = "GameState"
-        ```
-    - beschi will choose the underlying numeric type; if <= 255 values, `byte`; if < 65,535, `uint16`, etc. (will top out at the int32 max, but what the heck are you even doing with that many values?!)
-    - will be read into proper enum value in the target language, if applicable, and written into memory as a number
 - ?? static values, so you can, say, version a message and it will be automatically written to every instance of it
     - maybe like:
         ```toml

@@ -11,7 +11,7 @@
     "ui64": 18000000000000000000,
     "f": 3.1415927410125732421875,
     "d": 2.718281828459045090795598298427648842334747314453125,
-    "ee": "Enumerated.B",
+    "ee": "Enumerated.Beta",
     "es": "Specified.Negative",
     "s": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     "v2": {
@@ -100,6 +100,10 @@
         {"r": 0, "g": 0, "b": 255},
         {"r": 0, "g": 255, "b": 0},
         {"r": 255, "g": 0, "b": 0}
+      ],
+      "ranges": [
+        "Specified.Negative",
+        "Specified.Positive"
       ]
     },
     "cxl": [
@@ -114,6 +118,10 @@
           {"r": 255, "g": 0, "b": 0},
           {"r": 0, "g": 255, "b": 0},
           {"r": 0, "g": 0, "b": 255}
+        ],
+        "ranges": [
+          "Specified.Zero",
+          "Specified.Positive"
         ]
       },
       {
@@ -127,6 +135,10 @@
           {"r": 0, "g": 0, "b": 255},
           {"r": 0, "g": 255, "b": 0},
           {"r": 255, "g": 0, "b": 0}
+        ],
+        "ranges": [
+          "Specified.Negative",
+          "Specified.Zero"
         ]
       }
     ]

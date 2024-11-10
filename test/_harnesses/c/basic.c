@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     example.ui64 = 18000000000000000000UL;
     example.f = 3.1415927410125732421875f;
     example.d = 2.718281828459045090795598298427648842334747314453125;
-    example.ee = ComprehensiveMessage_Enumerated_B;
+    example.ee = ComprehensiveMessage_Enumerated_Beta;
     example.es = ComprehensiveMessage_Specified_Negative;
     example.s = (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
     example.s_len = (uint32_t)strlen(example.s);
@@ -107,6 +107,12 @@ int main(int argc, char** argv) {
     cx.spectrum_len = 3;
     ComprehensiveMessage_Color cx_spectrum[3] = {c3, c2, c1};
     cx.spectrum = cx_spectrum;
+    cx.ranges_len = 2;
+    ComprehensiveMessage_Specified cx_ranges[2] = {
+        ComprehensiveMessage_Specified_Negative,
+        ComprehensiveMessage_Specified_Positive,
+    };
+    cx.ranges = cx_ranges;
     example.cx = cx;
 
     ComprehensiveMessage_ComplexData cx1;
@@ -118,6 +124,12 @@ int main(int argc, char** argv) {
     cx1.spectrum_len = 5;
     ComprehensiveMessage_Color cx1_spectrum[5] = { c3, c2, c1, c2, c3 };
     cx1.spectrum = cx1_spectrum;
+    cx1.ranges_len = 2;
+    ComprehensiveMessage_Specified cx1_ranges[2] = {
+        ComprehensiveMessage_Specified_Zero,
+        ComprehensiveMessage_Specified_Positive,
+    };
+    cx1.ranges = cx1_ranges;
 
     ComprehensiveMessage_ComplexData cx2;
     cx2.identifier = 63;
@@ -128,6 +140,12 @@ int main(int argc, char** argv) {
     cx2.spectrum_len = 5;
     ComprehensiveMessage_Color cx2_spectrum[5] = { c1, c2, c3, c2, c1 };
     cx2.spectrum = cx2_spectrum;
+    cx2.ranges_len = 2;
+    ComprehensiveMessage_Specified cx2_ranges[2] = {
+        ComprehensiveMessage_Specified_Negative,
+        ComprehensiveMessage_Specified_Zero,
+    };
+    cx2.ranges = cx2_ranges;
 
     ComprehensiveMessage_ComplexData cxl[2] = { cx1, cx2 };
     example.cxl_len = 2;
@@ -141,7 +159,7 @@ int main(int argc, char** argv) {
 
     if (genPath != NULL) {
         err = ComprehensiveMessage_TestingMessage_GetSizeInBytes(&example, &bufferSize);
-        softAssert(bufferSize == 932, "size calculation check");
+        softAssert(bufferSize == 956, "size calculation check");
         if (err != COMPREHENSIVEMESSAGE_ERR_OK) { return err; }
         buffer = (uint8_t*)malloc(bufferSize);
         ComprehensiveMessage_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
@@ -256,6 +274,10 @@ int main(int argc, char** argv) {
             softAssert(input->cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g");
             softAssert(input->cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b");
         }
+        softAssert(input->cx.ranges_len == example.cx.ranges_len, "ComplexData.ranges.length");
+        for (uint32_t i  = 0; i < input->cx.ranges_len; i++) {
+            softAssert(input->cx.ranges[i] == example.cx.ranges[i], "ComplexData.ranges");
+        }
         softAssert(input->cxl_len == example.cxl_len, "[ComplexData].length");
         for (uint32_t i =0; i < input->cxl_len; i++) {
             softAssert(input->cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
@@ -271,6 +293,10 @@ int main(int argc, char** argv) {
                 softAssert(input->cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
                 softAssert(input->cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
                 softAssert(input->cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+            }
+            softAssert(input->cxl[i].ranges_len == example.cxl[i].ranges_len, "[ComplexData].ranges.length");
+            for (uint32_t j = 0; j < input->cxl[i].ranges_len; j++) {
+                softAssert(input->cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
             }
         }
 

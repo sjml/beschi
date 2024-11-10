@@ -26,22 +26,23 @@ label = "string"
 textColor = "Color"
 backgroundColor = "Color"
 spectrum = "[Color]"
+ranges = "[Specified]"
 
 [[enums]]
 _name = "Enumerated"
 _values = [
-    "A",
-    "B",
-    "C",
-    "D",
-    "E",
+    "Alpha",
+    "Beta",
+    "Gamma",
+    "Delta",
+    "Epsilon",
 ]
 
 [[enums]]
 _name = "Specified"
 _values = [
     { _name = "Negative", _value = -2048 },
-    { _name = "Zero",     _value = 0 },
+    { _name = "Zero",     _value =     0 },
     { _name = "Positive", _value =  2048 },
 ]
 

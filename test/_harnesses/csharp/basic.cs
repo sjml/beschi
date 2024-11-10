@@ -18,7 +18,7 @@ class BasicHarness: TestHarness {
         example.ui64 = 18000000000000000000;
         example.f = 3.1415927410125732421875f;
         example.d = 2.718281828459045090795598298427648842334747314453125;
-        example.ee = ComprehensiveMessage.Enumerated.B;
+        example.ee = ComprehensiveMessage.Enumerated.Beta;
         example.es = ComprehensiveMessage.Specified.Negative;
         example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
         example.v2 = new ComprehensiveMessage.Vec2();
@@ -107,18 +107,30 @@ class BasicHarness: TestHarness {
         example.cx.spectrum = new List<ComprehensiveMessage.Color> {
             c3, c2, c1
         };
+        example.cx.ranges = new List<ComprehensiveMessage.Specified> {
+            ComprehensiveMessage.Specified.Negative,
+            ComprehensiveMessage.Specified.Positive
+        };
         var cx1 = new ComprehensiveMessage.ComplexData();
         cx1.identifier = 255;
         cx1.label = "Complex1";
         cx1.backgroundColor = c3;
         cx1.textColor = c1;
         cx1.spectrum = new List<ComprehensiveMessage.Color> {c3, c2, c1, c2, c3};
+        cx1.ranges = new List<ComprehensiveMessage.Specified> {
+            ComprehensiveMessage.Specified.Zero,
+            ComprehensiveMessage.Specified.Positive
+        };
         var cx2 = new ComprehensiveMessage.ComplexData();
         cx2.identifier = 63;
         cx2.label = "Complex2";
         cx2.backgroundColor = c1;
         cx2.textColor = c3;
         cx2.spectrum = new List<ComprehensiveMessage.Color> {c1, c2, c3, c2, c1};
+        cx2.ranges = new List<ComprehensiveMessage.Specified> {
+            ComprehensiveMessage.Specified.Negative,
+            ComprehensiveMessage.Specified.Zero
+        };
         example.cxl = new List<ComprehensiveMessage.ComplexData> {cx1, cx2};
 
         var parsedArgs = parseArguments(args);
@@ -132,7 +144,7 @@ class BasicHarness: TestHarness {
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw, false);
 
-            softAssert(example.GetSizeInBytes() == 932, "size calculation check");
+            softAssert(example.GetSizeInBytes() == 956, "size calculation check");
             softAssert(example.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
@@ -213,6 +225,11 @@ class BasicHarness: TestHarness {
                 softAssert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g");
                 softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b");
             }
+            softAssert(input.cx.ranges.Count == example.cx.ranges.Count, "ComplexData.ranges.length");
+            for (int i = 0; i < input.cx.ranges.Count; i++)
+            {
+                softAssert(input.cx.ranges[i] == example.cx.ranges[i], "ComplexData.ranges");
+            }
             softAssert(input.cxl.Count == example.cxl.Count, "[ComplexData].length");
             for (int i=0; i < input.cxl.Count; i++)
             {
@@ -230,6 +247,11 @@ class BasicHarness: TestHarness {
                     softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
                     softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
                     softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+                }
+                softAssert(input.cxl[i].ranges.Count == example.cxl[i].ranges.Count, "[ComplexData].ranges.length");
+                for (int j = 0; j < input.cxl[i].ranges.Count; j++)
+                {
+                    softAssert(input.cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
                 }
             }
         }

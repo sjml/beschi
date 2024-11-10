@@ -13,7 +13,7 @@ example.i64 = -9000000000000000000n;
 example.ui64 = 18000000000000000000n;
 example.f = 3.1415927410125732421875;
 example.d = 2.718281828459045090795598298427648842334747314453125;
-example.ee = ComprehensiveMessage.Enumerated.B;
+example.ee = ComprehensiveMessage.Enumerated.Beta;
 example.es = ComprehensiveMessage.Specified.Negative;
 example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.";
 example.v2 = new ComprehensiveMessage.Vec2();
@@ -100,18 +100,30 @@ example.cx.label = "ComplexDataObject";
 example.cx.backgroundColor = c1;
 example.cx.textColor = c2;
 example.cx.spectrum = [c3, c2, c1];
+example.cx.ranges = [
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Positive,
+];
 const cx1 = new ComprehensiveMessage.ComplexData();
 cx1.identifier = 255;
 cx1.label = "Complex1";
 cx1.backgroundColor = c3;
 cx1.textColor = c1;
 cx1.spectrum = [c3, c2, c1, c2, c3];
+cx1.ranges = [
+    ComprehensiveMessage.Specified.Zero,
+    ComprehensiveMessage.Specified.Positive,
+];
 const cx2 = new ComprehensiveMessage.ComplexData();
 cx2.identifier = 63;
 cx2.label = "Complex2";
 cx2.backgroundColor = c1;
 cx2.textColor = c3;
 cx2.spectrum = [c1, c2, c3, c2, c1];
+cx2.ranges = [
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Zero,
+];
 example.cxl = [cx1, cx2];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
@@ -121,7 +133,7 @@ function generate(filePath: string, softAssert: (condition: boolean, label: stri
 
     writeBuffer(Buffer.from(data, 0, da.currentOffset), filePath);
 
-    softAssert(example.getSizeInBytes() == 932, "size calculation check");
+    softAssert(example.getSizeInBytes() == 956, "size calculation check");
     softAssert(example.getSizeInBytes() == da.currentOffset, "written bytes check");
 }
 
@@ -194,6 +206,10 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         softAssert(input.cx.spectrum[i].g == Math.fround(example.cx.spectrum[i].g), "ComplexData.spectrum.g");
         softAssert(input.cx.spectrum[i].b == Math.fround(example.cx.spectrum[i].b), "ComplexData.spectrum.b");
     }
+    softAssert(input.cx.ranges.length == example.cx.ranges.length, "ComplexData.ranges.length");
+    for (let i = 0; i < input.cx.ranges.length; i++) {
+        softAssert(input.cx.ranges[i] == Math.fround(example.cx.ranges[i]), "ComplexData.spectrum");
+    }
     softAssert(input.cxl.length == example.cxl.length, "[ComplexData].length");
     for (let i=0; i < input.cxl.length; i++) {
         softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
@@ -209,6 +225,10 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
             softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
             softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
             softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+        }
+        softAssert(input.cxl[i].ranges.length == example.cxl[i].ranges.length, "[ComplexData].ranges.length");
+        for (let j = 0; j < input.cxl[i].ranges.length; j++) {
+            softAssert(input.cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
         }
     }
 }

@@ -56,7 +56,7 @@ class CSharpWriter(Writer):
                 self.write_line(f"throw new DataReadErrorException(String.Format(\"Enum {{0}} out of range for {var.vartype}\", _{var.name}));")
                 self.indent_level -= 1
                 self.write_line("}")
-                self.write_line(f"{accessor}{var.name}.Add(({var.vartype})_el);")
+                self.write_line(f"{accessor}{var.name}.Add(({var.vartype})_{var.name});")
             else:
                 inner = Variable(self.protocol, f"{self.type_mapping[var.vartype]} _el", var.vartype)
                 self.deserializer(inner, "")

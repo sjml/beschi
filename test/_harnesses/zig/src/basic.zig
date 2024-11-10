@@ -23,7 +23,7 @@ const example = TestingMessage{
     .ui64 = 18000000000000000000,
     .f = 3.1415927410125732421875,
     .d = 2.718281828459045090795598298427648842334747314453125,
-    .ee = Enumerated.B,
+    .ee = Enumerated.Beta,
     .es = Specified.Negative,
     .s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     .v2 = Vec2{
@@ -80,7 +80,11 @@ const example = TestingMessage{
             Color{ .r = 0, .g = 0, .b = 255 },
             Color{ .r = 0, .g = 255, .b = 0 },
             Color{ .r = 255, .g = 0, .b = 0 },
-        })
+        }),
+        .ranges = makeMutableSlice([_]Specified{
+            Specified.Negative,
+            Specified.Positive,
+        }),
     },
     .cxl = makeMutableSlice([_]ComplexData{
         ComplexData{
@@ -94,7 +98,11 @@ const example = TestingMessage{
                 Color{ .r = 255, .g = 0, .b = 0 },
                 Color{ .r = 0, .g = 255, .b = 0 },
                 Color{ .r = 0, .g = 0, .b = 255 },
-            })
+            }),
+            .ranges = makeMutableSlice([_]Specified{
+                Specified.Zero,
+                Specified.Positive,
+            }),
         },
         ComplexData{
             .identifier = 63,
@@ -107,7 +115,11 @@ const example = TestingMessage{
                 Color{ .r = 0, .g = 0, .b = 255 },
                 Color{ .r = 0, .g = 255, .b = 0 },
                 Color{ .r = 255, .g = 0, .b = 0 },
-            })
+            }),
+            .ranges = makeMutableSlice([_]Specified{
+                Specified.Negative,
+                Specified.Zero,
+            }),
         }
     })
 };
@@ -127,7 +139,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const written_bytes = example.writeBytes(0, buffer, false);
-        checker.softAssert(written_bytes == 932, "size calculation check");
+        checker.softAssert(written_bytes == 956, "size calculation check");
 
         var file = try std.fs.cwd().createFile(args[2], .{ .truncate = true });
         defer file.close();
@@ -141,7 +153,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const input_read = try TestingMessage.fromBytes(testAllocator, 0, buffer);
-        checker.softAssert(input_read.bytes_read == 932, "size read check");
+        checker.softAssert(input_read.bytes_read == 956, "size read check");
         var input = input_read.value;
         defer input.deinit(testAllocator);
         checker.softAssert(input.b == example.b, "byte");
@@ -208,6 +220,10 @@ pub fn main() !void {
             checker.softAssert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g");
             checker.softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b");
         }
+        checker.softAssert(input.cx.ranges.len == example.cx.ranges.len, "ComplexData.ranges.length");
+        for (0..input.cx.ranges.len) |i| {
+            checker.softAssert(input.cx.ranges[i] == example.cx.ranges[i], "ComplexData.ranges");
+        }
         checker.softAssert(input.cxl.len == example.cxl.len, "[ComplexData].length");
         for (0..input.cxl.len) |i| {
             checker.softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
@@ -223,6 +239,10 @@ pub fn main() !void {
                 checker.softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
                 checker.softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
                 checker.softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+            }
+            checker.softAssert(input.cxl[i].ranges.len == example.cxl[i].ranges.len, "[ComplexData].ranges.length");
+            for (0..input.cxl[i].ranges.len) |j| {
+                checker.softAssert(input.cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
             }
         }
     }

@@ -67,7 +67,7 @@ class GoWriter(Writer):
                 self.write_line("}")
                 self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
                 self.indent_level += 1
-                self.write_line(f"return nil, fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
                 self.indent_level -= 1
                 self.write_line("}")
                 self.write_line(f"{accessor}.{var.name}[i{idx}] = _{var.name}")

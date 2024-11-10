@@ -13,7 +13,7 @@ example.i64 = -9000000000000000000
 example.ui64 = 18000000000000000000
 example.f = 3.1415927410125732421875
 example.d = 2.718281828459045090795598298427648842334747314453125
-example.ee = ComprehensiveMessage.Enumerated.B;
+example.ee = ComprehensiveMessage.Enumerated.Beta;
 example.es = ComprehensiveMessage.Specified.Negative;
 example.s = "Lorem ipsum dolor sit amet, consectetur adipiscing elit."
 example.v2 = ComprehensiveMessage.Vec2()
@@ -102,18 +102,30 @@ example.cx.textColor = c2
 example.cx.spectrum = [
     c3, c2, c1
 ]
+example.cx.ranges = [
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Positive
+];
 var cx1 = ComprehensiveMessage.ComplexData()
 cx1.identifier = 255
 cx1.label = "Complex1"
 cx1.backgroundColor = c3
 cx1.textColor = c1
 cx1.spectrum = [c3, c2, c1, c2, c3]
+cx1.ranges = [
+    ComprehensiveMessage.Specified.Zero,
+    ComprehensiveMessage.Specified.Positive
+];
 var cx2 = ComprehensiveMessage.ComplexData()
 cx2.identifier = 63
 cx2.label = "Complex2"
 cx2.backgroundColor = c1
 cx2.textColor = c3
 cx2.spectrum = [c1, c2, c3, c2, c1]
+cx2.ranges = [
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Zero
+];
 example.cxl = [cx1, cx2]
 
 var OK: Bool = true
@@ -148,7 +160,7 @@ if parsed["generate"] != nil {
     example.WriteBytes(data: &data, tag: false)
     try data.write(to: outPath)
 
-    softAssert(example.GetSizeInBytes() == 932, "size calculation check")
+    softAssert(example.GetSizeInBytes() == 956, "size calculation check")
     softAssert(example.GetSizeInBytes() == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
@@ -220,6 +232,10 @@ else if parsed["read"] != nil {
         softAssert(input.cx.spectrum[i].g == example.cx.spectrum[i].g, "ComplexData.spectrum.g")
         softAssert(input.cx.spectrum[i].b == example.cx.spectrum[i].b, "ComplexData.spectrum.b")
     }
+    softAssert(input.cx.ranges.count == example.cx.ranges.count, "ComplexData.ranges.length")
+    for i in 0..<input.cx.ranges.count {
+        softAssert(input.cx.ranges[i] == example.cx.ranges[i], "ComplexData.ranges")
+    }
     softAssert(input.cxl.count == example.cxl.count, "[ComplexData].length");
     for i in 0..<input.cxl.count {
         softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
@@ -235,6 +251,10 @@ else if parsed["read"] != nil {
             softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
             softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
             softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");
+        }
+        softAssert(input.cxl[i].ranges.count == example.cxl[i].ranges.count, "[ComplexData].ranges.length");
+        for j in 0..<input.cxl[i].ranges.count {
+            softAssert(input.cxl[i].ranges[j] == example.cxl[i].ranges[j], "[ComplexData].ranges");
         }
     }
 }
