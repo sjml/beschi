@@ -46,6 +46,16 @@ class GoWriter(Writer):
         self.type_mapping["float"] = "float32"
         self.type_mapping["double"] = "float64"
 
+    def struct_has_enums(self, s: Struct) -> bool:
+        for var in s.members:
+            if var.vartype in self.protocol.enums:
+                return True
+            elif var.vartype in self.protocol.structs:
+                st = self.protocol.structs[var.vartype]
+                if self.struct_has_enums(st):
+                    return True
+        return False
+
     def deserializer(self, var: Variable, accessor: str, by_ref: bool, declare_err: bool):
         if var.is_list:
             self.write_line(f"var {var.name}_Len {self.get_native_list_size()}")
@@ -91,7 +101,7 @@ class GoWriter(Writer):
             self.write_line("}")
             self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
             self.indent_level += 1
-            self.write_line(f"return nil, fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line(f"{accessor}.{var.name} = _{var.name}")
@@ -207,17 +217,23 @@ class GoWriter(Writer):
 
         self.write_line(f"func New{sname}Default() {sname} {{")
         self.indent_level += 1
-        my_enums = [var for var in sdata.members if (var.vartype in self.protocol.enums and not var.is_list)]
-        if len(my_enums) == 0:
+
+        if not self.struct_has_enums(sdata):
             self.write_line(f"return {sname}{{}}")
         else:
             self.write_line(f"return {sname}{{")
             self.indent_level += 1
-            for var in my_enums:
-                e = self.protocol.enums[var.vartype]
-                self.write_line(f"{var.name}: {var.vartype}{e.get_default_pair()[0]},")
+            for var in sdata.members:
+                if var.vartype in self.protocol.enums and not var.is_list:
+                    e = self.protocol.enums[var.vartype]
+                    self.write_line(f"{var.name}: {var.vartype}{e.get_default_pair()[0]},")
+                elif var.vartype in self.protocol.structs and not var.is_list:
+                    s = self.protocol.structs[var.vartype]
+                    if self.struct_has_enums(s):
+                        self.write_line(f"{var.name}: New{var.vartype}Default(),")
             self.indent_level -= 1
             self.write_line("}")
+
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

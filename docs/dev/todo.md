@@ -13,7 +13,6 @@ This file is a rough todo list for the tool itself.
 - enum documentation
     - show both ways of doing it
     - Go enums mean you have to use the New*Default junk :(
-- make sure go initializers nest properly
 
 
 ## possible future protocol features:
