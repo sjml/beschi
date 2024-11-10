@@ -70,6 +70,7 @@ jobs:
   build-dist:
     runs-on: ubuntu-20.04
     needs: [ci-linux, ci-windows]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
@@ -83,7 +84,7 @@ jobs:
     - name: Check Version
       run: |
         version=$(beschi --version | awk '{print $NF}')
-        git_tag=$(git describe --tags)
+        git_tag=$(${{ github.ref_name }})
         if [[ $version != $git_tag ]]; then
           echo "Git tag does not match version string."
           exit 1
@@ -100,7 +101,6 @@ jobs:
 
   publish-pypi:
     runs-on: ubuntu-20.04
-    needs: [build-dist]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     environment:
       name: pypi
@@ -118,7 +118,6 @@ jobs:
 
   publish-brew:
     runs-on: macos-latest
-    needs: [build-dist]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
     - name: Set Version Variable
