@@ -1,23 +1,24 @@
+<!-- Note to future self: using absolute links to documentation here so they work properly on the PyPI page. -->
 # Beschi
 
 [![PyPI](https://img.shields.io/pypi/v/beschi)](https://pypi.org/project/beschi/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/sjml/beschi/ci.yml)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
 This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, TypeScript, and Zig. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
-I go into more explanation for why this exists [in the documentation](./docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
+I go into more explanation for why this exists [in the documentation](https://github.com/sjml/beschi/tree/main/docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
 
 
 ## Documentation
 
-* [Introduction](./docs/introduction.md)
-* [Protocols](./docs/protocols.md)
+* [Introduction](https://github.com/sjml/beschi/tree/main/docs/introduction.md)
+* [Protocols](https://github.com/sjml/beschi/tree/main/docs/protocols.md)
 
 Language-Specific Documentation: 
 
-| [C](./docs/languages/c.md) | [C#](./docs/languages/csharp.md) | [Go](./docs/languages/go.md) | [Rust](./docs/languages/rust.md) | [Swift](./docs/languages/swift.md) | [TypeScript](./docs/languages/typescript.md) | [Zig](./docs/languages/zig.md)
+| [C](https://github.com/sjml/beschi/tree/main/docs/languages/c.md) | [C#](https://github.com/sjml/beschi/tree/main/docs/languages/csharp.md) | [Go](https://github.com/sjml/beschi/tree/main/docs/languages/go.md) | [Rust](https://github.com/sjml/beschi/tree/main/docs/languages/rust.md) | [Swift](https://github.com/sjml/beschi/tree/main/docs/languages/swift.md) | [TypeScript](https://github.com/sjml/beschi/tree/main/docs/languages/typescript.md) | [Zig](https://github.com/sjml/beschi/tree/main/docs/languages/zig.md)
 |-|-|-|-|-|-|-|
 
-* [Dev Notes](./docs/dev)
+* [Dev Notes](https://github.com/sjml/beschi/tree/main/docs/dev)
 
 
 ## Installation
@@ -50,7 +51,7 @@ From the input protocol file (detailed below), you get a code file that you can 
 
 ## Protocols
 
-The protocol files are written in [TOML](https://toml.io). There's [a fuller example in the test suite](./test/_protocols/example.toml) and a [more through explanation in the documentation](./docs/protocols.md), but here's an annotated sample.
+The protocol files are written in [TOML](https://toml.io). There's [a fuller example in the test suite](https://github.com/sjml/beschi/tree/main/test/_protocols/example.toml) and a [more through explanation in the documentation](https://github.com/sjml/beschi/tree/main/docs/protocols.md), but here's an annotated sample.
 
 ```toml
 [meta]
@@ -198,9 +199,9 @@ if (msg.y == Math.fround(4096.1234)) {
 ```
 
 
-For the most part, Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference [outlined on the various language pages](./docs/languages). Notice in the example above, for instance, that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. (Doing equality comparisons on floats is usually a bad idea, but in this instance we *want* to check that they are actually bitwise identical.) Similarly, see how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to make working across languages feel seamless, but there are some differences that we adapt to as much as possible. 
+For the most part, Beschi tries to keep behavior and structures consistent across the languages, but there are a few points of difference [outlined on the various language pages](https://github.com/sjml/beschi/tree/main/docs/languages). Notice in the example above, for instance, that in TypeScript you have to make a call to `Math.fround` if you want to do a straight comparison of float values because of how the underlying JavaScript engine treats all numbers as double-width floats. (Doing equality comparisons on floats is usually a bad idea, but in this instance we *want* to check that they are actually bitwise identical.) Similarly, see how the data members are upper-cased in Go to match that language's export conventions, and the byte reading function is part of the namespace because Go doesn't have static functions for data types. The goal is to make working across languages feel seamless, but there are some differences that we adapt to as much as possible. 
 
-There are more extensive examples in [the test harnesses](./test/_harnesses).
+There are more extensive examples in [the test harnesses](https://github.com/sjml/beschi/tree/main/test/_harnesses).
 
 
 ## Future

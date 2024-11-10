@@ -67,14 +67,13 @@ jobs:
       run: pytest --only c
 
 
-  publish:
+  build-dist:
     runs-on: ubuntu-20.04
     needs: [ci-linux, ci-windows]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Install Prerequisites
@@ -93,8 +92,70 @@ jobs:
       run: |
         rm -rf dist
         python -m build
+    - name: Upload Distribution Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  publish-pypi:
+    runs-on: ubuntu-20.04
+    needs: [build-dist]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    environment:
+      name: pypi
+      url: https://pypi.org/p/beschi
+    permissions:
+      id-token: write
+    steps:
+    - name: Download Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        user: __token__
-        password: ${{ secrets.PYPI_API_TOKEN }}
+
+  publish-brew:
+    runs-on: macos-latest
+    needs: [build-dist]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Set Version Variable
+      run: echo "BESCHI_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Setup Git Credentials
+      env:
+        SSH_DEPLOY_KEY: ${{ secrets.SSH_DEPLOY_KEY }}
+      run: |
+        SSH_PATH="$HOME/.ssh"
+        mkdir -p "$SSH_PATH"
+        echo "$SSH_DEPLOY_KEY" > "$SSH_PATH/deploy_key"
+        chmod 600 "$SSH_PATH/deploy_key"
+        ssh-keyscan -H "github.com" > "$SSH_PATH/known_hosts"
+        echo "GIT_SSH_COMMAND="ssh -vvv -i $SSH_PATH/deploy_key -o UserKnownHostsFile=$SSH_PATH/known_hosts"" >> $GITHUB_ENV
+    - name: Clone Personal Homebrew Repo
+      env:
+        PUSHER_NAME: ${{ github.event.pusher.name }}
+        PUSHER_EMAIL: ${{ github.event.pusher.email }}
+      run: |
+        git config --global user.name "$PUSHER_NAME"
+        git config --global user.email "$PUSHER_EMAIL"
+        git clone git@github.com:sjml/homebrew-sjml.git homebrew-sjml
+    - name: Update Local Tap
+      # doing manually since `brew bump-formula-pr` has a long installation and wants a PAT?
+      #    probably useful if you want to open a PR to the core Homebrew repo, but we're just
+      #    gonna push directly.
+      run: |
+        wget "https://github.com/sjml/beschi/archive/refs/tags/$BESCHI_VERSION.tar.gz"
+        SHA256_SUM=($(shasum -a 256 $BESCHI_VERSION.tar.gz))
+        cd homebrew-sjml
+        sed -i .bak -E "s/(\s*)url (.*)$/\1url \"https:\/\/github.com\/sjml\/beschi\/archive\/refs\/tags\/$BESCHI_VERSION.tar.gz\"/" Formula/beschi.rb
+        sed -i .bak -E "s/(\s*)sha256 (.*)$/\1sha256 \"$SHA256_SUM\"/" Formula/beschi.rb
+        rm Formula/*.bak
+    - name: Commit and Push to Remote
+      run: |
+        cd homebrew-sjml
+        git add .
+        git commit -m "Updating beschi to $BESCHI_VERSION"
+        echo "Pushing to remote..."
+        git push
