@@ -75,6 +75,49 @@ You can specify that a data member is a list of values by enclosing the type in 
 (Note that a `[bool]` does not do any packing and still uses a single byte per element. Use an integer and bitwise operations like your programming forebears.)
 
 
+## Enums
+
+You can define enumerated values that will be set up as whatever the target language supports for enums. Beschi chooses the underlying integer type based on the values, but is limited to the range of `int32` at the largest, because that's the limit of C. (Practically speaking, there's almost certainly no good reason to be using enum values outside this range anyway. I'm not worried about it; just letting you know the actual limit.)
+
+The enums that you specify can be used as types in structs and messages. 
+
+Example:
+```toml
+[[enums]]
+_name = "CharacterClass"
+_values = [
+    "Fighter",
+    "Wizard",
+    "Rogue",
+    "Cleric"
+]
+
+[[enums]]
+_name = "StatusCode"
+_values = [
+    { _name = "Ok",        _value = 200 },
+    { _name = "Forbidden", _value = 403 },
+    { _name = "NotFound",  _value = 404 },
+    # ... etc.
+]
+```
+
+In the `CharacterClass` example above, the values will be represented by a byte and numbered sequentially with `Fighter` being 0 and `Cleric` being 3. If you need the enumerated values to be specific integers, you can follow the pattern of the `StatusCode` example; since the given numbers fall outside the range of a byte, that enum will be represented as an `int16`. Note that in both cases, Beschi will use the _first_ value in the list as the default; in the sequential one this might be more expected since the first value is 0 and numbers tend to default that way in most programming languages, but in the second example you might be surprised, especially if a later entry in the list actually uses 0 for its value. 
+
+Note that negative values are perfectly valid, but you have to use the fully specified syntax for them. 
+
+```toml
+[[enums]]
+_name = "TeamRole"
+_values = [
+    { _name = "Minion",  _value =  256 },
+    { _name = "Ally",    _value =  512 },
+    { _name = "Leader",  _value = 1024 },
+    { _name = "Traitor", _value =   -1 }
+]
+```
+
+
 ## Messages
 
 Specifying messages is done the same way we describe structs; the only difference is that they get added to a separate table. 
@@ -90,11 +133,11 @@ teamColors = "[Color]"
 
 Messages are indeed very similar to structs, but there are a few important distinctions: 
 * Messages can contain base types, structs, and lists of either. Structs can contain other structs, but messages *cannot* contain other messages. 
-* Only messages are written and read to buffers. (There are generated functions that do similarly with structs, but they should be considered internal implementation details and not called directly.)
+* Only messages are written to and read from buffers. (There are generated functions that do similarly with structs, but they should be considered internal implementation details and not called directly.)
 
 In short, messages are usually what you want to be operating on, but structs are very handy ways to bunch a group of data together for organizational purproses.
 
-Note that all data members are initialized to zero values (or empty strings/lists). There's no way, at present, to specify other defaults in a protocol, so that needs to be handled in client code. 
+Note that all data members are initialized to zero values or empty strings/lists. (The exception to this is an enum that has no valid zero value, which will instead default to the first entry in its list of options.) There's no way, at present, to specify other defaults in a protocol, so that needs to be handled in client code. 
 
 
 ## Invalid Protocols
@@ -103,12 +146,13 @@ Certain protocols will throw errors and not output any generated code. The rules
 
 * Every data member must be either a base type, a struct, a list of base types, or a list of structs. Anything else will fail. 
 * Namespaces, struct names, message names, and data member names cannot contain any spaces.
-* Structs and messages must always have a `_name` property.
-* Struct and message names must be unique. 
+* Structs, messages, and enums must always have a `_name` property.
+* Enums must have a `_values` entry that is *either* a list of strings *or* a list of tables that have a `_name` string member and a `_value` integer member.
+* Struct, message, and enum names must be unique. 
 * Struct names, message names, and data member names cannot be the same as any of the base types (or `list` or `string`). 
 * You cannot have circular references (struct A contains a list of struct B, which contains a struct A).
 * `list_size_type` and `string_size_type`, if specified, must refer to integral types. (One of `byte`, `uint16`, `int16`, `uint32`, `int32`, `uint64`, or `int64`)
-* Lists cannot be directly nested, so you can't create a list of lists of floats with `[[float]]`, but you *could* create a struct that contains a single float and make a list of that. 
+* Lists cannot be directly nested, so you can't create a list of lists of floats with `[[float]]`, but you *could* create a struct that contains a list of `float`s and then make a list of that. 
 * You cannot have more than 255 message types in a single protocol. 
 
 (This last point is because the MessageType identifier is represented with a single byte; in practice I have not found this to be a limitation, but it could be easily expanded if need be.)

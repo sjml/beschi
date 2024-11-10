@@ -138,7 +138,7 @@ _values = [
     { _name = "Ally",    _value =  512 },
     { _name = "Leader",  _value = 1024 },
     # values can even be negative
-    { _name = "Traitor", _value =   -1 },
+    { _name = "Traitor", _value =   -1 }
 ]
 ```
 
