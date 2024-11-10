@@ -242,8 +242,8 @@ impl Spectrum {
         let colors_len = reader.read_u16()?;
         let mut colors: Vec<Color> = Vec::new();
         for _ in 0..colors_len {
-            let el = Color::from_bytes(reader)?;
-            colors.push(el);
+            let _el = Color::from_bytes(reader)?;
+            colors.push(_el);
         }
         Ok(Spectrum {default_color, colors})
     }
@@ -251,8 +251,8 @@ impl Spectrum {
     pub fn write_bytes(&self, writer: &mut Vec<u8>) {
         self.default_color.write_bytes(writer);
         writer.extend((self.colors.len() as u16).to_le_bytes());
-        for el in &self.colors {
-            el.write_bytes(writer);
+        for _el in &self.colors {
+            _el.write_bytes(writer);
         }
     }
 }
@@ -323,8 +323,8 @@ impl NewCharacterMessage {
         let nicknames_len = reader.read_u16()?;
         let mut nicknames: Vec<String> = Vec::new();
         for _ in 0..nicknames_len {
-            let el = reader.read_string()?;
-            nicknames.push(el);
+            let _el = reader.read_string()?;
+            nicknames.push(_el);
         }
         Ok(NewCharacterMessage {id, character_name, job, strength, intelligence, dexterity, wisdom, gold_in_wallet, nicknames})
     }
@@ -343,9 +343,9 @@ impl NewCharacterMessage {
         writer.extend(self.wisdom.to_le_bytes());
         writer.extend(self.gold_in_wallet.to_le_bytes());
         writer.extend((self.nicknames.len() as u16).to_le_bytes());
-        for el in &self.nicknames {
-            writer.extend((el.len() as u8).to_le_bytes());
-            writer.extend(el.as_bytes());
+        for _el in &self.nicknames {
+            writer.extend((_el.len() as u8).to_le_bytes());
+            writer.extend(_el.as_bytes());
         }
     }
 }
@@ -373,8 +373,8 @@ impl CharacterJoinedTeam {
         let team_colors_len = reader.read_u16()?;
         let mut team_colors: Vec<Color> = Vec::new();
         for _ in 0..team_colors_len {
-            let el = Color::from_bytes(reader)?;
-            team_colors.push(el);
+            let _el = Color::from_bytes(reader)?;
+            team_colors.push(_el);
         }
         let role = reader.read_i16()?;
         let role = TeamRole::try_from(role)?;
@@ -389,8 +389,8 @@ impl CharacterJoinedTeam {
         writer.extend((self.team_name.len() as u8).to_le_bytes());
         writer.extend(self.team_name.as_bytes());
         writer.extend((self.team_colors.len() as u16).to_le_bytes());
-        for el in &self.team_colors {
-            el.write_bytes(writer);
+        for _el in &self.team_colors {
+            _el.write_bytes(writer);
         }
         writer.extend((self.role as i16).to_le_bytes());
     }

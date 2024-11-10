@@ -311,8 +311,8 @@ public /* namespace */ enum AppMessages {
             let colors_Length = try dataReader.GetUInt16()
             nSpectrum.colors = []
             for _ in 0..<colors_Length {
-                let colors_el = try Color.FromBytes(dataReader: dataReader)
-                nSpectrum.colors.append(colors_el)
+                let _colors_el = try Color.FromBytes(dataReader: dataReader)
+                nSpectrum.colors.append(_colors_el)
             }
             return nSpectrum
         }
@@ -416,8 +416,8 @@ public /* namespace */ enum AppMessages {
             let nicknames_Length = try dataReader.GetUInt16()
             nNewCharacterMessage.nicknames = []
             for _ in 0..<nicknames_Length {
-                let nicknames_el = try dataReader.GetString()
-                nNewCharacterMessage.nicknames.append(nicknames_el)
+                let _nicknames_el = try dataReader.GetString()
+                nNewCharacterMessage.nicknames.append(_nicknames_el)
             }
             return nNewCharacterMessage
         }
@@ -476,8 +476,8 @@ public /* namespace */ enum AppMessages {
             let teamColors_Length = try dataReader.GetUInt16()
             nCharacterJoinedTeam.teamColors = []
             for _ in 0..<teamColors_Length {
-                let teamColors_el = try Color.FromBytes(dataReader: dataReader)
-                nCharacterJoinedTeam.teamColors.append(teamColors_el)
+                let _teamColors_el = try Color.FromBytes(dataReader: dataReader)
+                nCharacterJoinedTeam.teamColors.append(_teamColors_el)
             }
             let _roleRead = try dataReader.GetInt16()
             guard let _role = TeamRole(rawValue: _roleRead) else {

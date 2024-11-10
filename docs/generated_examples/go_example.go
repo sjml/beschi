@@ -133,6 +133,7 @@ type Color struct {
 func NewColorDefault() Color {
 	return Color{}
 }
+
 func ColorFromBytes(data io.Reader, input *Color) error {
 	if err := binary.Read(data, binary.LittleEndian, &input.Red); err != nil {
 		return fmt.Errorf("Could not read input.Red at offset %d (%w)", getDataOffset(data), err)
@@ -164,6 +165,7 @@ type Spectrum struct {
 func NewSpectrumDefault() Spectrum {
 	return Spectrum{}
 }
+
 func SpectrumFromBytes(data io.Reader, input *Spectrum) error {
 	if err := binary.Read(data, binary.LittleEndian, &input.DefaultColor); err != nil {
 		return fmt.Errorf("Could not read input.DefaultColor at offset %d (%w)", getDataOffset(data), err)
@@ -199,6 +201,7 @@ type Vector3Message struct {
 func NewVector3MessageDefault() Vector3Message {
 	return Vector3Message{}
 }
+
 func (output Vector3Message) GetMessageType() MessageType {
 	return Vector3MessageType
 }
@@ -249,6 +252,7 @@ func NewNewCharacterMessageDefault() NewCharacterMessage {
 		Job: CharacterClassFighter,
 	}
 }
+
 func (output NewCharacterMessage) GetMessageType() MessageType {
 	return NewCharacterMessageType
 }
@@ -340,6 +344,7 @@ func NewCharacterJoinedTeamDefault() CharacterJoinedTeam {
 		Role: TeamRoleMinion,
 	}
 }
+
 func (output CharacterJoinedTeam) GetMessageType() MessageType {
 	return CharacterJoinedTeamType
 }

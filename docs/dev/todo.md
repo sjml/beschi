@@ -9,12 +9,6 @@ This file is a rough todo list for the tool itself.
   - no security checks
   - do not use on untrusted input
 
-## enum notes
-- enum documentation
-    - show both ways of doing it
-    - Go enums mean you have to use the New*Default junk :(
-
-
 ## possible future protocol features:
 - ?? static values, so you can, say, version a message and it will be automatically written to every instance of it
     - maybe like:

@@ -70,7 +70,7 @@ class Enum():
         if all(isinstance(entry, str) for entry in value_spec):
             duplicate_entries = [v for v, count in Counter(value_spec).items() if count > 1]
             if len(duplicate_entries) > 0:
-                raise ValueError(f"Duplicate values in enum {name}: {", ".join(duplicate_entries)}")
+                raise ValueError(f"Duplicate values in enum {name}: {', '.join(duplicate_entries)}")
             self.values = dict((entry, idx) for idx, entry in enumerate(value_spec))
         elif not all(isinstance(entry, dict) for entry in value_spec):
             raise TypeError(f"Values list for enum {name} is neither all strings nor all tables")
@@ -80,11 +80,11 @@ class Enum():
                 if "_name" not in entry:
                     raise TypeError("Missing _name in enum entry")
                 if not type(entry["_name"]) is str:
-                    raise TypeError(f"Enum entry _name is not a string: {entry["_name"]}")
+                    raise TypeError(f"Enum entry _name is not a string: {entry['_name']}")
                 if "_value" not in entry:
                     raise TypeError("Missing _value in enum entry")
                 if not type(entry["_value"]) is int:
-                    raise TypeError(f"Enum entry _value is not an integer: {entry["_value"]}")
+                    raise TypeError(f"Enum entry _value is not an integer: {entry['_value']}")
                 od[entry["_name"]] = entry["_value"]
             self.values = od
 
@@ -193,7 +193,7 @@ class Protocol():
                 raise ValueError(f"No values given for enum {e.name}.")
             duplicate_assignment = [v for v, count in Counter(e.values.values()).items() if count > 1]
             if len(duplicate_assignment) > 0:
-                raise ValueError(f"Duplicate assignments in enum {e.name}: {", ".join([str(v) for v in duplicate_assignment])}")
+                raise ValueError(f"Duplicate assignments in enum {e.name}: {', '.join([str(v) for v in duplicate_assignment])}")
             if e.name in self.structs:
                 raise ValueError(f"Enum name cannot shadow struct: '{e.name}'")
             if e.name in self.messages:

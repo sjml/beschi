@@ -190,7 +190,7 @@ class GoWriter(Writer):
         self.write_line(f"func isValid{ename}(value {ename}) bool {{")
         self.indent_level += 1
         self.write_line("switch value {")
-        self.write_line(f"case {", ".join([f'{ename}{k}' for k in edata.values.keys()])}:")
+        self.write_line(f"case {', '.join([f'{ename}{k}' for k in edata.values.keys()])}:")
         self.indent_level += 1
         self.write_line("return true")
         self.indent_level -= 1

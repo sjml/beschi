@@ -59,6 +59,14 @@ The protocol files are written in [TOML](https://toml.io). There's [a fuller exa
 #  to have to help avoid clashes
 namespace = "AppMessages"
 
+# The size types specify what kind of number to
+#  use when recording the length of lists and
+#  strings. If not specified, they both default
+#  to uint32 (four bytes).
+list_size_type = "uint16"
+string_size_type = "byte"
+
+
 # Messages are defined by a name and their data
 #  members. This will become a class or struct in
 #  the target languages with these pieces of data
@@ -75,14 +83,28 @@ z = "float"
 _name = "NewCharacterMessage"
 id = "uint64"
 characterName = "string"
+job = "CharacterClass" # an enum! (see below)
 strength = "uint16"
 intelligence = "uint16"
 dexterity = "uint16"
+wisdom = "uint16"
 goldInWallet = "uint32"
 nicknames = "[string]" # brackets indicate a list/array
 
-# You can also define structs, collections of data
-#  that go together, but are not themselves a message.
+# You can also define enumerated values which will be
+#  translated into the target language's enum / integer
+#  types as appropriate.
+[[enums]]
+_name = "CharacterClass"
+_values = [
+    "Fighter",
+    "Wizard",
+    "Rogue",
+    "Cleric"
+]
+
+# There are also structs, collections of data that go
+#   together, but are not themselves a message.
 [[structs]]
 _name = "Color"
 red = "float"
@@ -96,12 +118,27 @@ _name = "Spectrum"
 defaultColor = "Color"
 colors = "[Color]"
 
-# Structs can then be used in messages.
+# Structs and enums can then be used in messages
+#  (which can also have lists of structs, of course).
 [[messages]]
 _name = "CharacterJoinedTeam"
 characterID = "uint64"
 teamName = "string"
 teamColors = "[Color]"
+role = "TeamRole"
+
+# Enums can also be non-sequential if you need
+[[enums]]
+_name = "TeamRole"
+_values = [
+    # in a non-sequential enum, the first
+    #   listed value will be used as the default
+    { _name = "Minion",  _value =  256 },
+    { _name = "Ally",    _value =  512 },
+    { _name = "Leader",  _value = 1024 },
+    # values can even be negative
+    { _name = "Traitor", _value =   -1 },
+]
 ```
 
 ## Data Members

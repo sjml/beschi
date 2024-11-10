@@ -78,7 +78,7 @@ class RustWriter(Writer):
             self.write_line(f"writer.extend(({accessor}{var.name}.len() as {self.get_native_list_size()}).to_le_bytes());")
             self.write_line(f"for _el in &{accessor}{var.name} {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{"*" if var.vartype in self.protocol.enums else ""}_el", var.vartype)
+            inner = Variable(self.protocol, f"{'*' if var.vartype in self.protocol.enums else ''}_el", var.vartype)
             self.serializer(inner, "")
             self.indent_level -= 1
             self.write_line("}")

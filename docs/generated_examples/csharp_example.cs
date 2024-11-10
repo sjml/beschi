@@ -126,8 +126,8 @@ namespace AppMessages
             _nSpectrum.colors = new List<Color>();
             for (int i3 = 0; i3 < colors_Length; i3++)
             {
-                Color el = Color.FromBytes(br);
-                _nSpectrum.colors.Add(el);
+                Color _el = Color.FromBytes(br);
+                _nSpectrum.colors.Add(_el);
             }
             return _nSpectrum;
         }
@@ -234,10 +234,10 @@ namespace AppMessages
                 _nNewCharacterMessage.nicknames = new List<string>();
                 for (int i4 = 0; i4 < nicknames_Length; i4++)
                 {
-                    byte string_el_Length = br.ReadByte();
-                    byte[] string_el_Buffer = br.ReadBytes((int)string_el_Length);
-                    string el = System.Text.Encoding.UTF8.GetString(string_el_Buffer);
-                    _nNewCharacterMessage.nicknames.Add(el);
+                    byte string__el_Length = br.ReadByte();
+                    byte[] string__el_Buffer = br.ReadBytes((int)string__el_Length);
+                    string _el = System.Text.Encoding.UTF8.GetString(string__el_Buffer);
+                    _nNewCharacterMessage.nicknames.Add(_el);
                 }
                 return _nNewCharacterMessage;
             }
@@ -304,8 +304,8 @@ namespace AppMessages
                 _nCharacterJoinedTeam.teamColors = new List<Color>();
                 for (int i4 = 0; i4 < teamColors_Length; i4++)
                 {
-                    Color el = Color.FromBytes(br);
-                    _nCharacterJoinedTeam.teamColors.Add(el);
+                    Color _el = Color.FromBytes(br);
+                    _nCharacterJoinedTeam.teamColors.Add(_el);
                 }
                 short _role = br.ReadInt16();
                 if (!Enum.IsDefined(typeof(TeamRole), _role))

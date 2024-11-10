@@ -247,7 +247,7 @@ class CWriter(Writer):
         self.write_line(f"typedef enum {self.prefix}{ename} {{")
         self.indent_level += 1
         for ei, (v, vi) in enumerate((edata.values.items())):
-            self.write_line(f"{self.prefix}{ename}_{v} = {vi}{"," if ei < len(edata.values) - 1 else ""}")
+            self.write_line(f"{self.prefix}{ename}_{v} = {vi}{',' if ei < len(edata.values) - 1 else ''}")
         self.indent_level -= 1
         self.write_line(f"}} {self.prefix}{ename};")
         self.write_line(f"bool {self.prefix}IsValid{ename}({self.type_mapping[edata.encoding]} value);")
