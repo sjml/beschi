@@ -65,7 +65,7 @@ class ZigWriter(Writer):
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
                 self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.encoding]}, local_offset, buffer);")
-                self.write_line(f"if (!_isValidEnum({e.name}, {self.type_mapping[e.encoding]}, {accessor}_{var.name}_check_read.value)) {{")
+                self.write_line(f"if (!isValidEnum({e.name}, {self.type_mapping[e.encoding]}, {accessor}_{var.name}_check_read.value)) {{")
                 self.indent_level += 1
                 self.write_line("return error.InvalidData;")
                 self.indent_level -= 1

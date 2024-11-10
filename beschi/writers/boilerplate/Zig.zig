@@ -3,7 +3,7 @@ const DataReaderError = error {
     InvalidData,
 };
 
-fn _numberTypeIsValid(comptime T: type) bool {
+fn numberTypeIsValid(comptime T: type) bool {
     const validNumericTypes = [_]type{
         bool,
         u8,  i8,
@@ -20,8 +20,8 @@ fn _numberTypeIsValid(comptime T: type) bool {
     return false;
 }
 
-fn _typeIsSimple(comptime T: type) bool {
-    if (comptime _numberTypeIsValid(T)) {
+fn typeIsSimple(comptime T: type) bool {
+    if (comptime numberTypeIsValid(T)) {
         return true;
     }
     const simpleTypes = [_]type{
@@ -35,7 +35,7 @@ fn _typeIsSimple(comptime T: type) bool {
     return false;
 }
 
-fn _isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
+fn isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
     inline for (std.meta.fields(Te)) |f| {
         if (value == f.value) {
             return true;
@@ -46,7 +46,7 @@ fn _isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
 
 pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
-        if (!_numberTypeIsValid(T)) {
+        if (!numberTypeIsValid(T)) {
             @compileError("Invalid number type");
         }
     }
@@ -88,7 +88,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
 
     errdefer {
         for (0..made_count) |i| {
-            if (comptime _numberTypeIsValid(T)) {
+            if (comptime numberTypeIsValid(T)) {
                 // no-op; just keeping the same structure as below
             }
             else {
@@ -97,7 +97,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
                         allocator.free(list[i]);
                     },
                     else => {
-                        if (comptime _typeIsSimple(T)) {
+                        if (comptime typeIsSimple(T)) {
                             // no-op
                         }
                         else {
@@ -111,7 +111,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
     }
 
     for (0..len) |i| {
-        if (comptime _numberTypeIsValid(T)) {
+        if (comptime numberTypeIsValid(T)) {
             const list_read = try readNumber(T, local_offset, buffer);
             list[i] = list_read.value;
             local_offset += list_read.bytes_read;
@@ -123,7 +123,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
                     local_offset += list_read.bytes_read;
                 },
                 else => {
-                    if (comptime _typeIsSimple(T)) {
+                    if (comptime typeIsSimple(T)) {
                         const list_read = try T.fromBytes(local_offset, buffer);
                         list[i] = list_read.value;
                         local_offset += list_read.bytes_read;
@@ -143,7 +143,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
 
 pub fn writeNumber(comptime T: type, offset: usize, buffer: []u8, value: T) usize {
     comptime {
-        if (!_numberTypeIsValid(T)) {
+        if (!numberTypeIsValid(T)) {
             @compileError("Invalid number type");
         }
     }
@@ -169,7 +169,7 @@ pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usiz
     local_offset += writeNumber({# LIST_SIZE_TYPE #}, local_offset, buffer, @intCast(value.len));
 
     for (value) |item| {
-        if (comptime _numberTypeIsValid(T)) {
+        if (comptime numberTypeIsValid(T)) {
             local_offset += writeNumber(T, local_offset, buffer, item);
         }
         else {
