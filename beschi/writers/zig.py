@@ -58,20 +58,10 @@ class ZigWriter(Writer):
                 self.write_line(f"const {accessor}_{var.name}_read = try readList({self.type_mapping[var.vartype]}, allocator, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
-            elif var.vartype in NUMERIC_TYPE_SIZES:
+            elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype in self.protocol.enums:
                 self.write_line(f"const {accessor}_{var.name}_read = try readNumber({self.type_mapping[var.vartype]}, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
                 self.write_line(f"local_offset += {accessor}_{var.name}_read.bytes_read;")
-            elif var.vartype in self.protocol.enums:
-                e = self.protocol.enums[var.vartype]
-                self.write_line(f"const {accessor}_{var.name}_check_read = try readNumber({self.type_mapping[e.encoding]}, local_offset, buffer);")
-                self.write_line(f"if (!isValidEnum({e.name}, {self.type_mapping[e.encoding]}, {accessor}_{var.name}_check_read.value)) {{")
-                self.indent_level += 1
-                self.write_line("return error.InvalidData;")
-                self.indent_level -= 1
-                self.write_line("}")
-                self.write_line(f"const {accessor}_{var.name}: {e.name} = @enumFromInt({accessor}_{var.name}_check_read.value);")
-                self.write_line(f"local_offset += {accessor}_{var.name}_check_read.bytes_read;")
             elif var.vartype == "string":
                 self.write_line(f"const {accessor}_{var.name}_read = try readString(allocator, local_offset, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
@@ -90,11 +80,8 @@ class ZigWriter(Writer):
         else:
             if var.is_list:
                 self.write_line(f"local_offset += writeList({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
-            elif var.vartype in NUMERIC_TYPE_SIZES:
+            elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype in self.protocol.enums:
                 self.write_line(f"local_offset += writeNumber({self.type_mapping[var.vartype]}, local_offset, buffer, {accessor}{var.name});")
-            elif var.vartype in self.protocol.enums:
-                e = self.protocol.enums[var.vartype]
-                self.write_line(f"local_offset += writeNumber({self.type_mapping[e.encoding]}, local_offset, buffer, @intFromEnum({accessor}{var.name}));")
             elif var.vartype == "string":
                 self.write_line(f"local_offset += writeString(local_offset, buffer, {accessor}{var.name});")
             else:
@@ -315,11 +302,13 @@ class ZigWriter(Writer):
         simple_structs  = [sname for sname, sdata in self.protocol.structs.items()  if sdata.is_simple()]
         simple_messages = [mname for mname, mdata in self.protocol.messages.items() if mdata.is_simple()]
         simpletons = simple_structs + simple_messages
+        enum_types = [e.name for e in self.protocol.enums.values()]
 
         subs = [
             ("{# STRING_SIZE_TYPE #}", self.get_native_string_size()),
             ("{# LIST_SIZE_TYPE #}"  , self.get_native_list_size()),
             ("{# SIMPLE_TYPES #}", f"{', '.join(simpletons)}{',' if len(simpletons) > 0 else ''}"),
+            ("{# ENUM_TYPES #}", f"{', '.join(enum_types)}{',' if len(enum_types) > 0 else ''}"),
         ]
         self.add_boilerplate(subs)
         self.write_line()

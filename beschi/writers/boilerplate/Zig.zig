@@ -20,14 +20,31 @@ fn numberTypeIsValid(comptime T: type) bool {
     return false;
 }
 
+const simpleTypes = [_]type{
+    {# SIMPLE_TYPES #}
+};
+
+const enumTypes = [_]type{
+    {# ENUM_TYPES #}
+};
+
 fn typeIsSimple(comptime T: type) bool {
     if (comptime numberTypeIsValid(T)) {
         return true;
     }
-    const simpleTypes = [_]type{
-        {# SIMPLE_TYPES #}
-    };
     for (simpleTypes) |vt| {
+        if (T == vt) {
+            return true;
+        }
+    }
+    if (typeIsEnum(T)) {
+        return true;
+    }
+    return false;
+}
+
+fn typeIsEnum(comptime T: type) bool {
+    for (enumTypes) |vt| {
         if (T == vt) {
             return true;
         }
@@ -46,7 +63,12 @@ fn isValidEnum(comptime Te: type, comptime Ti: type, value: Ti) bool {
 
 pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct { value: T, bytes_read: usize } {
     comptime {
-        if (!numberTypeIsValid(T)) {
+        const actual_type = switch (@typeInfo(T)) {
+            .Enum => |enum_info| enum_info.tag_type,
+            else => T,
+        };
+
+        if (!numberTypeIsValid(actual_type)) {
             @compileError("Invalid number type");
         }
     }
@@ -55,12 +77,25 @@ pub fn readNumber(comptime T: type, offset: usize, buffer: []const u8) !struct {
         return DataReaderError.EOF;
     }
 
-    switch (T) {
-        f32 => return .{ .value = @bitCast(std.mem.readInt(u32, buffer[offset..][0..@sizeOf(T)], .little)), .bytes_read = @sizeOf(T) },
-        f64 => return .{ .value = @bitCast(std.mem.readInt(u64, buffer[offset..][0..@sizeOf(T)], .little)), .bytes_read = @sizeOf(T) },
-        bool => return .{ .value = std.mem.readInt(u8, buffer[offset..][0..@sizeOf(T)], .little) != 0, .bytes_read = @sizeOf(T) },
-        else => return .{ .value = std.mem.readInt(T, buffer[offset..][0..@sizeOf(T)], .little), .bytes_read = @sizeOf(T) },
-    }
+    const val: T = switch (T) {
+        f32 => @bitCast(std.mem.readInt(u32, buffer[offset..][0..@sizeOf(T)], .little)),
+        f64 => @bitCast(std.mem.readInt(u64, buffer[offset..][0..@sizeOf(T)], .little)),
+        bool => std.mem.readInt(u8, buffer[offset..][0..@sizeOf(T)], .little) != 0,
+        else => enum_conversion: {
+            break :enum_conversion switch (@typeInfo(T)) {
+                .Enum => |ei| {
+                    const raw = std.mem.readInt(ei.tag_type, buffer[offset..][0..@sizeOf(T)], .little);
+                    if (!isValidEnum(T, ei.tag_type, raw)) {
+                        return DataReaderError.InvalidData;
+                    }
+                    break :enum_conversion @enumFromInt(raw);
+                },
+                else => std.mem.readInt(T, buffer[offset..][0..@sizeOf(T)], .little),
+            };
+        },
+    };
+
+    return .{ .value = val, .bytes_read = @sizeOf(T) };
 }
 
 pub fn readString(allocator: std.mem.Allocator, offset: usize, buffer: []const u8) !struct { value: []u8, bytes_read: usize } {
@@ -88,7 +123,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
 
     errdefer {
         for (0..made_count) |i| {
-            if (comptime numberTypeIsValid(T)) {
+            if (comptime (numberTypeIsValid(T) or typeIsEnum(T))) {
                 // no-op; just keeping the same structure as below
             }
             else {
@@ -111,7 +146,7 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
     }
 
     for (0..len) |i| {
-        if (comptime numberTypeIsValid(T)) {
+        if (comptime (numberTypeIsValid(T) or typeIsEnum(T))) {
             const list_read = try readNumber(T, local_offset, buffer);
             list[i] = list_read.value;
             local_offset += list_read.bytes_read;
@@ -143,7 +178,12 @@ pub fn readList(comptime T: type, allocator: std.mem.Allocator, offset: usize, b
 
 pub fn writeNumber(comptime T: type, offset: usize, buffer: []u8, value: T) usize {
     comptime {
-        if (!numberTypeIsValid(T)) {
+        const actual_type = switch (@typeInfo(T)) {
+            .Enum => |enum_info| enum_info.tag_type,
+            else => T,
+        };
+
+        if (!numberTypeIsValid(actual_type)) {
             @compileError("Invalid number type");
         }
     }
@@ -153,7 +193,10 @@ pub fn writeNumber(comptime T: type, offset: usize, buffer: []u8, value: T) usiz
         f32 => std.mem.writeInt(u32, @constCast(slice), @bitCast(value), .little),
         f64 => std.mem.writeInt(u64, @constCast(slice), @bitCast(value), .little),
         bool => std.mem.writeInt(u8, @constCast(slice), @intFromBool(value), .little),
-        else => std.mem.writeInt(T, @constCast(slice), value, .little),
+        else => switch (@typeInfo(T)) {
+            .Enum => |ei| std.mem.writeInt(ei.tag_type, @constCast(slice), @intFromEnum(value), .little),
+            else => std.mem.writeInt(T, @constCast(slice), value, .little),
+        }
     }
     return @sizeOf(T);
 }
@@ -169,7 +212,7 @@ pub fn writeList(comptime T: type, offset: usize, buffer: []u8, value: []T) usiz
     local_offset += writeNumber({# LIST_SIZE_TYPE #}, local_offset, buffer, @intCast(value.len));
 
     for (value) |item| {
-        if (comptime numberTypeIsValid(T)) {
+        if (comptime (numberTypeIsValid(T) or typeIsEnum(T))) {
             local_offset += writeNumber(T, local_offset, buffer, item);
         }
         else {

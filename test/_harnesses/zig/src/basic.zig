@@ -37,6 +37,14 @@ const example = TestingMessage{
     },
     .c = Color{ .r = 255, .g = 128, .b = 0 },
     .il = makeMutableSlice([_]i16{ -1000, 500, 0, 750, 2000 }),
+    .el = makeMutableSlice([_]Specified{
+        Specified.Negative,
+        Specified.Negative,
+        Specified.Positive,
+        Specified.Zero,
+        Specified.Positive,
+        Specified.Zero,
+    }),
     .sl = makeMutableSlice([_][]const u8{
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
         "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
@@ -119,7 +127,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const written_bytes = example.writeBytes(0, buffer, false);
-        checker.softAssert(written_bytes == 916, "size calculation check");
+        checker.softAssert(written_bytes == 932, "size calculation check");
 
         var file = try std.fs.cwd().createFile(args[2], .{ .truncate = true });
         defer file.close();
@@ -133,7 +141,7 @@ pub fn main() !void {
         defer testAllocator.free(buffer);
 
         const input_read = try TestingMessage.fromBytes(testAllocator, 0, buffer);
-        checker.softAssert(input_read.bytes_read == 916, "size read check");
+        checker.softAssert(input_read.bytes_read == 932, "size read check");
         var input = input_read.value;
         defer input.deinit(testAllocator);
         checker.softAssert(input.b == example.b, "byte");
@@ -160,6 +168,10 @@ pub fn main() !void {
         checker.softAssert(input.il.len == example.il.len, "[int16].length");
         for (0..input.il.len) |i| {
             checker.softAssert(input.il[i] == example.il[i], "[int16]");
+        }
+        checker.softAssert(input.el.len == example.el.len, "[Specified].length");
+        for (0..input.el.len) |i| {
+            checker.softAssert(input.el[i] == example.el[i], "[Specified]");
         }
         checker.softAssert(input.sl.len == example.sl.len, "[string].length");
         for (0..input.sl.len) |i| {
