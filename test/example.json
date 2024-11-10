@@ -29,6 +29,14 @@
       "b": 0
     },
     "il": [-1000, 500, 0, 750, 2000],
+    "el": [
+      "Specified.Negative",
+      "Specified.Negative",
+      "Specified.Positive",
+      "Specified.Zero",
+      "Specified.Positive",
+      "Specified.Zero"
+    ],
     "sl": [
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
       "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",

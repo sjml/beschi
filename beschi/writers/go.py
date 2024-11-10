@@ -58,8 +58,22 @@ class GoWriter(Writer):
             idx = self.indent_level
             self.write_line(f"for i{idx} := ({self.get_native_list_size()})(0); i{idx} < {var.name}_Len; i{idx}++ {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
-            self.deserializer(inner, accessor, by_ref, declare_err)
+            if var.vartype in self.protocol.enums:
+                self.write_line(f"var _{var.name} {var.vartype}")
+                self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &_{var.name}); err != nil {{")
+                self.indent_level += 1
+                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
+                self.indent_level += 1
+                self.write_line(f"return nil, fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line(f"{accessor}.{var.name}[i{idx}] = _{var.name}")
+            else:
+                inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+                self.deserializer(inner, accessor, by_ref, declare_err)
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
@@ -69,7 +83,6 @@ class GoWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype in self.protocol.enums:
-            e = self.protocol.enums[var.vartype]
             self.write_line(f"var _{var.name} {var.vartype}")
             self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &_{var.name}); err != nil {{")
             self.indent_level += 1
@@ -194,20 +207,20 @@ class GoWriter(Writer):
 
         self.write_line(f"func New{sname}Default() {sname} {{")
         self.indent_level += 1
-        has_enums = any([var.vartype in self.protocol.enums for var in sdata.members])
-        if not has_enums:
+        my_enums = [var for var in sdata.members if (var.vartype in self.protocol.enums and not var.is_list)]
+        if len(my_enums) == 0:
             self.write_line(f"return {sname}{{}}")
         else:
             self.write_line(f"return {sname}{{")
             self.indent_level += 1
-            for var in sdata.members:
-                if var.vartype in self.protocol.enums:
-                    e = self.protocol.enums[var.vartype]
-                    self.write_line(f"{var.name}: {var.vartype}{e.get_default_pair()[0]},")
+            for var in my_enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"{var.name}: {var.vartype}{e.get_default_pair()[0]},")
             self.indent_level -= 1
             self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         if sdata.is_message:
             self.write_line(f"func (output {sname}) GetMessageType() MessageType {{")

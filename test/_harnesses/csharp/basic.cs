@@ -33,6 +33,14 @@ class BasicHarness: TestHarness {
         example.c.g = 128;
         example.c.b = 0;
         example.il = new List<short> { -1000, 500, 0, 750, 2000 };
+        example.el = new List<ComprehensiveMessage.Specified> {
+            ComprehensiveMessage.Specified.Negative,
+            ComprehensiveMessage.Specified.Negative,
+            ComprehensiveMessage.Specified.Positive,
+            ComprehensiveMessage.Specified.Zero,
+            ComprehensiveMessage.Specified.Positive,
+            ComprehensiveMessage.Specified.Zero
+        };
         example.sl = new List<string> {
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
             "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
@@ -124,7 +132,7 @@ class BasicHarness: TestHarness {
             BinaryWriter bw = new BinaryWriter(f);
             example.WriteBytes(bw, false);
 
-            softAssert(example.GetSizeInBytes() == 916, "size calculation check");
+            softAssert(example.GetSizeInBytes() == 932, "size calculation check");
             softAssert(example.GetSizeInBytes() == bw.BaseStream.Position, "written bytes check");
         }
         else if (parsedArgs.ContainsKey("read"))
@@ -159,6 +167,11 @@ class BasicHarness: TestHarness {
             for (int i = 0; i < input.il.Count; i++)
             {
                 softAssert(input.il[i] == example.il[i], "[int16]");
+            }
+            softAssert(input.el.Count == example.el.Count, "[Specified].length");
+            for (int i = 0; i < input.el.Count; i++)
+            {
+                softAssert(input.el[i] == example.el[i], "[Specified]");
             }
             softAssert(input.sl.Count == example.sl.Count, "[string].length");
             for (int i = 0; i < input.sl.Count; i++)

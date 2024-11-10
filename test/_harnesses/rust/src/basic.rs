@@ -36,6 +36,14 @@ fn main() {
         v3: Vec3 {x: 128.64, y: 2048.4096, z: 16.32},
         c: Color {r: 255, g: 128, b: 0},
         il: vec![-1000, 500, 0, 750, 2000],
+        el: vec![
+            Specified::Negative,
+            Specified::Negative,
+            Specified::Positive,
+            Specified::Zero,
+            Specified::Positive,
+            Specified::Zero
+        ],
         sl: vec![
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit.".to_string(),
             "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.".to_string(),
@@ -106,7 +114,7 @@ fn main() {
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
         example.write_bytes(&mut writer, false);
-        checker.soft_assert(writer.len() == 916, "size calculation check");
+        checker.soft_assert(writer.len() == 932, "size calculation check");
 
         let filename = args.get("generate").unwrap();
         fs::write(filename, writer).unwrap();
@@ -140,6 +148,10 @@ fn main() {
         checker.soft_assert(input.il.len() == example.il.len(), "[int16].length");
         for i in 0..input.il.len() {
             checker.soft_assert(input.il[i] == example.il[i], "[int16]");
+        }
+        checker.soft_assert(input.el.len() == example.el.len(), "[Specified].length");
+        for i in 0..input.el.len() {
+            checker.soft_assert(input.el[i] == example.el[i], "[Specified]");
         }
         checker.soft_assert(input.sl.len() == example.sl.len(), "[string].length");
         for i in 0..input.sl.len() {

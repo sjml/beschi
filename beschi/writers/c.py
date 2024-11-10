@@ -83,8 +83,20 @@ class CWriter(Writer):
             idx = self.indent_level
             self.write_line(f"for ({self.get_native_list_size()} i{idx} = 0; i{idx} < {accessor}{var.name}_len; i{idx}++) {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
-            self.deserializer(inner, accessor)
+            if var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"{self.type_mapping[e.encoding]} _{var.name};")
+                self.write_line(f"err = {self.prefix}_Read{self.base_serializers[e.encoding]}(r, &(_{var.name}));")
+                self.err_check_return()
+                self.write_line(f"if (!{self.prefix}IsValid{var.vartype}(_{var.name})) {{")
+                self.indent_level += 1
+                self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line(f"{accessor}{var.name}[i{idx}] = ({self.prefix}{var.vartype})_{var.name};")
+            else:
+                inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+                self.deserializer(inner, accessor)
             self.indent_level -= 1
             self.write_line("}")
             self.err_check_return()
@@ -253,7 +265,7 @@ class CWriter(Writer):
                     self.write_line(f"{self.get_native_list_size()}* {var.name}_els_len;")
                 if var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
                     self.write_line(f"{self.type_mapping[var.vartype]}* {var.name};")
-                elif var.vartype in self.protocol.structs:
+                elif var.vartype in self.protocol.structs or var.vartype in self.protocol.enums:
                     self.write_line(f"{self.prefix}{var.vartype}* {var.name};")
             elif var.vartype == "string":
                 self.write_line(f"{self.get_native_string_size()} {var.name}_len;")

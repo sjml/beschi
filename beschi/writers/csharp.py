@@ -47,9 +47,20 @@ class CSharpWriter(Writer):
             self.write_line(f"for (int i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++)")
             self.write_line("{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{self.type_mapping[var.vartype]} el", var.vartype)
-            self.deserializer(inner, "")
-            self.write_line(f"{accessor}{var.name}.Add(el);")
+            if var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"{self.type_mapping[e.encoding]} _{var.name} = br.{self.base_deserializers[e.encoding]}();")
+                self.write_line(f"if (!Enum.IsDefined(typeof({var.vartype}), _{var.name}))")
+                self.write_line("{")
+                self.indent_level += 1
+                self.write_line(f"throw new DataReadErrorException(String.Format(\"Enum {{0}} out of range for {var.vartype}\", _{var.name}));")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line(f"{accessor}{var.name}.Add(({var.vartype})_el);")
+            else:
+                inner = Variable(self.protocol, f"{self.type_mapping[var.vartype]} _el", var.vartype)
+                self.deserializer(inner, "")
+                self.write_line(f"{accessor}{var.name}.Add(_el);")
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":

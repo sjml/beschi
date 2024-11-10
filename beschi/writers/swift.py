@@ -46,9 +46,18 @@ class SwiftWriter(Writer):
             self.write_line(f"{accessor}{var.name} = []")
             self.write_line(f"for _ in 0..<{var.name}_Length {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"let {var.name}_el", var.vartype)
-            self.deserializer(inner, "")
-            self.write_line(f"{accessor}{var.name}.append({var.name}_el)")
+            if var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"let _{var.name}Read = try dataReader.Get{self.type_mapping[e.encoding]}()")
+                self.write_line(f"guard let _{var.name}_el = {var.vartype}(rawValue: _{var.name}Read) else {{")
+                self.indent_level += 1
+                self.write_line("throw DataReaderError.InvalidData")
+                self.indent_level -= 1
+                self.write_line("}")
+            else:
+                inner = Variable(self.protocol, f"let _{var.name}_el", var.vartype)
+                self.deserializer(inner, "")
+            self.write_line(f"{accessor}{var.name}.append(_{var.name}_el)")
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":

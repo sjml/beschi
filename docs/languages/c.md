@@ -45,7 +45,8 @@ Note that this requires the `stdint.h` and `stdbool.h` header files, which are s
         - You probably shouldn't declare members in the protocol that would shadow these variables, but I'm not the boss of you. 
 * With the various length variables: they will be set properly when reading a message out of a buffer, but ***you are responsible*** for making sure they are correct before they go into a buffer. C has no way to track the length of arrays (without introducing another dependency), so it's up to you. 
 * The calculated length for strings should *not* include the null terminator. 
-* When declaring an instance of a message, it's probably best to use the generated constant `{namespace}_{message_name}_default` to make sure that its members are initialized and that its identifying byte is set correctly. Otherwise things might break. 
+* When declaring an instance of a message, it's probably best to use the generated `{namespace}_{message_name}_Create` function to make sure that its members are initialized and that its identifying byte is set correctly. Otherwise things might break.
+    - Note that function allocates, so that's a problem for you, just copy the constant `{namespace}_{message_name}_default` directly. 
 * Reading a message from a buffer copies all the data it needs, so the buffer can be discarded safely afterwards. This *does* mean, though, that the reading functions will allocate memory if there are lists or strings in the structure. They will need to be `free`-ed or will leak. 
     - Every message struct has an associated `{namespace}_Destroy{message_type}` function that handles that for you. 
 * `ProcessRawBytes` fills an array of pointers to `void` (`void**`), so you need to pass it a *pointer* to such an array, a `void***`. I know, I know. Anyway, once it's filled, you can check each one for its type with `{namespace}_GetMessageType` and then cast as you need to. 

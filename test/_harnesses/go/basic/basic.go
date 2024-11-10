@@ -42,6 +42,14 @@ func main() {
 	example.C.G = 128
 	example.C.B = 0
 	example.Il = []int16{-1000, 500, 0, 750, 2000}
+	example.El = []comprehensivemessage.Specified{
+		comprehensivemessage.SpecifiedNegative,
+		comprehensivemessage.SpecifiedNegative,
+		comprehensivemessage.SpecifiedPositive,
+		comprehensivemessage.SpecifiedZero,
+		comprehensivemessage.SpecifiedPositive,
+		comprehensivemessage.SpecifiedZero,
+	}
 	example.Sl = []string{
 		"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
 		"Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
@@ -127,7 +135,7 @@ func main() {
 
 		example.WriteBytes(dat, false)
 
-		softAssert(example.GetSizeInBytes() == 916, "size calculation check")
+		softAssert(example.GetSizeInBytes() == 932, "size calculation check")
 		seek, _ := dat.Seek(0, io.SeekCurrent)
 		softAssert(example.GetSizeInBytes() == (int)(seek), "written bytes check")
 	} else if len(*readPathPtr) > 0 {
@@ -164,6 +172,10 @@ func main() {
 		softAssert(len(input.Il) == len(example.Il), "[int16].length")
 		for i := 0; i < len(input.Il); i++ {
 			softAssert(input.Il[i] == example.Il[i], "[int16]")
+		}
+		softAssert((len(input.El) == len(example.El)), "[Specified].length")
+		for i := 0; i < len(input.El); i++ {
+			softAssert(input.El[i] == example.El[i], "[Specified]")
 		}
 		softAssert(len(input.Sl) == len(example.Sl), "[string].length")
 		for i := 0; i < len(input.Sl); i++ {

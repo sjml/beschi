@@ -52,9 +52,9 @@ class RustWriter(Writer):
                 self.write_line(f"let mut {var.name}: Vec<{var.vartype}> = Vec::new();")
             self.write_line(f"for _ in 0..{var.name}_len {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, "el", var.vartype)
+            inner = Variable(self.protocol, "_el", var.vartype)
             self.deserializer(inner, "");
-            self.write_line(f"{var.name}.push(el);")
+            self.write_line(f"{var.name}.push(_el);")
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES:
@@ -76,9 +76,9 @@ class RustWriter(Writer):
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
             self.write_line(f"writer.extend(({accessor}{var.name}.len() as {self.get_native_list_size()}).to_le_bytes());")
-            self.write_line(f"for el in &{accessor}{var.name} {{")
+            self.write_line(f"for _el in &{accessor}{var.name} {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, "el", var.vartype)
+            inner = Variable(self.protocol, f"{"*" if var.vartype in self.protocol.enums else ""}_el", var.vartype)
             self.serializer(inner, "")
             self.indent_level -= 1
             self.write_line("}")

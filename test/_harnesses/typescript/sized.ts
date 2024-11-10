@@ -36,8 +36,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
 
     softAssert(input.label == shortList.label, "readback label comparison");
     softAssert(input.collection.length == shortList.collection.length, "readback list length");
-    for (let i = 0; i < input.collection.length; i++)
-    {
+    for (let i = 0; i < input.collection.length; i++) {
         softAssert(input.collection[i] == shortList.collection[i], "short list comparison");
     }
 }

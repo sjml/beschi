@@ -28,6 +28,14 @@ example.c.r = 255
 example.c.g = 128
 example.c.b = 0
 example.il = [-1000, 500, 0, 750, 2000]
+example.el = [
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Negative,
+    ComprehensiveMessage.Specified.Positive,
+    ComprehensiveMessage.Specified.Zero,
+    ComprehensiveMessage.Specified.Positive,
+    ComprehensiveMessage.Specified.Zero,
+]
 example.sl = [
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     "Quisque est eros, placerat ut libero ut, pellentesque tincidunt sem.",
@@ -140,7 +148,7 @@ if parsed["generate"] != nil {
     example.WriteBytes(data: &data, tag: false)
     try data.write(to: outPath)
 
-    softAssert(example.GetSizeInBytes() == 916, "size calculation check")
+    softAssert(example.GetSizeInBytes() == 932, "size calculation check")
     softAssert(example.GetSizeInBytes() == data.count, "written bytes check")
 }
 else if parsed["read"] != nil {
@@ -172,6 +180,10 @@ else if parsed["read"] != nil {
     softAssert(input.il.count == example.il.count, "[int16].length")
     for i in 0..<input.il.count {
         softAssert(input.il[i] == example.il[i], "[int16]")
+    }
+    softAssert(input.el.count == example.el.count, "[Specified].length")
+    for i in 0..<input.el.count {
+        softAssert(input.el[i] == example.el[i], "[Specified]")
     }
     softAssert(input.sl.count == example.sl.count, "[string].length")
     for i in 0..<input.sl.count {

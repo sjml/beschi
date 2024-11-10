@@ -38,26 +38,22 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
     softAssert(input.c.g == Math.fround(example.c.g), "Color.g");
     softAssert(input.c.b == Math.fround(example.c.b), "Color.b");
     softAssert(input.sl.length == example.sl.length, "[string].length");
-    for (let i = 0; i < input.sl.length; i++)
-    {
+    for (let i = 0; i < input.sl.length; i++) {
         softAssert(input.sl[i] == example.sl[i], "[string]");
     }
     softAssert(input.v2l.length == example.v2l.length, "[Vec2].length");
-    for (let i = 0; i < input.v2l.length; i++)
-    {
+    for (let i = 0; i < input.v2l.length; i++) {
         softAssert(input.v2l[i].x == example.v2l[i].x, "[Vec2].x");
         softAssert(input.v2l[i].y == example.v2l[i].y, "[Vec2].y");
     }
     softAssert(input.v3l.length == example.v3l.length, "[Vec3].length");
-    for (let i = 0; i < input.v3l.length; i++)
-    {
+    for (let i = 0; i < input.v3l.length; i++) {
         softAssert(input.v3l[i].x == example.v3l[i].x, "[Vec3].x");
         softAssert(input.v3l[i].y == example.v3l[i].y, "[Vec3].y");
         softAssert(input.v3l[i].z == example.v3l[i].z, "[Vec3].z");
     }
     softAssert(input.cl.length == example.cl.length, "[Color].length");
-    for (let i = 0; i < input.cl.length; i++)
-    {
+    for (let i = 0; i < input.cl.length; i++) {
         softAssert(input.cl[i].r == example.cl[i].r, "[Color].r");
         softAssert(input.cl[i].g == example.cl[i].g, "[Color].g");
         softAssert(input.cl[i].b == example.cl[i].b, "[Color].b");
@@ -71,15 +67,13 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
     softAssert(input.cx.textColor.g == Math.fround(example.cx.textColor.g), "ComplexData.textColor.g");
     softAssert(input.cx.textColor.b == Math.fround(example.cx.textColor.b), "ComplexData.textColor.b");
     softAssert(input.cx.spectrum.length == example.cx.spectrum.length, "ComplexData.spectrum.length");
-    for (let i = 0; i < input.cx.spectrum.length; i++)
-    {
+    for (let i = 0; i < input.cx.spectrum.length; i++) {
         softAssert(input.cx.spectrum[i].r == Math.fround(example.cx.spectrum[i].r), "ComplexData.spectrum.r");
         softAssert(input.cx.spectrum[i].g == Math.fround(example.cx.spectrum[i].g), "ComplexData.spectrum.g");
         softAssert(input.cx.spectrum[i].b == Math.fround(example.cx.spectrum[i].b), "ComplexData.spectrum.b");
     }
     softAssert(input.cxl.length == example.cxl.length, "[ComplexData].length");
-    for (let i=0; i < input.cxl.length; i++)
-    {
+    for (let i=0; i < input.cxl.length; i++) {
         softAssert(input.cxl[i].identifier == example.cxl[i].identifier, "[ComplexData].identifier");
         softAssert(input.cxl[i].label == example.cxl[i].label, "[ComplexData].label");
         softAssert(input.cxl[i].backgroundColor.r == example.cxl[i].backgroundColor.r, "[ComplexData].backgroundColor.r");
@@ -89,8 +83,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
         softAssert(input.cxl[i].textColor.g == example.cxl[i].textColor.g, "[ComplexData].textColor.g");
         softAssert(input.cxl[i].textColor.b == example.cxl[i].textColor.b, "[ComplexData].textColor.b");
         softAssert(input.cxl[i].spectrum.length == example.cxl[i].spectrum.length, "[ComplexData].spectrum.length");
-        for (let j = 0; j < input.cxl[i].spectrum.length; j++)
-        {
+        for (let j = 0; j < input.cxl[i].spectrum.length; j++) {
             softAssert(input.cxl[i].spectrum[j].r == example.cxl[i].spectrum[j].r, "[ComplexData].spectrum.r");
             softAssert(input.cxl[i].spectrum[j].g == example.cxl[i].spectrum[j].g, "[ComplexData].spectrum.g");
             softAssert(input.cxl[i].spectrum[j].b == example.cxl[i].spectrum[j].b, "[ComplexData].spectrum.b");

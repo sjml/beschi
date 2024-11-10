@@ -43,6 +43,16 @@ int main(int argc, char** argv) {
     example.il_len = 5;
     short il[5] = { -1000, 500, 0, 750, 2000 };
     example.il = il;
+    example.el_len = 6;
+    ComprehensiveMessage_Specified el[6] = {
+        ComprehensiveMessage_Specified_Negative,
+        ComprehensiveMessage_Specified_Negative,
+        ComprehensiveMessage_Specified_Positive,
+        ComprehensiveMessage_Specified_Zero,
+        ComprehensiveMessage_Specified_Positive,
+        ComprehensiveMessage_Specified_Zero
+    };
+    example.el = el;
     example.sl_len = 7;
     char* sl[7] = {
         (char*)"Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
@@ -131,6 +141,7 @@ int main(int argc, char** argv) {
 
     if (genPath != NULL) {
         err = ComprehensiveMessage_TestingMessage_GetSizeInBytes(&example, &bufferSize);
+        softAssert(bufferSize == 932, "size calculation check");
         if (err != COMPREHENSIVEMESSAGE_ERR_OK) { return err; }
         buffer = (uint8_t*)malloc(bufferSize);
         ComprehensiveMessage_DataAccess writer = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
@@ -204,6 +215,10 @@ int main(int argc, char** argv) {
         softAssert(input->il_len == example.il_len, "[int16].length");
         for (uint32_t i = 0; i < input->il_len; i++) {
             softAssert(input->il[i] == example.il[i], "[int16]");
+        }
+        softAssert(input->el_len == example.el_len, "[Specified].length");
+        for (uint32_t i = 0; i < input->el_len; i++) {
+            softAssert(input->el[i] == example.el[i], "[Specified]");
         }
         softAssert(input->sl_len == example.sl_len, "[string].length");
         for (uint32_t i  = 0; i < input->sl_len; i++) {

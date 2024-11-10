@@ -14,12 +14,10 @@ This file is a rough todo list for the tool itself.
     - show both ways of doing it
     - Go enums mean you have to use the New*Default junk :(
 - test cases, beyond just read/write:
-  - corrupted message with invalid value throws error
-  - Go and Rust renames (are those tested on other protocol things?)
-    - (are they happening to struct and message names?!)
   - enum in a struct in another struct
     - (gonna be a problem for Go; initiators need to nest)
   - list of enums
+      - done on most; still need to do for zig
 
 
 ## possible future protocol features:

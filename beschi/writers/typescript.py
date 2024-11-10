@@ -54,8 +54,18 @@ class TypeScriptWriter(Writer):
             idx = self.indent_level
             self.write_line(f"for (let i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
             self.indent_level += 1
-            inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
-            self.deserializer(inner, accessor)
+            if var.vartype in self.protocol.enums:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.encoding]}();")
+                self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
+                self.indent_level += 1
+                self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line(f"{accessor}{var.name}[i{idx}] = _{var.name};")
+            else:
+                inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
+                self.deserializer(inner, accessor)
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype == "string":
