@@ -142,6 +142,9 @@ _values = [
 ]
 ```
 
+Note that while [the TOML spec](https://toml.io/en/v1.0.0) does not guarantee the order of table entries, [the Python library which Beschi uses](https://docs.python.org/3/library/tomllib.html) uses order-preserving dictionaries, so if you care about the order of elements in the resulting struct (for memory alignment issues or something), you can re-order them and have that change reflected in the generated code. 
+
+
 ## Data Members
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
