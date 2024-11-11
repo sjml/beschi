@@ -158,7 +158,7 @@ These are the base types from which you can build up whatever structures and mes
 | **`uint64`**  | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   | `u64`         |
 | **`float`**   | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   | `f32`         |
 | **`double`**  | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   | `f64`         |
-| **`string`**  | `char*`    | `string` | `string`  | `String` | `String`  | `string`   | `[] const u8` |
+| **`string`**  | `char*`    | `string` | `string`  | `String` | `String`  | `string`   | `[]const u8`  |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. 
 
