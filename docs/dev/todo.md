@@ -2,7 +2,6 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
-- rethink C memory story -- destroy functions work, but only on `malloc`ed memory, and might need to clean up stack variables that contain allocations
 - test suite for destroying messages
 - add notes about trustworthiness
   - all reading code assumes it's reading stuff that was written by a corresponding writer

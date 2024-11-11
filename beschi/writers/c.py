@@ -290,6 +290,7 @@ class CWriter(Writer):
         if sdata.is_message:
             self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_GetSizeInBytes(const {self.prefix}{sname}* m, size_t* size);")
             self.write_line(f"{self.prefix}{sname}* {self.prefix}{sname}_Create(void);")
+            self.write_line(f"void {self.prefix}{sname}_Cleanup({self.prefix}{sname} *m);")
             self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m);")
         self.write_line()
         self.write_line()
@@ -345,13 +346,21 @@ class CWriter(Writer):
             self.write_line("}")
             self.write_line()
 
-            self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m) {{")
+            self.write_line(f"void {self.prefix}{sname}_Cleanup({self.prefix}{sname} *m) {{")
             self.indent_level += 1
             [self.destructor(mem, f"m->") for mem in sdata.members]
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+
+            self.write_line(f"void {self.prefix}{sname}_Destroy({self.prefix}{sname} *m) {{")
+            self.indent_level += 1
+            self.write_line(f"{self.prefix}{sname}_Cleanup(m);")
             self.write_line(f"{self.prefix.upper()}FREE(m);")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
+
 
         self.write_line(f"{self.prefix}err_t {self.prefix}{sname}_FromBytes({self.prefix}DataAccess* r, {self.prefix}{sname}* dst) {{")
         self.indent_level += 1
