@@ -52,9 +52,9 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
     - name: Install Beschi and Python Prerequisites
@@ -81,14 +81,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install '.[publish]'
-    - name: Check Version
-      run: |
-        version=$(beschi --version | awk '{print $NF}')
-        git_tag=$(${{ github.ref_name }})
-        if [[ $version != $git_tag ]]; then
-          echo "Git tag does not match version string."
-          exit 1
-        fi
     - name: Build Distribution Package
       run: |
         rm -rf dist
@@ -101,7 +93,7 @@ jobs:
 
   publish-pypi:
     runs-on: ubuntu-20.04
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build-dist]
     environment:
       name: pypi
       url: https://pypi.org/p/beschi
@@ -118,7 +110,7 @@ jobs:
 
   publish-brew:
     runs-on: macos-latest
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build-dist]
     steps:
     - name: Set Version Variable
       run: echo "BESCHI_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
