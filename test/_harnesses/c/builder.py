@@ -3,6 +3,7 @@ import stat
 import platform
 import subprocess
 import shutil
+import shlex
 
 # i hate this
 import sys
@@ -12,6 +13,8 @@ import builder_util
 if platform.system() != "Windows":
     CC = os.environ.get("CC", "clang")
     CXX = os.environ.get("CXX", "clang++")
+    CFLAGS = shlex.split(os.environ.get("CFLAGS", ""))
+    CPPFLAGS = shlex.split(os.environ.get("CPPFLAGS", ""))
 
     FLAGS = [
         "-pedantic-errors", # complain if compiler extensions come into play
@@ -32,7 +35,8 @@ if platform.system() != "Windows":
         "unused-parameter", # GetSizeInBytes takes a message pointer, but never looks at it if the size is constant precomputed
     ]
     [FLAGS.append(f"-Wno-{sw}") for sw in SILENCE_WARNINGS]
-    CFLAGS = [
+
+    CFLAGS += [
         "-std=c99",         # c99 is the baseline
     ]
     CSILENCE_WARNINGS = [
@@ -40,14 +44,18 @@ if platform.system() != "Windows":
     ]
     [CFLAGS.append(f"-Wno-{sw}") for sw in CSILENCE_WARNINGS]
 
-    CPPFLAGS = [
+    CPPFLAGS += [
         "-x", "c++",        # explicitly compile C files as C++
     ]
     if CXX == "clang++":
         major_version = int(subprocess.getoutput(f"{CXX} -dumpversion").split(".")[0])
     else:
         # assuming that non-clang is GCC
-        major_version = int(subprocess.getoutput(f"{CXX} -dumpversion"))
+        vstring = subprocess.getoutput(f"{CXX} -dumpversion")
+        if "." in vstring:
+            major_version = int(subprocess.getoutput(f"{CXX} -dumpversion").split(".")[0])
+        else:
+            major_version = int(subprocess.getoutput(f"{CXX} -dumpversion"))
 
         # C++ 20 is needed to use designated initializers, but flags to indicate that shift
         if major_version <= 9:

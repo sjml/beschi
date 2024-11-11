@@ -14,7 +14,7 @@ This file is a rough todo list for the tool itself.
     - maybe like:
         ```toml
         [[structs]]
-        _name = "ConfigurationParamaters"
+        _name = "ConfigurationParameters"
         revision = "u16:24"
         semver = "[u16]:[0, 1, 0]" # this one makes me nervous for some reason
         # ..."
@@ -23,6 +23,8 @@ This file is a rough todo list for the tool itself.
         - statics are allowed for numeric types (and lists of numeric types) only
         - statics cannot be set from target language; will be overwritten with static value when put into the buffer
             - note that this might lead to leaked memory or trashed pointers if you're not careful in C
+    - thinking about this some more I'm way less inclined to bother with it
+        - given that all generated languages are such that differences in code will arise at compile-time, there's a lot less utility in it; unless Beschi were to start going down the road of reading older messages, but that way lies complexity and madness
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now
     - not pressing, but worth thinking of
         ```toml
@@ -38,6 +40,7 @@ This file is a rough todo list for the tool itself.
         regList = "[DataType][]" # default
         regList2 = "[DataType]" # default
         ```
+    - I still like this idea in the larger sense; feels like a very pragmatic thing to have. In current projects though I'm not quibbling over a few bytes, and the effort of implementing and testing this across all generated languages would be high.
 
 ## "immediate" todo
 - make multiple message stream a bit smarter (below)
