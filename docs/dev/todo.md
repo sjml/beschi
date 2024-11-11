@@ -2,28 +2,13 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
-- test suite for destroying messages
+- test suite for destroying and cleaning up messages
 - add notes about trustworthiness
   - all reading code assumes it's reading stuff that was written by a corresponding writer
   - no security checks
   - do not use on untrusted input
 
 ## possible future protocol features:
-- ?? static values, so you can, say, version a message and it will be automatically written to every instance of it
-    - maybe like:
-        ```toml
-        [[structs]]
-        _name = "ConfigurationParameters"
-        revision = "u16:24"
-        semver = "[u16]:[0, 1, 0]" # this one makes me nervous for some reason
-        # ..."
-        ```
-    - proposal:
-        - statics are allowed for numeric types (and lists of numeric types) only
-        - statics cannot be set from target language; will be overwritten with static value when put into the buffer
-            - note that this might lead to leaked memory or trashed pointers if you're not careful in C
-    - thinking about this some more I'm way less inclined to bother with it
-        - given that all generated languages are such that differences in code will arise at compile-time, there's a lot less utility in it; unless Beschi were to start going down the road of reading older messages, but that way lies complexity and madness
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now
     - not pressing, but worth thinking of
         ```toml
