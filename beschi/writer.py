@@ -37,6 +37,7 @@ class Writer:
 
         self.protocol = protocol
         self.tab: str = tab
+        self.native_tab: str = tab
 
         self.type_mapping: dict[str, str] = {}
         self.type_mapping["string"] = "string"
@@ -59,6 +60,12 @@ class Writer:
             boilerplate_lines = open(boilerplate_path, "r").read().splitlines()
             for s in substitutions:
                 boilerplate_lines = [bpl.replace(s[0], s[1]) for bpl in boilerplate_lines]
+            def replace_indent(line: str, old_indent: str, new_indent: str):
+                count = 0
+                while line[count:].startswith(old_indent):
+                    count += len(old_indent)
+                return (new_indent * (count // len(old_indent))) + line[count:]
+            boilerplate_lines = [replace_indent(bpl, self.native_tab, self.tab) for bpl in boilerplate_lines]
             [self.write_line(bpl) for bpl in boilerplate_lines]
         else:
             print("no file", filename)

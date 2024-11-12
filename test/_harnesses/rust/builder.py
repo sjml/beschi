@@ -7,13 +7,14 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import builder_util
 
+from beschi.writer import TextUtil
 
 
 class RustBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("rust")
         self.srcfile = f"src/{self.srcfile}"
-        self.local_libfiles = [f"src/{lf}" for lf in self.libfiles]
+        self.local_libfiles = [f"src/{TextUtil.convert_to_lower_snake_case(lf)}" for lf in self.libfiles]
 
 
 

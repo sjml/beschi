@@ -17,6 +17,7 @@ def main():
     argparser.add_argument("--lang", "-l", type=str, help=f"language to generate ({' '.join(sorted(writers))})")
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
     argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
+    argparser.add_argument("--indent", type=str, help="override the default indentation for the language")
 
     additional_arguments = []
     extra_parser = argparser.add_argument_group("Extra")
@@ -74,6 +75,10 @@ def main():
 
     extra_args = {flag: val for flag, val in args._get_kwargs() if flag.startswith(args.lang) or flag in additional_arguments}
     writer = writer_class(protocol, extra_args=extra_args)
+
+    if args.indent and len(args.indent) > 0:
+        writer.tab = args.indent
+
     try:
         output = writer.generate()
     except NotImplementedError as nie:

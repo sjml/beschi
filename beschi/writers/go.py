@@ -14,7 +14,7 @@ class GoWriter(Writer):
     @classmethod
     def get_additional_args(cls, parser: argparse.ArgumentParser):
         group = parser.add_argument_group(cls.language_name)
-        group.add_argument("--go-no-rename", action="store_const", const=True, default=False, help="don't rename data members to Uppercase")
+        group.add_argument("--go-no-rename", action="store_const", const=True, default=False, help="don't rename data members to Uppercase or namespace to lowercase")
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         self.rename = not extra_args["go_no_rename"]

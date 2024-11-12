@@ -1,10 +1,10 @@
 target/
 Cargo.lock
 
-src/ComprehensiveMessage.rs
-src/BrokenMessages.rs
-src/SmallMessages.rs
-src/SizedMessage.rs
-src/AppMessages.rs
-src/Nested.rs
-src/Empty.rs
+src/comprehensive_message.rs
+src/broken_messages.rs
+src/small_messages.rs
+src/sized_message.rs
+src/app_messages.rs
+src/nested.rs
+src/empty.rs

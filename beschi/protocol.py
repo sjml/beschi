@@ -200,9 +200,11 @@ class Protocol():
                 raise ValueError(f"Enum name cannot shadow message: '{e.name}'")
             for v in e.values.keys():
                 if v in self.structs:
-                    raise ValueError(f"Enum value cannot shadow struct: '{e.name}.{v}'")
+                    raise ValueError(f"Enum value name cannot shadow struct: '{e.name}.{v}'")
                 if v in self.messages:
-                    raise ValueError(f"Enum value cannot shadow message: '{e.name}.{v}'")
+                    raise ValueError(f"Enum value name cannot shadow message: '{e.name}.{v}'")
+                if _contains_whitespace(v):
+                    raise ValueError(f"Enum value name cannot contain whitespace: '{e.name}.{v}'")
 
         def validate_struct(s: Struct):
             label = "Struct"

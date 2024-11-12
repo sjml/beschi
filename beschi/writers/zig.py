@@ -12,7 +12,7 @@ class ZigWriter(Writer):
     default_extension = ".zig"
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
-        super().__init__(protocol=p)
+        super().__init__(protocol=p, tab = "    ")
 
         self.embed_protocol = extra_args["embed_protocol"]
 

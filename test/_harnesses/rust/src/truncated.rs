@@ -3,12 +3,8 @@
 
 use std::fs;
 
-// in a real program you would want this file to have an appropriate name
-//   but for testing I'd rather not deal with it having a different name
-//   than all the other files.
-#[allow(non_snake_case)]
-mod BrokenMessages;
-use BrokenMessages::*;
+mod broken_messages;
+use broken_messages::*;
 
 mod util;
 
@@ -16,7 +12,7 @@ fn main() {
     let mut checker = util::Checker { ok: true };
     let args = util::arg_parse();
 
-    let lmsg = BrokenMessages::ListMessage { ints: vec![1, 2, 32767, 4, 5] };
+    let lmsg = broken_messages::ListMessage { ints: vec![1, 2, 32767, 4, 5] };
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();

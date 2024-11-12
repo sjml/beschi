@@ -3,12 +3,8 @@
 
 use std::fs;
 
-// in a real program you would want this file to have an appropriate name
-//   but for testing I'd rather not deal with it having a different name
-//   than all the other files.
-#[allow(non_snake_case)]
-mod BrokenMessages;
-use BrokenMessages::*;
+mod broken_messages;
+use broken_messages::*;
 
 mod util;
 
@@ -16,8 +12,8 @@ fn main() {
     let mut checker = util::Checker { ok: true };
     let args = util::arg_parse();
 
-    let trunc = BrokenMessages::TruncatedMessage { x: 1.0, y: 2.0 };
-    let full = BrokenMessages::FullMessage { x: 1.0, y: 2.0, z: 3.0 };
+    let trunc = broken_messages::TruncatedMessage { x: 1.0, y: 2.0 };
+    let full = broken_messages::FullMessage { x: 1.0, y: 2.0, z: 3.0 };
 
     if args.contains_key("generate") {
         let mut writer: Vec<u8> = Vec::new();
@@ -48,7 +44,7 @@ fn main() {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
         let mut reader = BufferReader::new(buffer);
-        match BrokenMessages::process_raw_bytes(&mut reader) {
+        match broken_messages::process_raw_bytes(&mut reader) {
             Err(_) => checker.soft_assert(true, "read broken stream length"),
             Ok(_) => checker.soft_assert(false, "read broken stream length"),
         }
