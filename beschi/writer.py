@@ -37,7 +37,7 @@ class Writer:
 
         self.protocol = protocol
         self.tab: str = tab
-        self.native_tab: str = tab
+        self.native_tab: str = tab # so can still access in case it gets overridden
 
         self.type_mapping: dict[str, str] = {}
         self.type_mapping["string"] = "string"

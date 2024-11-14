@@ -21,12 +21,13 @@ if platform.system() != "Windows":
     ]
     # actually, complain about everything
     if CC == "clang":
-        FLAGS += ["-Wall", "-Wextra"]
+        FLAGS += ["-Weverything"] # clang recommends against this, but lets stay overly pedantic and find as much as possible... for now
+        # FLAGS += ["-Wall", "-Wextra"] # the recommended setting from clang
     else:
         # assuming that non-clang is GCC
-        FLAGS += ["-Wall"]
+        FLAGS += ["-Wall", "-Wextra"]
     FLAGS += [
-        "-Werror",          # loudly
+        "-Werror",          # complain loudly
         "-O0", "-g",        # have as much debug info as we can
     ]
     SILENCE_WARNINGS = [    # turn off these very specific warnings, though
@@ -40,7 +41,7 @@ if platform.system() != "Windows":
         "-std=c99",         # c99 is the baseline
     ]
     CSILENCE_WARNINGS = [
-        "declaration-after-statement", # should not be a problem with > c99, but both LLVM and GCC still warn on it
+        "declaration-after-statement", # should not be a problem with >= c99, but both LLVM and GCC still warn on it
     ]
     [CFLAGS.append(f"-Wno-{sw}") for sw in CSILENCE_WARNINGS]
 

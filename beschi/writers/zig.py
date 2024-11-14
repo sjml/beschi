@@ -48,10 +48,9 @@ class ZigWriter(Writer):
                 self.write_line(f"const {accessor}_{var.name} = (try readNumber({self.type_mapping[var.vartype]}, offset + {simple_offset}, buffer)).value;")
             elif var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
-                self.write_line(f"const {accessor}_{var.name}_check = (try readNumber({self.type_mapping[e.encoding]}, offset + {simple_offset}, buffer)).value;")
-                self.write_line(f"")
+                self.write_line(f"const {accessor}_{var.name} = (try readNumber({var.vartype}, offset + {simple_offset}, buffer)).value;")
             else:
-                self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes({simple_offset}, buffer);")
+                self.write_line(f"const {accessor}_{var.name}_read = {var.vartype}.fromBytes(offset + {simple_offset}, buffer);")
                 self.write_line(f"const {accessor}_{var.name} = {accessor}_{var.name}_read.value;")
         else:
             if var.is_list:

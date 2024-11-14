@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"messages/nested"
-	"messages/smallmessages"
+	"messages/small_messages"
 )
 
 var ok bool = true
@@ -24,16 +24,16 @@ func main() {
 	var nested nested.DeepData
 	nested.Data.Data.Data.Data.Data.Data.Data.Data.Datums = make([]float32, 2)
 
-	var emptyMsg smallmessages.EmptyMessage
-	var byteMsg smallmessages.ByteMessage
+	var emptyMsg small_messages.EmptyMessage
+	var byteMsg small_messages.ByteMessage
 	byteMsg.ByteMember = 242
-	var intMsgA smallmessages.IntMessage
+	var intMsgA small_messages.IntMessage
 	intMsgA.IntMember = -42
-	var intMsgB smallmessages.IntMessage
+	var intMsgB small_messages.IntMessage
 	intMsgB.IntMember = 2048
-	var floatMsg smallmessages.FloatMessage
+	var floatMsg small_messages.FloatMessage
 	floatMsg.FloatMember = 1234.5678
-	var longMsg smallmessages.LongMessage
+	var longMsg small_messages.LongMessage
 	longMsg.IntMember = 2147483647 + 10 // (2^31 - 1) + 10
 
 	generatePathPtr := flag.String("generate", "", "")
@@ -87,44 +87,44 @@ func main() {
 		copy(buffer, content)
 		reader := bytes.NewReader(buffer)
 
-		msgList, err := smallmessages.ProcessRawBytes(reader)
+		msgList, err := small_messages.ProcessRawBytes(reader)
 		softAssert(err == nil, "reading multiple messages")
 
 		softAssert(len(msgList) == 12, "reading multiple messages length")
 
-		softAssert(msgList[0].GetMessageType() == smallmessages.ByteMessageType, "msg 0 type")
-		softAssert(msgList[0].(*smallmessages.ByteMessage).ByteMember == byteMsg.ByteMember, "msg 0 content")
+		softAssert(msgList[0].GetMessageType() == small_messages.ByteMessageType, "msg 0 type")
+		softAssert(msgList[0].(*small_messages.ByteMessage).ByteMember == byteMsg.ByteMember, "msg 0 content")
 
-		softAssert(msgList[1].GetMessageType() == smallmessages.IntMessageType, "msg 1 type")
-		softAssert(msgList[1].(*smallmessages.IntMessage).IntMember == intMsgA.IntMember, "msg 1 content")
+		softAssert(msgList[1].GetMessageType() == small_messages.IntMessageType, "msg 1 type")
+		softAssert(msgList[1].(*small_messages.IntMessage).IntMember == intMsgA.IntMember, "msg 1 content")
 
-		softAssert(msgList[2].GetMessageType() == smallmessages.IntMessageType, "msg 2 type")
-		softAssert(msgList[2].(*smallmessages.IntMessage).IntMember == intMsgB.IntMember, "msg 2 content")
+		softAssert(msgList[2].GetMessageType() == small_messages.IntMessageType, "msg 2 type")
+		softAssert(msgList[2].(*small_messages.IntMessage).IntMember == intMsgB.IntMember, "msg 2 content")
 
-		softAssert(msgList[3].GetMessageType() == smallmessages.EmptyMessageType, "msg 3 type")
+		softAssert(msgList[3].GetMessageType() == small_messages.EmptyMessageType, "msg 3 type")
 
-		softAssert(msgList[4].GetMessageType() == smallmessages.LongMessageType, "msg 4 type")
-		softAssert(msgList[4].(*smallmessages.LongMessage).IntMember == longMsg.IntMember, "msg 4 content")
+		softAssert(msgList[4].GetMessageType() == small_messages.LongMessageType, "msg 4 type")
+		softAssert(msgList[4].(*small_messages.LongMessage).IntMember == longMsg.IntMember, "msg 4 content")
 
-		softAssert(msgList[5].GetMessageType() == smallmessages.FloatMessageType, "msg 5 type")
-		softAssert(msgList[5].(*smallmessages.FloatMessage).FloatMember == floatMsg.FloatMember, "msg 5 content")
+		softAssert(msgList[5].GetMessageType() == small_messages.FloatMessageType, "msg 5 type")
+		softAssert(msgList[5].(*small_messages.FloatMessage).FloatMember == floatMsg.FloatMember, "msg 5 content")
 
-		softAssert(msgList[6].GetMessageType() == smallmessages.IntMessageType, "msg 6 type")
-		softAssert(msgList[6].(*smallmessages.IntMessage).IntMember == intMsgA.IntMember, "msg 6 content")
+		softAssert(msgList[6].GetMessageType() == small_messages.IntMessageType, "msg 6 type")
+		softAssert(msgList[6].(*small_messages.IntMessage).IntMember == intMsgA.IntMember, "msg 6 content")
 
-		softAssert(msgList[7].GetMessageType() == smallmessages.IntMessageType, "msg 7 type")
-		softAssert(msgList[7].(*smallmessages.IntMessage).IntMember == intMsgB.IntMember, "msg 7 content")
+		softAssert(msgList[7].GetMessageType() == small_messages.IntMessageType, "msg 7 type")
+		softAssert(msgList[7].(*small_messages.IntMessage).IntMember == intMsgB.IntMember, "msg 7 content")
 
-		softAssert(msgList[8].GetMessageType() == smallmessages.IntMessageType, "msg 8 type")
-		softAssert(msgList[8].(*smallmessages.IntMessage).IntMember == intMsgB.IntMember, "msg 8 content")
+		softAssert(msgList[8].GetMessageType() == small_messages.IntMessageType, "msg 8 type")
+		softAssert(msgList[8].(*small_messages.IntMessage).IntMember == intMsgB.IntMember, "msg 8 content")
 
-		softAssert(msgList[9].GetMessageType() == smallmessages.IntMessageType, "msg 9 type")
-		softAssert(msgList[9].(*smallmessages.IntMessage).IntMember == intMsgB.IntMember, "msg 9 content")
+		softAssert(msgList[9].GetMessageType() == small_messages.IntMessageType, "msg 9 type")
+		softAssert(msgList[9].(*small_messages.IntMessage).IntMember == intMsgB.IntMember, "msg 9 content")
 
-		softAssert(msgList[10].GetMessageType() == smallmessages.IntMessageType, "msg 10 type")
-		softAssert(msgList[10].(*smallmessages.IntMessage).IntMember == intMsgA.IntMember, "msg 10 content")
+		softAssert(msgList[10].GetMessageType() == small_messages.IntMessageType, "msg 10 type")
+		softAssert(msgList[10].(*small_messages.IntMessage).IntMember == intMsgA.IntMember, "msg 10 content")
 
-		softAssert(msgList[11].GetMessageType() == smallmessages.EmptyMessageType, "msg 11 type")
+		softAssert(msgList[11].GetMessageType() == small_messages.EmptyMessageType, "msg 11 type")
 	}
 
 	if !ok {

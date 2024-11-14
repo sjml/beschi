@@ -27,8 +27,6 @@ This file is a rough todo list for the tool itself.
     - I still like this idea in the larger sense; feels like a very pragmatic thing to have. In current projects though I'm not quibbling over a few bytes, and the effort of implementing and testing this across all generated languages would be high.
 
 ## "immediate" todo
-- make multiple message stream a bit smarter (below)
-- docstrings in various languages?
 - add "IsValid" function to languages where it makes sense:
     - check that numbers are in the appropriate range (like JavaScript where everything is everything)
         - in languages with strong types enforced by a compiler, skip
@@ -58,7 +56,7 @@ This file is a rough todo list for the tool itself.
 
 ## testing framework
   - comparison (size/perf) to flatbuffers/capnproto/etc?
-      - I'm willing to bet that beschi will lose in performance, but hopefully not by much. There should be a noticeable win in buffer size, though. Enough to justify this project? Eeeeeeh? 
+      - I'm willing to bet that beschi will lose in performance, but hopefully not by much. There should be at lest a small win in buffer size, though. Enough to justify this project? Eeeeeeh? 
       - And if it's behind in both memory size AND performance, I still like the client-code ergonomics, so maybe not a total loss. 
   - is there some way to test it with big-endian architecture too so we can be sure it's consistent? 
       - qemu or something?

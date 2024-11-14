@@ -7,13 +7,14 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import builder_util
 
+from beschi.writer import TextUtil
 
 
 class GoBuilder(builder_util.Builder):
     def __init__(self) -> None:
         super().__init__("go")
-        self.lib_src_dirs = [f"messages/{ln.lower()}" for ln in self.libnames]
-        self.local_libfiles = [os.path.join(lsd, lf.lower()) for lsd, lf in zip(self.lib_src_dirs, self.libfiles)]
+        self.lib_src_dirs = [f"messages/{TextUtil.convert_to_lower_snake_case(ln)}" for ln in self.libnames]
+        self.local_libfiles = [os.path.join(lsd, TextUtil.convert_to_lower_snake_case(lf)) for lsd, lf in zip(self.lib_src_dirs, self.libfiles)]
 
 
 
