@@ -21,7 +21,7 @@ if platform.system() != "Windows":
     ]
     # actually, complain about everything
     if CC == "clang":
-        FLAGS += ["-Weverything"]
+        FLAGS += ["-Wall", "-Wextra"]
     else:
         # assuming that non-clang is GCC
         FLAGS += ["-Wall"]
