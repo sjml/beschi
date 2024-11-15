@@ -383,7 +383,7 @@ class CWriter(Writer):
         if sdata.is_message:
             self.write_line("if (tag) {")
             self.indent_level += 1
-            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (const uint8_t)(src->_mt));")
+            self.write_line(f"err = {self.prefix}_WriteUInt8(w, (uint8_t)(src->_mt));")
             self.err_check_return()
             self.indent_level -= 1
             self.write_line("}")

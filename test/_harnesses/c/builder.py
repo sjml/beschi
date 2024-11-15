@@ -25,7 +25,8 @@ if platform.system() != "Windows":
         # FLAGS += ["-Wall", "-Wextra"] # the recommended setting from clang
     else:
         # assuming that non-clang is GCC
-        FLAGS += ["-Wall", "-Wextra"]
+        # FLAGS += ["-Wall", "-Wextra"] #
+        FLAGS += ["-Wall"]
     FLAGS += [
         "-Werror",          # complain loudly
         "-O0", "-g",        # have as much debug info as we can
