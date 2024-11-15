@@ -19,15 +19,19 @@ class CSharpBuilder(builder_util.Builder):
     def build(self):
         super().build()
 
-        deps = [self.srcfile, *self.gen_files, "harness.cs"]
-        if builder_util.needs_build(self.intermediate_path, deps):
-            subprocess.check_call([
-                "csc", "-nologo", "-target:exe",
-                "-warn:4", "-warnaserror",
-                f"-out:{self.intermediate_path}",
-                *deps
-            ])
+        if "DOTNET_VERSION" in os.environ:
+            framework = f"net{os.environ['DOTNET_VERSION']}.0"
+        else:
+            dotnet_vers = subprocess.getoutput("dotnet --version").split(" ")[0]
+            framework = f"net{'.'.join(dotnet_vers.split('.')[:-1])}"
 
+        if builder_util.needs_build(self.intermediate_path):
+            subprocess.check_call([
+                "dotnet", "build",
+                f"-p:SourceFile={os.path.splitext(self.srcfile)[0]}",
+                f"-p:Framework={framework}",
+                "-o", f"{self.intermediate_path}",
+            ])
 
         if builder_util.needs_build(self.exepath, [self.intermediate_path]):
             shim = open("./exe_template").read()

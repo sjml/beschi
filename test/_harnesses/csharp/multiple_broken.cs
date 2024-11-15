@@ -30,7 +30,7 @@ class MultipleBrokenHarness: TestHarness {
             full.WriteBytes(bw, true);
 
             // write a truncated message tagged as a full one
-            bw.Write((byte)MessageType.FullMessageType);
+            bw.Write((byte)BrokenMessages.MessageType.FullMessageType);
             trunc.WriteBytes(bw, false);
 
             full.WriteBytes(bw, true);
@@ -52,7 +52,7 @@ class MultipleBrokenHarness: TestHarness {
             string errMsg = "";
             try
             {
-                Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br);
+                BrokenMessages.Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br);
             }
             catch (BrokenMessages.UnknownMessageTypeException e)
             {

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>$(Framework)</TargetFramework>
+		<AssemblyName>$(SourceFile)_csharp</AssemblyName>
+		<EnableDefaultItems>false</EnableDefaultItems>
+		<WarningLevel>4</WarningLevel>
+		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Include="$(SourceFile).cs" />
+		<Compile Include="harness.cs" />
+		<Compile Include="../../../out/generated/csharp/*.cs" />
+	</ItemGroup>
+
+</Project>

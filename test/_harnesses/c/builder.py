@@ -23,10 +23,11 @@ if platform.system() != "Windows":
     if CC == "clang":
         FLAGS += ["-Weverything"] # clang recommends against this, but lets stay overly pedantic and find as much as possible... for now
         # FLAGS += ["-Wall", "-Wextra"] # the recommended setting from clang
+        if platform.system() == "Darwin":
+            FLAGS += ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"]
     else:
         # assuming that non-clang is GCC
-        # FLAGS += ["-Wall", "-Wextra"] #
-        FLAGS += ["-Wall"]
+        FLAGS += ["-Wall", "-Wextra"]
     FLAGS += [
         "-Werror",          # complain loudly
         "-O0", "-g",        # have as much debug info as we can
@@ -124,8 +125,6 @@ class CBuilder(builder_util.Builder):
             cpp_out_flags = [f"/Fe:{self.intermediate_path_cpp}", f"/Fo:{self.intermediate_path_cpp[:-4]}.obj"]
         else:
             build_flags += [f"-I{self.generated_code_dir}"]
-            if platform.system() == "Darwin":
-                build_flags += ["-isysroot", "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"]
             c_out_flags = ["-o", self.intermediate_path]
             cpp_out_flags = ["-o", self.intermediate_path_cpp]
 

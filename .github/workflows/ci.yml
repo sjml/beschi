@@ -3,60 +3,252 @@ name: Verification Tests
 on:
   push
 
-jobs:
-  ci-linux:
-    runs-on: ubuntu-20.04
+env:
+  PYTHON_VERSION: '3.11'
 
+jobs:
+  csharp-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        dotnet-version: ['6', '7', '8', '9']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
-    - name: Setup Node
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-    - name: Setup Go
-      uses: actions/setup-go@v5
-      with:
-        go-version: '^1.19'
-    # seems the environments already come with recent-ish Swift!
-    # - name: Setup Swift
-    #   uses: fwal/setup-swift@v2
-    #   with:
-    #     swift-version: '6.0'
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-    - name: Setup Zig
-      uses: mlugg/setup-zig@v1
-      with:
-        version: 0.13.0
-    - name: Install System Prerequisites
-      run: |
-        sudo apt-get update
-        sudo apt-get install valgrind
+        python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Beschi and Python Prerequisites
       run: |
         python -m pip install --upgrade pip
         pip install '.[dev]'
-    - name: Run Tests (Non-C)
-      run: pytest --skip c
-    - name: Run C Tests (clang)
-      run: CC=clang CXX=clang++ pytest --only c
-    - name: Run C Tests (gcc)
-      run: CC=gcc-9 CXX=g++-9 pytest --only c
+    - name: Install .NET v${{ matrix.dotnet-version }}
+      uses: actions/setup-dotnet@v4
+      id: install-step
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+    - name: Configure .NET
+      run: |
+        echo '{"sdk":{"version": "${{ steps.install-step.outputs.dotnet-version }}"}}' > ./global.json
+    - name: Run Tests (.NET v${{ matrix.dotnet-version }})
+      run: |
+        DOTNET_VERSION=${{ matrix.dotnet-version }} pytest --only csharp
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: csharp-dotnet${{ matrix.dotnet-version }}-generated-messages
+        path: out/data
 
-
-  ci-windows:
-    runs-on: windows-latest
-
+  node-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        node-version: ['18', '20', '22']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Node v${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Run Tests (Node v${{ matrix.node-version }})
+      run: |
+        pytest --only typescript
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: typescript-node${{ matrix.node-version }}-generated-messages
+        path: out/data
+
+  go-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        go-version: ['1.19', '1.20', '1.21', '1.22', '1.23']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Go v${{ matrix.go-version }}
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ matrix.go-version }}
+        cache: false
+    - name: Run Tests (Go v${{ matrix.go-version }})
+      run: |
+        pytest --only go
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: go-${{ matrix.go-version }}-generated-messages
+        path: out/data
+
+  swift-builds:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        swift-version: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Swift v${{ matrix.swift-version }}
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ matrix.swift-version }}
+    - name: Run Tests (Swift v${{ matrix.swift-version }})
+      run: |
+        pytest --only swift
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: swift-${{ matrix.swift-version }}-generated-messages
+        path: out/data
+
+  rust-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        rust-version: ['1.65.0', 'stable']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Rust v${{ matrix.rust-version }}
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust-version }}
+    - name: Run Tests (Rust v${{ matrix.rust-version }})
+      run: |
+        pytest --only rust
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: rust-${{ matrix.rust-version }}-generated-messages
+        path: out/data
+
+  zig-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        zig-version: ['0.13.0']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Zig v${{ matrix.zig-version }}
+      uses: mlugg/setup-zig@v1
+      with:
+        version: ${{ matrix.zig-version }}
+    - name: Run Tests (Rust v${{ matrix.zig-version }})
+      run: |
+        pytest --only zig
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: zig-${{ matrix.zig-version }}-generated-messages
+        path: out/data
+
+  c-gcc-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        gcc-version: ['9', '10', '11', '12', '13', '14']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install GCC v${{ matrix.gcc-version }}
+      run: |
+        sudo add-apt-repository -y universe
+        sudo apt-get update
+        sudo apt-get install valgrind gcc-${{ matrix.gcc-version }} g++-${{ matrix.gcc-version }}
+    - name: Run Tests (C [GCC v${{ matrix.gcc-version }}])
+      run: |
+        CC=gcc-${{ matrix.gcc-version }} CXX=g++-${{ matrix.gcc-version }} pytest --only c
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: c-gcc-${{ matrix.gcc-version}}-generated-messages
+        path: out/data
+
+  c-clang-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        clang-version: ['14', '15', '16', '17']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Clang v${{ matrix.clang-version }}
+      run: |
+        sudo add-apt-repository -y universe
+        sudo apt-get update
+        sudo apt-get install valgrind clang-${{ matrix.clang-version }}
+    - name: Run Tests (C [Clang v${{ matrix.clang-version }}])
+      run: |
+        CC=clang-${{ matrix.clang-version }} CXX=clang++-${{ matrix.clang-version }} pytest --only c
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: c-clang-${{ matrix.clang-version }}-generated-messages
+        path: out/data
+
+  c-msvc-builds:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        msvc-version: ['latest']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Beschi and Python Prerequisites
       run: |
         python -m pip install --upgrade pip
@@ -65,18 +257,56 @@ jobs:
       uses: ilammy/msvc-dev-cmd@v1
     - name: Run Tests
       run: pytest --only c
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: c-msvc-generated-messages
+        path: out/data
 
+  compare-messages:
+    runs-on: ubuntu-latest
+    needs: [
+      csharp-builds,
+      node-builds,
+      go-builds,
+      swift-builds,
+      rust-builds,
+      zig-builds,
+      c-gcc-builds,
+      c-clang-builds,
+      c-msvc-builds
+    ]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Download All Generated Messages
+      uses: actions/download-artifact@v4
+      with:
+        path: out/data
+    - name: Verify Messages Download (manual check if needed)
+      run: |
+        ls -R out/
+    - name: Run Comparison Test
+      run: |
+        pytest test/00_compare_all_messages.py
 
   build-dist:
-    runs-on: ubuntu-20.04
-    needs: [ci-linux, ci-windows]
+    runs-on: ubuntu-latest
+    needs: ['compare-messages']
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Prerequisites
       run: |
         python -m pip install --upgrade pip
@@ -92,7 +322,7 @@ jobs:
         path: dist/
 
   publish-pypi:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     needs: [build-dist]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     environment:
@@ -137,7 +367,7 @@ jobs:
     - name: Update Local Tap
       # doing manually since `brew bump-formula-pr` has a long installation and wants a PAT?
       #    probably useful if you want to open a PR to the core Homebrew repo, but we're just
-      #    gonna push directly.
+      #    gonna push directly to the private tap.
       run: |
         wget "https://github.com/sjml/beschi/archive/refs/tags/$BESCHI_VERSION.tar.gz"
         SHA256_SUM=($(shasum -a 256 $BESCHI_VERSION.tar.gz))
