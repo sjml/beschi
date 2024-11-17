@@ -8,7 +8,6 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <string.h>
 
 typedef uint8_t beschi_err_t;
 #define BESCHI_ERR_OK  0
