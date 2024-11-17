@@ -2,7 +2,6 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - add endian handling to C writer for the sake of completion
-- GCC has found some more warnings if -Wextra is turned on; look at those
 - test suite for destroying and cleaning up messages
 - add notes about trustworthiness
   - all reading code assumes it's reading stuff that was written by a corresponding writer

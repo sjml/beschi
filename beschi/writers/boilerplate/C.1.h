@@ -131,9 +131,10 @@ beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_T
     if (r->bufferSize < r->position + *len) {
         return BESCHI_ERR_EOF;
     }
-    *s = (char*)calloc(1, (size_t)(*len + 1));
+    *s = (char*)BESCHI_MALLOC((size_t)(*len + 1));
     if (*s == NULL) { return BESCHI_ERR_ALLOCATION_FAILURE; }
     memcpy(*s, r->buffer + r->position, *len);
+    (*s)[*len] = '\0';
     r->position += *len;
     return BESCHI_ERR_OK;
 }

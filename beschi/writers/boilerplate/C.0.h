@@ -6,8 +6,10 @@
 #ifndef INCLUDE_BESCHI_H
 #define INCLUDE_BESCHI_H
 
-#include <stdbool.h>
+#include <stdlib.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef uint8_t beschi_err_t;
 #define BESCHI_ERR_OK  0
