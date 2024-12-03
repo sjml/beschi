@@ -44,13 +44,14 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
     const dv = getDataView(filePath);
     let errMsg: string;
     try {
-        const msgList = BrokenMessages.ProcessRawBytes(dv);
+        const msgList = BrokenMessages.ProcessRawBytes(dv, -1);
     }
     catch (e) {
         errMsg = e.message;
     }
 
     softAssert(errMsg === "Unknown message type: 63", "read broken stream");
+
 }
 
 runTest(generate, read);

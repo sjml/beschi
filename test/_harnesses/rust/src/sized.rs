@@ -36,7 +36,7 @@ fn main() {
 
         let filename = args.get("generate").unwrap();
         checker.soft_assert(short_list.get_size_in_bytes() == 464, "short list size calculation check");
-        checker.soft_assert(writer.len() as u32 == short_list.get_size_in_bytes(), "written bytes check");
+        checker.soft_assert(writer.len() == short_list.get_size_in_bytes(), "written bytes check");
         fs::write(filename, writer).unwrap();
     }
     else if args.contains_key("read") {
@@ -51,7 +51,6 @@ fn main() {
         for i in 0..input.collection.len() {
             checker.soft_assert(input.collection[i] == short_list.collection[i], "short list comparison");
         }
-
     }
 
     checker.check();

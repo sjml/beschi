@@ -342,11 +342,16 @@ class GoWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("func ProcessRawBytes(data io.Reader) ([]Message, error) {")
+        self.write_line("func ProcessRawBytes(data io.Reader, max int) ([]Message, error) {")
         self.indent_level += 1
         self.write_line("var msgList []Message")
+        self.write_line("if max == 0 {")
+        self.indent_level += 1
+        self.write_line("return msgList, nil")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("var err error")
-        self.write_line("for err != io.EOF {")
+        self.write_line("for (err != io.EOF) && (max < 0 || len(msgList) < max) {")
         self.indent_level += 1
         self.write_line("var msgType MessageType")
         self.write_line("err = binary.Read(data, binary.LittleEndian, &msgType)")

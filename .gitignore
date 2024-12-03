@@ -8,5 +8,6 @@ __pycache__
 /out/*
 /build
 /.vscode
+/.editorconfig
 
 !/**/.gitkeep

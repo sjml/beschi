@@ -62,7 +62,7 @@ class MultipleHarness: TestHarness {
             Array.Copy(originalContents, contents, originalContents.Length);
             MemoryStream ms = new MemoryStream(contents);
 
-            SmallMessages.Message[] msgList = SmallMessages.Message.ProcessRawBytes(new BinaryReader(ms));
+            SmallMessages.Message[] msgList = SmallMessages.Message.ProcessRawBytes(new BinaryReader(ms), -1);
 
             softAssert(msgList.Length == 12, "reading multiple messages length");
 

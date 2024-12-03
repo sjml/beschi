@@ -109,17 +109,17 @@ class RustWriter(Writer):
             lines.append(f"{self.protocol.get_size_of(st.name)}")
             return lines, accum
 
-        size_init = "let mut size: u32 = 0;"
+        size_init = "let mut size: usize = 0;"
         lines.append(size_init)
 
         for var in st.members:
             if var.is_list:
                 accum += NUMERIC_TYPE_SIZES[self.protocol.list_size_type]
                 if var.is_simple(True):
-                    lines.append(f"size += ({accessor}{var.name}.len() as u32) * {self.protocol.get_size_of(var.vartype)};")
+                    lines.append(f"size += {accessor}{var.name}.len() * {self.protocol.get_size_of(var.vartype)};")
                 elif var.vartype == "string":
                     lines.append(f"for s in &{accessor}{var.name} {{")
-                    lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + (s.len() as u32);")
+                    lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + s.len();")
                     lines.append("}")
                 else:
                     lines.append(f"for el in &{accessor}{var.name} {{")
@@ -134,7 +134,7 @@ class RustWriter(Writer):
                     accum += self.protocol.get_size_of(var.vartype)
                 elif var.vartype == "string":
                     accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
-                    lines.append(f"size += {accessor}{var.name}.len() as u32;")
+                    lines.append(f"size += {accessor}{var.name}.len();")
                 else:
                     clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
                     if clines[0] == size_init:
@@ -198,10 +198,13 @@ class RustWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"impl {sname} {{")
+        if sdata.is_message:
+            self.write_line(f"impl MessageCodec for {sname} {{")
+        else:
+            self.write_line(f"impl {sname} {{")
         self.indent_level += 1
 
-        self.write_line("pub fn get_size_in_bytes(&self) -> u32 {")
+        self.write_line("fn get_size_in_bytes(&self) -> usize {")
         self.indent_level += 1
         measure_lines, accumulator = self.gen_measurement(sdata, "self.")
         [self.write_line(s) for s in measure_lines]
@@ -213,7 +216,7 @@ class RustWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"pub fn from_bytes({'_' if len(sdata.members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
+        self.write_line(f"fn from_bytes({'_' if len(sdata.members) == 0 else ''}reader: &mut BufferReader) -> Result<{sname}, {self.prefix}Error> {{")
         self.indent_level += 1
         [self.deserializer(mem, "") for mem in sdata.members]
         varnames = [mem.name for mem in sdata.members]
@@ -223,7 +226,7 @@ class RustWriter(Writer):
         self.write_line()
 
         if sdata.is_message:
-            self.write_line("pub fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")
+            self.write_line("fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")
             self.indent_level += 1
             self.write_line("if tag {")
             self.indent_level += 1
@@ -275,18 +278,67 @@ class RustWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"pub fn process_raw_bytes(reader: &mut BufferReader) -> Result<Vec<Message>, {self.prefix}Error> {{")
+        self.write_line("impl MessageCodec for Message {")
+        self.indent_level += 1
+        self.write_line("fn get_size_in_bytes(&self) -> usize {")
+        self.indent_level += 1
+        self.write_line("match self {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"Message::{mname}(msg) => msg.get_size_in_bytes(),")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+        self.write_line(f"fn from_bytes(reader: &mut BufferReader) -> Result<Message, {self.prefix}Error> {{")
+        self.indent_level += 1
+        self.write_line("let tag = reader.take_byte()?;")
+        self.write_line("let msg = match tag {")
+        self.indent_level += 1
+        self.write_line(f"0 => return Err({self.prefix}Error::EndOfMessageList),")
+        for mi, mname in enumerate(self.protocol.messages):
+            self.write_line(f"{mi+1} => Message::{mname}({mname}::from_bytes(reader)?),")
+        self.write_line(f"_ => return Err({self.prefix}Error::InvalidData),")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.write_line("Ok(msg)")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+        self.write_line("fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool) {")
+        self.indent_level += 1
+        self.write_line("match self {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"Message::{mname}(msg) => msg.write_bytes(writer, tag),")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"pub fn process_raw_bytes(reader: &mut BufferReader, max: i32) -> Result<Vec<Message>, {self.prefix}Error> {{")
         self.indent_level += 1
         self.write_line("let mut msg_list: Vec<Message> = Vec::new();")
-        self.write_line("while !reader.is_finished() {")
+        self.write_line("if max == 0 {")
         self.indent_level += 1
-        self.write_line("let msg_type = reader.take_byte()?;")
-        self.write_line("match msg_type {")
+        self.write_line("return Ok(msg_list);")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("while !reader.is_finished() && (max < 0 || msg_list.len() < max as usize) {")
         self.indent_level += 1
-        self.write_line("0 => return Ok(msg_list),")
-        for i, k in enumerate(self.protocol.messages.keys()):
-            self.write_line(f"{i+1} => msg_list.push(Message::{k}({k}::from_bytes(reader)?)),")
-        self.write_line(f"_ => return Err({self.prefix}Error::InvalidData),")
+        self.write_line("match Message::from_bytes(reader) {")
+        self.indent_level += 1
+        self.write_line("Err(e) => match e {")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}Error::EndOfMessageList => return Ok(msg_list),")
+        self.write_line("_ => return Err(e),")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("Ok(msg) => msg_list.push(msg),")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1

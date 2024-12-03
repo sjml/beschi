@@ -31,4 +31,8 @@ path = "src/sized.rs"
 name = "uninitialized"
 path = "src/uninitialized.rs"
 
+[[bin]]
+name = "packed"
+path = "src/packed.rs"
+
 [dependencies]

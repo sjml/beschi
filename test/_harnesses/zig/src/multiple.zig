@@ -65,7 +65,7 @@ pub fn main() !void {
             b.* = 0;
         }
 
-        const msg_list = try small.processRawBytes(testAllocator, buffer);
+        const msg_list = try small.processRawBytes(testAllocator, buffer, -1);
         defer testAllocator.free(msg_list);
         checker.softAssert(msg_list.len == 12, "reading multiple messages");
 

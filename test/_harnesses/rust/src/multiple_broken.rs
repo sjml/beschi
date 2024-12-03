@@ -37,14 +37,14 @@ fn main() {
         size += 1; // trunc marker
 
         let filename = args.get("generate").unwrap();
-        checker.soft_assert(writer.len() as u32 == size, "size calculation check");
+        checker.soft_assert(writer.len() == size, "size calculation check");
         fs::write(filename, writer).unwrap();
     }
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
         let mut reader = BufferReader::new(buffer);
-        match broken_messages::process_raw_bytes(&mut reader) {
+        match broken_messages::process_raw_bytes(&mut reader, -1) {
             Err(_) => checker.soft_assert(true, "read broken stream length"),
             Ok(_) => checker.soft_assert(false, "read broken stream length"),
         }

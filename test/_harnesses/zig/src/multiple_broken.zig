@@ -50,7 +50,7 @@ pub fn main() !void {
         const buffer = try file.readToEndAlloc(testAllocator, std.math.maxInt(u32));
         defer testAllocator.free(buffer);
 
-        const msg_list = broken.processRawBytes(testAllocator, buffer);
+        const msg_list = broken.processRawBytes(testAllocator, buffer, -1);
         checker.softAssert(msg_list == error.InvalidData, "read broken stream length");
     }
 

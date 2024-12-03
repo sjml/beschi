@@ -323,17 +323,46 @@ class ZigWriter(Writer):
         self.indent_level += 1
         for mname in self.protocol.messages:
             self.write_line(f"{mname}: {mname},")
+        self.write_line()
+
+        self.write_line("pub fn getSizeInBytes(self: @This()) usize {")
+        self.indent_level += 1
+        self.write_line("return switch (self) {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f".{mname} => self.{mname}.getSizeInBytes(),")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line("pub fn writeBytes(self: @This(), offset: usize, buffer: []u8, tag: bool) usize {")
+        self.indent_level += 1
+        self.write_line("return switch (self) {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f".{mname} => self.{mname}.writeBytes(offset, buffer, tag),")
+        self.indent_level -= 1
+        self.write_line("};")
+        self.indent_level -= 1
+        self.write_line("}")
+
         self.indent_level -= 1
         self.write_line("};")
         self.write_line()
 
-        self.write_line("pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8) ![]Message {")
+        self.write_line("pub fn processRawBytes(allocator: std.mem.Allocator, buffer: []const u8, max: i32) ![]Message {")
         self.indent_level += 1
         self.write_line("var msg_list = std.ArrayList(Message).init(allocator);")
         self.write_line("defer msg_list.deinit();")
-        self.write_line();
+        self.write_line("if (max == 0) {")
+        self.indent_level += 1
+        self.write_line("return msg_list.toOwnedSlice();");
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("var local_offset: usize = 0;")
-        self.write_line("while (local_offset < buffer.len) {")
+        self.write_line("while (local_offset < buffer.len and (max < 0 or msg_list.items.len < max)) {")
         self.indent_level += 1
         self.write_line("const msg_type_byte = (try readNumber(u8, local_offset, buffer)).value;")
         self.write_line("local_offset += 1;")

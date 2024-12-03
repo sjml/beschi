@@ -220,6 +220,7 @@ class CSharpWriter(Writer):
             self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
+        self.write_line()
 
         if sdata.is_message:
             self.write_line(f"public override void WriteBytes(BinaryWriter bw, bool tag)")
@@ -263,85 +264,27 @@ class CSharpWriter(Writer):
             self.write_line()
             self.write_line()
 
-        self.write_line("using System;")
-        self.write_line("using System.IO;")
-        self.write_line("using System.Text;")
-        self.write_line("using System.Collections.Generic;")
-        self.write_line()
+        self.add_boilerplate([], 0)
 
         if self.protocol.namespace:
             self.write_line(f"namespace {self.protocol.namespace}")
             self.write_line("{")
             self.indent_level += 1
 
+        msg_types_sub = []
+
+        for msg_type in self.protocol.messages:
+            msg_types_sub.append(f"                case (byte)MessageType.{msg_type}Type:")
+            msg_types_sub.append(f"                    msgList.Add({msg_type}.FromBytes(br));")
+            msg_types_sub.append( "                    break;")
+
+        # self.add_boilerplate([("{# MESSAGE_TYPE_CASES #}", "\n".join(msg_types_sub))], 1)
+        self.add_boilerplate([("{# MESSAGE_TYPE_CASES #}", msg_types_sub)], 1)
+
         self.write_line("public enum MessageType")
         self.write_line("{")
         self.indent_level += 1
         [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(self.protocol.messages)]
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        wrapped_exceptions = ["DataReadError", "UnknownMessageType"]
-        for wrapped in wrapped_exceptions:
-            self.write_line(f"public class {wrapped}Exception : Exception")
-            self.write_line("{")
-            self.indent_level += 1
-            self.write_line(f"public {wrapped}Exception() {{ }}")
-            self.write_line()
-            self.write_line(f"public {wrapped}Exception(string msg)")
-            self.indent_level += 1
-            self.write_line(": base(msg) { }")
-            self.indent_level -= 1
-            self.write_line()
-            self.write_line(f"public {wrapped}Exception(string msg, Exception inner)")
-            self.indent_level += 1
-            self.write_line(": base(msg, inner) { }")
-            self.indent_level -= 1
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line()
-
-        self.write_line("public abstract class Message")
-        self.write_line("{")
-        self.indent_level += 1
-        self.write_line("abstract public MessageType GetMessageType();")
-        self.write_line("abstract public void WriteBytes(BinaryWriter bw, bool tag);")
-        self.write_line("abstract public int GetSizeInBytes();")
-        self.write_line()
-
-        self.write_line("public static Message[] ProcessRawBytes(BinaryReader br)")
-        self.write_line("{")
-        self.indent_level += 1
-        self.write_line("List<Message> msgList = new List<Message>();")
-        self.write_line("while (br.BaseStream.Position < br.BaseStream.Length)")
-        self.write_line("{")
-        self.indent_level += 1
-        self.write_line("byte msgType = br.ReadByte();")
-        self.write_line("switch (msgType)")
-        self.write_line("{")
-        self.indent_level += 1
-        self.write_line("case 0:")
-        self.indent_level += 1
-        self.write_line("return msgList.ToArray();")
-        self.indent_level -= 1
-        for msg_type in self.protocol.messages:
-            self.write_line(f"case (byte)MessageType.{msg_type}Type:")
-            self.indent_level += 1
-            self.write_line(f"msgList.Add({msg_type}.FromBytes(br));")
-            self.write_line("break;")
-            self.indent_level -= 1
-        self.write_line("default:")
-        self.indent_level += 1
-        self.write_line("throw new UnknownMessageTypeException(String.Format(\"Unknown message type: {0}\", msgType));")
-        self.indent_level -= 1
-        self.indent_level -= 1
-        self.write_line("}")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("return msgList.ToArray();")
-        self.indent_level -= 1
-        self.write_line("}")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()

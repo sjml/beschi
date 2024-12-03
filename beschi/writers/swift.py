@@ -8,6 +8,7 @@ LANGUAGE_NAME = "Swift"
 class SwiftWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".swift"
+    in_progress = True # just temporary until I can rethink the data story here
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")

@@ -1,7 +1,50 @@
 This file is a rough todo list for the tool itself.
 
 ## dustoff notes
+- actually, go back to appending null to broken message stream
+    - useful for saying "we found something we didn't recognize"
+    - BUT also create a pack message function and have ProcessRawBytes take a max value
+    - procedure:
+      - change ProcessRawBytes back to appending null
+        - takes a max value (signed int32)
+          - if 0, return empty list
+          - if negative, consider infinite
+      - update multiple_broken and multiple tests
+      - GetPackedSize
+      - PackMessages
+        - writes BSCI
+        - write 4 bytes: u32 number of messages
+        - write all messages (tagged)
+        - write null byte
+      - UnpackMessages
+        - ensures header: "Packed message buffer has invalid header."
+        - gets message count
+        - runs processraw
+        - if 0 messages read, throw: "No messages in buffer."
+        - if last message is null, discard it
+        - if count is off, throw: "Unexpected number of messages in buffer."
+      - packed test
+        - pack a variety of messages
+        - check them as they come out
+    - done for:
+      - ✅ C#
+      - ✅ TypeScript
+      - ✅ Go
+      - ⬜️ Swift
+      - ✅ Rust
+      - ✅ Zig
+      - ✅ C
+    - update documentation before publishing 0.3.*
+        - call out that process_raw_bytes doesn't append null in Rust
+            - that this was an ergonomics decision (otherwise having to deal with vec of optionals), but can be revisited
+        - if you call from_bytes on a generic message, it has to be tagged
+    - UnpackMessages should check for EOF on reads and throw/return errors as appropriate
+        - make sure we're consuming the terminator, too
 - add endian handling to C writer for the sake of completion
+- add zig cc / zig c++ as compiler for c tests
+  - musl build on linux?
+  - also check on windows
+  - maybe do debug and release builds for languages where it makes sense
 - test suite for destroying and cleaning up messages
 - add notes about trustworthiness
   - all reading code assumes it's reading stuff that was written by a corresponding writer
@@ -41,18 +84,6 @@ This file is a rough todo list for the tool itself.
         }
     }
     ```
-
-## functionality
-- can size limits on arrays be enforced? at least when writing?
-- open question: should the multiple message format (as read by ProcessRawBytes) be a little smarter?
-    - right now is very minimal
-    - but maybe could also have a little header: 
-        - first four bytes are number of messages
-        - next set of four bytes each are the length of each message
-        - (or should the length of each message come right before it? is this an arbitrary distinction or are there performance/usability tradeoffs?)
-        - could even do checksums or something in here if needed
-        - *then* the messages themselves
-    - should be an associated PackMessages function that takes a list of messages and makes these bytes from it
 
 ## testing framework
   - comparison (size/perf) to flatbuffers/capnproto/etc?

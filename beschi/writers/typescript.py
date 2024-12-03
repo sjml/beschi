@@ -198,7 +198,7 @@ class TypeScriptWriter(Writer):
             self.write_line()
 
         if sdata.is_message:
-            self.write_line(f"static fromBytes(data: DataView|DataAccess|ArrayBuffer): {sname} {{")
+            self.write_line(f"static override fromBytes(data: DataView|DataAccess|ArrayBuffer): {sname} {{")
             self.indent_level += 1
             self.write_line("let da: DataAccess;")
             self.write_line("if (data instanceof DataView) {")
@@ -308,8 +308,13 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line("export function ProcessRawBytes(data: DataView|DataAccess): Message[] {")
+        self.write_line("export function ProcessRawBytes(data: DataView|DataAccess, max: number): Message[] {")
         self.indent_level += 1
+        self.write_line("if (max === undefined) {")
+        self.indent_level += 1
+        self.write_line("max = -1;")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("let da: DataAccess;")
         self.write_line("if (data instanceof DataView) {")
         self.indent_level += 1
@@ -322,7 +327,12 @@ class TypeScriptWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line("const msgList: Message[] = [];")
-        self.write_line("while (!da.isFinished()) {")
+        self.write_line("if (max == 0) {")
+        self.indent_level += 1
+        self.write_line("return msgList;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("while (!da.isFinished() && (max < 0 || msgList.length < max)) {")
         self.indent_level += 1
         self.write_line("const msgType: number = da.getByte();")
         self.write_line("switch (msgType) {")

@@ -234,3 +234,51 @@ pub fn writeBytes(m: *const Message, offset: usize, buffer: []u8, tag: bool) usi
         inline else => |inner| return inner.writeBytes(offset, buffer, tag),
     }
 }
+
+pub fn getPackedSize(msg_list: []const Message) usize {
+    var size: usize = 0;
+    for (msg_list) |msg| {
+        size += msg.getSizeInBytes();
+    }
+    size += msg_list.len;
+    size += 9;
+    return size;
+}
+
+pub fn packMessages(msg_list: []const Message, buffer: []u8) void {
+    const header_bytes = "BSCI";
+    var offset: usize = 0;
+
+    for (header_bytes) |b| {
+        offset += writeNumber(u8, offset, buffer, b);
+    }
+    offset += writeNumber(u32, offset, buffer, @intCast(msg_list.len));
+
+    for (msg_list) |msg| {
+        offset += msg.writeBytes(offset, buffer, true);
+    }
+
+    offset += writeNumber(u8, offset, buffer, 0);
+}
+
+pub fn unpackMessages(allocator: std.mem.Allocator, buffer: []u8) ![]Message {
+    var offset: usize = 0;
+    if (!std.mem.eql(u8, buffer[0..4], "BSCI")) {
+        return DataReaderError.InvalidData;
+    }
+    offset += 4;
+    const msg_count_read = try readNumber(u32, 4, buffer);
+    offset += msg_count_read.bytes_read;
+    const msg_count = msg_count_read.value;
+    if (msg_count == 0) {
+        return allocator.alloc(Message, 0);
+    }
+    const msg_list = try processRawBytes(allocator, buffer[offset..], @intCast(msg_count));
+    if (msg_list.len == 0) {
+        return DataReaderError.InvalidData;
+    }
+    if (msg_list.len != msg_count) {
+        return DataReaderError.InvalidData;
+    }
+    return msg_list;
+}

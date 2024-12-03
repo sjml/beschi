@@ -7,6 +7,8 @@ mod small_messages;
 
 mod util;
 
+use small_messages::MessageCodec;
+
 fn main() {
     let mut checker = util::Checker { ok: true };
     let args = util::arg_parse();
@@ -44,7 +46,7 @@ fn main() {
         size += 12;
 
         let filename = args.get("generate").unwrap();
-        checker.soft_assert(writer.len() as u32 == size, "size calculation check");
+        checker.soft_assert(writer.len() == size, "size calculation check");
         fs::write(filename, writer).unwrap();
     }
     else if args.contains_key("read") {
@@ -52,7 +54,7 @@ fn main() {
         let mut buffer = fs::read(&filename).unwrap();
         buffer.resize(buffer.len() + 25, 0);
         let mut reader = small_messages::BufferReader::new(buffer);
-        let msg_list = small_messages::process_raw_bytes(&mut reader).unwrap();
+        let msg_list = small_messages::process_raw_bytes(&mut reader, -1).unwrap();
         checker.soft_assert(msg_list.len() == 12, "reading multiple messages length");
 
         match &msg_list[0] {

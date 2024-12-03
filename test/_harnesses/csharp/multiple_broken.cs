@@ -52,7 +52,7 @@ class MultipleBrokenHarness: TestHarness {
             string errMsg = "";
             try
             {
-                BrokenMessages.Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br);
+                BrokenMessages.Message[] msgList = BrokenMessages.Message.ProcessRawBytes(br, -1);
             }
             catch (BrokenMessages.UnknownMessageTypeException e)
             {

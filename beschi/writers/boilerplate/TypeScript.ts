@@ -146,11 +146,68 @@ export class DataAccess {
 
 export abstract class Message {
   abstract getMessageType(): MessageType;
-  abstract writeBytes(dv: DataView, tag: boolean): void;
+  abstract writeBytes(dv: DataView|DataAccess, tag: boolean): void;
   abstract getSizeInBytes(): number;
 
   static fromBytes(data: DataView|DataAccess|ArrayBuffer): Message | null {
     throw new Error("Cannot read abstract Message from bytes.");
   };
+}
+
+export function GetPackedSize(msgList: Message[]): number {
+    let size = 0;
+    for (const msg of msgList) {
+        size += msg.getSizeInBytes();
+    }
+    size += msgList.length;
+    size += 9;
+    return size;
+}
+
+export function PackMessages(msgList: Message[], data: DataView|DataAccess): void {
+  let da: DataAccess;
+  if (data instanceof DataView) {
+    da = new DataAccess(data);
+  }
+  else {
+    da = data;
+  }
+  const headerBytes = _textEnc.encode("BSCI");
+  const arr = new Uint8Array(da.data.buffer);
+  arr.set(headerBytes, da.currentOffset);
+  da.currentOffset += headerBytes.byteLength;
+  da.setUint32(msgList.length);
+  for (const msg of msgList) {
+    msg.writeBytes(da, true);
+  }
+  da.setByte(0);
+}
+
+export function UnpackMessages(data: DataView|DataAccess): Message[] {
+  let da: DataAccess;
+  if (data instanceof DataView) {
+    da = new DataAccess(data);
+  }
+  else {
+    da = data;
+  }
+  const headerBuffer = new Uint8Array(da.data.buffer, da.currentOffset, 4);
+  da.currentOffset += 4;
+  const headerLabel = _textDec.decode(headerBuffer);
+  if (headerLabel !== "BSCI") {
+    throw new Error("Packed message buffer has invalid header.");
+  }
+  const msgCount = da.getUint32();
+  if (msgCount == 0) {
+    return [];
+  }
+  const msgList = ProcessRawBytes(da, msgCount);
+  if (msgList.length == 0) {
+    throw new Error("No messages in buffer.");
+  }
+  if (msgList.length != msgCount) {
+    throw new Error("Unexpected number of messages in buffer.");
+  }
+  return msgList;
 }
 

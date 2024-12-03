@@ -87,7 +87,7 @@ func main() {
 		copy(buffer, content)
 		reader := bytes.NewReader(buffer)
 
-		msgList, err := small_messages.ProcessRawBytes(reader)
+		msgList, err := small_messages.ProcessRawBytes(reader, -1)
 		softAssert(err == nil, "reading multiple messages")
 
 		softAssert(len(msgList) == 12, "reading multiple messages length")

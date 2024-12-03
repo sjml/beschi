@@ -5,6 +5,7 @@ use std::error::Error;
 pub enum BeschiError {
     EndOfFile,
     InvalidData,
+    EndOfMessageList,
 }
 
 impl Error for BeschiError {}
@@ -14,6 +15,7 @@ impl fmt::Display for BeschiError {
         match self {
             BeschiError::EndOfFile => write!(f, "end of file reached prematurely"),
             BeschiError::InvalidData => write!(f, "invalid data encountered"),
+            BeschiError::EndOfMessageList => write!(f, "end of message list encountered"),
         }
     }
 }
@@ -115,3 +117,57 @@ impl BufferReader {
     }
 }
 
+pub trait MessageCodec {
+    fn get_size_in_bytes(&self) -> usize;
+    fn from_bytes(reader: &mut BufferReader) -> Result<Self, BeschiError>
+        where Self: Sized;
+    fn write_bytes(&self, writer: &mut Vec<u8>, tag: bool);
+}
+
+
+pub fn get_packed_size(msg_list: &[Message]) -> usize {
+    let mut size: usize = 0;
+
+    for msg in msg_list {
+        size += msg.get_size_in_bytes();
+    }
+    size += msg_list.len();
+    size += 9;
+
+    size
+}
+
+pub fn pack_messages(msg_list: &[Message], writer: &mut Vec<u8>) {
+    let header_bytes = b"BSCI";
+    writer.extend_from_slice(header_bytes);
+    let msg_count = msg_list.len() as u32;
+    writer.extend_from_slice(&msg_count.to_le_bytes());
+
+    for msg in msg_list {
+        msg.write_bytes(writer, true);
+    }
+    writer.push(0);
+}
+
+pub fn unpack_messages(reader: &mut BufferReader) -> Result<Vec<Message>, BeschiError> {
+    let header_label = reader.take(4)?;
+    if header_label != b"BSCI" {
+        return Err(BeschiError::InvalidData);
+    }
+
+    let msg_count = reader.read_u32()? as usize;
+    if msg_count == 0 {
+        return Ok(Vec::new());
+    }
+
+    let msg_list = process_raw_bytes(reader, msg_count as i32)?;
+    let read_count = msg_list.len();
+    if read_count == 0 {
+        return Err(BeschiError::InvalidData);
+    }
+    if msg_list.len() != msg_count {
+        return Err(BeschiError::InvalidData);
+    }
+
+    Ok(msg_list)
+}

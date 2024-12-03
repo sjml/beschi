@@ -13,5 +13,6 @@ def test_message_comparison():
     check_files_identical("*/multiple_broken.*.msg")
     check_files_identical("*/sized.*.msg")
     check_files_identical("*/uninitialized.*.msg")
+    check_files_identical("*/packed.*.msg")
 
 

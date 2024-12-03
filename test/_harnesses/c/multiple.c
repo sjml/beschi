@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
         SmallMessages_DataAccess reader = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         void** msgList = NULL;
         size_t msgListLen = 0;
-        err = SmallMessages_ProcessRawBytes(&reader, &msgList, &msgListLen);
+        err = SmallMessages_ProcessRawBytes(&reader, -1, &msgList, &msgListLen);
         if (err != SMALLMESSAGES_ERR_OK) { return err; }
         free(buffer);
 

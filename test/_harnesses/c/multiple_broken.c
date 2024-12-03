@@ -103,7 +103,7 @@ int main(int argc, char** argv) {
         BrokenMessages_DataAccess reader = {.buffer = buffer, .bufferSize = bufferSize, .position = 0};
         void** msgList = NULL;
         size_t msgListLen = 0;
-        err = BrokenMessages_ProcessRawBytes(&reader, &msgList, &msgListLen);
+        err = BrokenMessages_ProcessRawBytes(&reader, -1, &msgList, &msgListLen);
         free(buffer);
 
         softAssert(err == BROKENMESSAGES_ERR_INVALID_DATA, "read broken stream error");

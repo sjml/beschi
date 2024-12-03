@@ -429,9 +429,12 @@ class CWriter(Writer):
         self.write_line(f"{self.prefix}MessageType {self.prefix}GetMessageType(const void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}GetSizeInBytes(const void* m, size_t* len);")
         self.write_line(f"{self.prefix}err_t {self.prefix}WriteBytes({self.prefix}DataAccess* w, const void* m, bool tag);")
-        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListOut, size_t* len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, int32_t max, void*** msgListOut, size_t* len);")
         self.write_line(f"{self.prefix}err_t {self.prefix}Destroy(void* m);")
         self.write_line(f"{self.prefix}err_t {self.prefix}DestroyMessageList(void** msgList, size_t len);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}GetPackedSize(void** msgList, size_t len, size_t* packedSize);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}PackMessages(void** msgList, size_t len, {self.prefix}DataAccess* w);")
+        self.write_line(f"{self.prefix}err_t {self.prefix}UnpackMessages({self.prefix}DataAccess* r, void*** msgListOut, size_t* len);")
         self.write_line()
 
         for enum, edata in self.protocol.enums.items():
@@ -521,14 +524,19 @@ class CWriter(Writer):
         self.write_line("}")
         self.write_line()
 
-        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, void*** msgListDst, size_t* len) {{")
+        self.write_line(f"{self.prefix}err_t {self.prefix}ProcessRawBytes({self.prefix}DataAccess* r, int32_t max, void*** msgListDst, size_t* len) {{")
         self.indent_level += 1
         self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
         self.write_line("size_t currCapacity = 8;")
         self.write_line(f"*msgListDst = (void**){self.prefix.upper()}MALLOC(sizeof(void*) * currCapacity);")
         self.write_line(f"if (*msgListDst == NULL) {{ return {self.prefix.upper()}ERR_ALLOCATION_FAILURE; }}")
         self.write_line("*len = 0;")
-        self.write_line(f"while (!{self.prefix}IsFinished(r)) {{")
+        self.write_line("if (max == 0) {")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line(f"while (!{self.prefix}IsFinished(r) && (max < 0 || *len < (size_t)max)) {{")
         self.indent_level += 1
         self.write_line("while (*len >= currCapacity) {")
         self.indent_level += 1
@@ -590,6 +598,109 @@ class CWriter(Writer):
         self.indent_level -= 1
         self.write_line("}")
         self.write_line(f"{self.prefix.upper()}FREE(msgList);")
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"{self.prefix}err_t {self.prefix}GetPackedSize(void** msgList, size_t len, size_t* packedSize) {{")
+        self.indent_level += 1
+        self.write_line("*packedSize = 0;")
+        self.write_line("for (size_t i = 0; i < len; i++) {")
+        self.indent_level += 1
+        self.write_line("size_t individualSize = 0;")
+        self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(msgList[i]);")
+        self.write_line("switch (msgType) {")
+        for msg_type in self.protocol.messages:
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"{self.prefix}{msg_type}_GetSizeInBytes(({self.prefix}{msg_type}*)msgList[i], &individualSize);")
+            self.write_line("*packedSize += individualSize;")
+            self.write_line("break;")
+            self.indent_level -= 1
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("*packedSize += len;")
+        self.write_line("*packedSize += 9;")
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"{self.prefix}err_t {self.prefix}PackMessages(void** msgList, size_t len, {self.prefix}DataAccess* w) {{")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
+        self.write_line("if (msgList == NULL) {")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("const char header[] = \"BSCI\";")
+        self.write_line("memcpy(w->buffer, header, 4);")
+        self.write_line("w->position += 4;")
+        self.write_line(f"err = {self.prefix}_WriteUInt32(w, (uint32_t)len);")
+        self.err_check_return()
+        self.write_line("for (size_t i = 0; i < len; i++) {")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}MessageType msgType = {self.prefix}GetMessageType(msgList[i]);")
+        self.write_line("switch (msgType) {")
+        for msg_type in self.protocol.messages:
+            self.write_line(f"case {self.prefix}MessageType_{msg_type}:")
+            self.indent_level += 1
+            self.write_line(f"err = {self.prefix}{msg_type}_WriteBytes(w, ({self.prefix}{msg_type}*)msgList[i], true);")
+            self.err_check_return()
+            self.write_line("break;")
+            self.indent_level -= 1
+        self.write_line(f"case {self.prefix}MessageType___NullMessage:")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line(f"{self.prefix}_WriteUInt8(w, 0);")
+        self.write_line()
+        self.write_line(f"return {self.prefix.upper()}ERR_OK;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
+
+        self.write_line(f"{self.prefix}err_t {self.prefix}UnpackMessages({self.prefix}DataAccess* r, void*** msgListOut, size_t* len) {{")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}err_t err = {self.prefix.upper()}ERR_OK;")
+        self.write_line("if (memcmp(r->buffer, \"BSCI\", 4) != 0) {")
+        self.indent_level += 1
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("r->position += 4;")
+        self.write_line("uint32_t msgCount;")
+        self.write_line(f"err = {self.prefix}_ReadUInt32(r, &msgCount);")
+        self.err_check_return()
+        # doing things a little backwards here to let ProcessRawBytes allocate an empty array
+        self.write_line(f"err = {self.prefix}ProcessRawBytes(r, (int32_t)msgCount, msgListOut, len);")
+        self.err_check_return()
+        self.write_line("if (len == 0) {")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix.upper()}FREE(*msgListOut);")
+        self.write_line("*msgListOut = NULL;")
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line("if (*len != (size_t)msgCount) {")
+        self.indent_level += 1
+        self.write_line(f"{self.prefix}DestroyMessageList(*msgListOut, *len);")
+        self.write_line("*msgListOut = NULL;")
+        self.write_line("*len = 0;")
+        self.write_line(f"return {self.prefix.upper()}ERR_INVALID_DATA;")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
         self.write_line(f"return {self.prefix.upper()}ERR_OK;")
         self.indent_level -= 1
         self.write_line("}")

@@ -49,7 +49,7 @@ class Writer:
             self.type_mapping[enum_type] = enum_type
 
     # inserts any boilerplate code, indented at the current level
-    def add_boilerplate(self, substitutions: list[tuple[str,str]] = [], index: int =-1):
+    def add_boilerplate(self, substitutions: list[tuple[str,(str|list[str])]] = [], index: int =-1):
         if index >= 0:
             index_str = f".{index}"
         else:
@@ -59,7 +59,13 @@ class Writer:
         if os.path.exists(boilerplate_path):
             boilerplate_lines = open(boilerplate_path, "r").read().splitlines()
             for s in substitutions:
-                boilerplate_lines = [bpl.replace(s[0], s[1]) for bpl in boilerplate_lines]
+                if type(s[1]) == str:
+                    boilerplate_lines = [bpl.replace(s[0], s[1]) for bpl in boilerplate_lines]
+                else:
+                    for i in reversed(range(len(boilerplate_lines))):
+                        bpl = boilerplate_lines[i]
+                        if bpl == s[0]:
+                            boilerplate_lines = boilerplate_lines[:i] + s[1] + boilerplate_lines[i+1:]
             def replace_indent(line: str, old_indent: str, new_indent: str):
                 count = 0
                 while line[count:].startswith(old_indent):

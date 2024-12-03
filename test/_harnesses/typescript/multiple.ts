@@ -60,7 +60,7 @@ function read(filePath: string, softAssert: (condition: boolean, label: string) 
 
     const dv = getDataView(filePath);
 
-    const msgList = SmallMessages.ProcessRawBytes(dv);
+    const msgList = SmallMessages.ProcessRawBytes(dv, -1);
 
     softAssert(msgList.length == 12, "reading multiple messages length");
 
