@@ -2,12 +2,10 @@ This file is a rough todo list for the tool itself.
 
 ## dustoff notes
 - update documentation before publishing 0.3.*
-    - call out that process_raw_bytes doesn't append null in Rust
-        - that this was an ergonomics decision (otherwise having to deal with vec of optionals), but can be revisited
     - if you call from_bytes on a generic message, it has to be tagged
-    - UnpackMessages should check for EOF on reads and throw/return errors as appropriate
-        - make sure we're consuming the terminator, too
     - Swift the PackMessages and stuff hangs off the array because of Reasons™
+- UnpackMessages should check for EOF on reads and throw/return errors as appropriate
+    - make sure we're consuming the terminator, too
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now
