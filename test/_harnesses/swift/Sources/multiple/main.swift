@@ -47,19 +47,19 @@ if parsed["generate"] != nil {
     let outDir = outPath.deletingLastPathComponent()
     try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
-    var data = Data()
-    byteMsg.WriteBytes(data: &data, tag: true)   //  0
-    intMsgA.WriteBytes(data: &data, tag: true)   //  1
-    intMsgB.WriteBytes(data: &data, tag: true)   //  2
-    emptyMsg.WriteBytes(data: &data, tag: true)  //  3
-    longMsg.WriteBytes(data: &data, tag: true)   //  4
-    floatMsg.WriteBytes(data: &data, tag: true)  //  5
-    intMsgA.WriteBytes(data: &data, tag: true)   //  6
-    intMsgB.WriteBytes(data: &data, tag: true)   //  7
-    intMsgB.WriteBytes(data: &data, tag: true)   //  8
-    intMsgB.WriteBytes(data: &data, tag: true)   //  9
-    intMsgA.WriteBytes(data: &data, tag: true)   // 10
-    emptyMsg.WriteBytes(data: &data, tag: true)  // 11
+    let data = NSMutableData()
+    byteMsg.WriteBytes(data: data, tag: true)   //  0
+    intMsgA.WriteBytes(data: data, tag: true)   //  1
+    intMsgB.WriteBytes(data: data, tag: true)   //  2
+    emptyMsg.WriteBytes(data: data, tag: true)  //  3
+    longMsg.WriteBytes(data: data, tag: true)   //  4
+    floatMsg.WriteBytes(data: data, tag: true)  //  5
+    intMsgA.WriteBytes(data: data, tag: true)   //  6
+    intMsgB.WriteBytes(data: data, tag: true)   //  7
+    intMsgB.WriteBytes(data: data, tag: true)   //  8
+    intMsgB.WriteBytes(data: data, tag: true)   //  9
+    intMsgA.WriteBytes(data: data, tag: true)   // 10
+    emptyMsg.WriteBytes(data: data, tag: true)  // 11
 
     try data.write(to: outPath)
 
@@ -78,7 +78,7 @@ else if parsed["read"] != nil {
     let originalData = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
     let data = originalData + [UInt8](repeating: 0, count: 25)
 
-    let msgList = try SmallMessages.ProcessRawBytes(data)
+    let msgList = try SmallMessages.ProcessRawBytes(data, max: -1)
 
     softAssert(msgList.count == 12, "reading multiple messages length")
 

@@ -34,15 +34,15 @@ if parsed["generate"] != nil {
     let outDir = outPath.deletingLastPathComponent()
     try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
-    var data = Data()
-    lmsg.WriteBytes(data: &data, tag: false)
+    var data = NSMutableData()
+    lmsg.WriteBytes(data: data, tag: false)
 
     softAssert(lmsg.GetSizeInBytes() == data.count, "written bytes check");
 
     // tweak the buffer so the message looks longer
     var buffer = [UInt8](data)
     buffer[0] = 0xFF
-    data = Data(buffer)
+    data = NSMutableData(data: Data(buffer))
 
     try data.write(to: outPath)
 }

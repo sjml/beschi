@@ -152,68 +152,125 @@ class DataReader {
 }
 
 class DataWriter {
-    var data: Data
+    var data: NSMutableData
+
     init() {
-        self.data = Data()
+        self.data = NSMutableData()
     }
-    init(withData: inout Data) {
+
+    init(withData: NSMutableData) {
         self.data = withData
     }
 
-    func WriteUInt8(_ ui8: UInt8) {
-        self.data.append(ui8)
+    var asData: Data {
+        return self.data as Data
     }
 
-    func WriteBool(_ b: Bool) {
-        self.WriteUInt8(b ? 1 : 0)
+    func Write(uint8: UInt8) {
+        var val = uint8;
+        self.data.append(&val, length: MemoryLayout<UInt8>.size);
     }
 
-    func WriteInt16(_ i16: Int16) {
-        var _i16 = Int16(littleEndian: i16)
-        self.data.append(withUnsafeBytes(of: &_i16, {Data($0)}))
+    func Write(bool: Bool) {
+        self.Write(uint8: bool ? 1 : 0)
     }
 
-    func WriteUInt16(_ ui16: UInt16) {
-        var _ui16 = UInt16(littleEndian: ui16)
-        self.data.append(withUnsafeBytes(of: &_ui16, {Data($0)}))
+    func Write(int16: Int16) {
+        var val = int16;
+        self.data.append(&val, length: MemoryLayout<Int16>.size);
     }
 
-    func WriteInt32(_ i32: Int32) {
-        var _i32 = Int32(littleEndian: i32)
-        self.data.append(withUnsafeBytes(of: &_i32, {Data($0)}))
+    func Write(uint16: UInt16) {
+        var val = uint16;
+        self.data.append(&val, length: MemoryLayout<UInt16>.size);
     }
 
-    func WriteUInt32(_ ui32: UInt32) {
-        var _ui32 = UInt32(littleEndian: ui32)
-        self.data.append(withUnsafeBytes(of: &_ui32, {Data($0)}))
+    func Write(int32: Int32) {
+        var val = int32;
+        self.data.append(&val, length: MemoryLayout<Int32>.size);
     }
 
-    func WriteInt64(_ i64: Int64) {
-        var _i64 = Int64(littleEndian: i64)
-        self.data.append(withUnsafeBytes(of: &_i64, {Data($0)}))
+    func Write(uint32: UInt32) {
+        var val = uint32;
+        self.data.append(&val, length: MemoryLayout<UInt32>.size);
     }
 
-    func WriteUInt64(_ ui64: UInt64) {
-        var _ui64 = UInt64(littleEndian: ui64)
-        self.data.append(withUnsafeBytes(of: &_ui64, {Data($0)}))
+    func Write(int64: Int64) {
+        var val = int64;
+        self.data.append(&val, length: MemoryLayout<Int64>.size);
     }
 
-    func WriteFloat32(_ f: Float32) {
-        var _f = f
-        var out = UInt32(littleEndian: withUnsafeBytes(of: &_f, {$0.load(fromByteOffset: 0, as: UInt32.self)}))
-        self.data.append(withUnsafeBytes(of: &out, {Data($0)}))
+    func Write(uint64: UInt64) {
+        var val = uint64;
+        self.data.append(&val, length: MemoryLayout<UInt64>.size);
     }
 
-    func WriteFloat64(_ d: Float64) {
-        var _d = d
-        var out = UInt64(littleEndian: withUnsafeBytes(of: &_d, {$0.load(fromByteOffset: 0, as: UInt64.self)}))
-        self.data.append(withUnsafeBytes(of: &out, {Data($0)}))
+    func Write(float32: Float32) {
+        var val = float32;
+        var valOut = UInt32(littleEndian: withUnsafeBytes(of: &val) {
+            $0.load(fromByteOffset: 0, as: UInt32.self)
+        })
+        self.data.append(&valOut, length: MemoryLayout<UInt32>.size);
     }
 
-    func WriteString(_ s: String) {
-        let buffer = s.data(using: String.Encoding.utf8)!
-        self.Write{# STRING_SIZE_TYPE #}({# STRING_SIZE_TYPE #}(buffer.count))
+    func Write(float64: Float64) {
+        var val = float64;
+        var valOut = UInt64(littleEndian: withUnsafeBytes(of: &val) {
+            $0.load(fromByteOffset: 0, as: UInt64.self)
+        })
+        self.data.append(&valOut, length: MemoryLayout<UInt64>.size);
+    }
+
+    func Write(string: String) {
+        let buffer = string.data(using: .utf8)!
+        self.Write({# STRING_SIZE_TYPE_LOWER #}: {# STRING_SIZE_TYPE #}(buffer.count))
         self.data.append(buffer)
+    }
+}
+
+
+public class Message {
+    public func GetMessageType() -> MessageType {
+        fatalError("GetMessageType must be implemented in subclass")
+    }
+    public func WriteBytes(data: NSMutableData, tag: Bool) -> Void {
+        fatalError("WriteBytes must be implemented in subclass")
+    }
+    public func GetSizeInBytes() -> UInt32 {
+        fatalError("GetSizeInBytes must be implemented in subclass")
+    }
+    public class func FromBytes(_ fromData: Data) throws -> Self {
+        fatalError("FromBytes:fromData must be implemented in subclass")
+    }
+    class func FromBytes(dataReader: DataReader) throws -> Self {
+        fatalError("FromBytes:dataReader must be implemented in subclass")
+    }
+
+    public static func UnpackMessages(_ data: Data) throws -> [Message] {
+        let dataReader = DataReader(fromData: data)
+        let headerBytes = dataReader.data[dataReader.currentOffset..<dataReader.currentOffset+4];
+        guard
+            let headerLabel = String(data: headerBytes, encoding: String.Encoding.utf8)
+        else {
+            throw DataReaderError.InvalidData
+        }
+        dataReader.currentOffset += 4
+        if headerLabel != "BSCI" {
+            throw DataReaderError.InvalidData
+        }
+        let msgCount = try dataReader.GetUInt32();
+        if msgCount == 0 {
+            return [Message]()
+        }
+        let listData = data.subdata(in: dataReader.currentOffset..<dataReader.data.count)
+        let msgList: [Message] = try ProcessRawBytes(listData, max: Int(msgCount))
+        if msgList.count == 0 {
+            throw DataReaderError.InvalidData
+        }
+        if msgList.count != msgCount {
+            throw DataReaderError.InvalidData
+        }
+        return msgList.compactMap { $0 }
     }
 }
 

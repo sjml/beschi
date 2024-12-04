@@ -48,8 +48,8 @@ if parsed["generate"] != nil {
     let outDir = outPath.deletingLastPathComponent()
     try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
-    var data = Data()
-    shortList.WriteBytes(data: &data, tag: false)
+    let data = NSMutableData()
+    shortList.WriteBytes(data: data, tag: false)
 
     try data.write(to: outPath)
 

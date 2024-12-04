@@ -41,18 +41,19 @@ if parsed["generate"] != nil {
     let outDir = outPath.deletingLastPathComponent()
     try FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
 
-    var data = Data()
-    full.WriteBytes(data: &data, tag: true)
-    full.WriteBytes(data: &data, tag: true)
-    full.WriteBytes(data: &data, tag: true)
+    let data = NSMutableData()
+    full.WriteBytes(data: data, tag: true)
+    full.WriteBytes(data: data, tag: true)
+    full.WriteBytes(data: data, tag: true)
 
     // write a truncated message tagged as a full one
-    data.append(BrokenMessages.MessageType.FullMessageType.rawValue)
-    trunc.WriteBytes(data: &data, tag: false)
+    var tag = BrokenMessages.MessageType.FullMessageType.rawValue
+    data.append(&tag, length: MemoryLayout<UInt8>.size)
+    trunc.WriteBytes(data: data, tag: false)
 
-    full.WriteBytes(data: &data, tag: true)
-    full.WriteBytes(data: &data, tag: true)
-    full.WriteBytes(data: &data, tag: true)
+    full.WriteBytes(data: data, tag: true)
+    full.WriteBytes(data: data, tag: true)
+    full.WriteBytes(data: data, tag: true)
 
     try data.write(to: outPath)
 }
@@ -61,7 +62,7 @@ else if parsed["read"] != nil {
 
     var caught: BrokenMessages.DataReaderError? = nil
     do {
-        let _ = try BrokenMessages.ProcessRawBytes(data)
+        let _ = try BrokenMessages.ProcessRawBytes(data, max: -1)
     }
     catch BrokenMessages.DataReaderError.InvalidData {
         caught = BrokenMessages.DataReaderError.InvalidData

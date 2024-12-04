@@ -8,7 +8,6 @@ LANGUAGE_NAME = "Swift"
 class SwiftWriter(Writer):
     language_name = LANGUAGE_NAME
     default_extension = ".swift"
-    in_progress = True # just temporary until I can rethink the data story here
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         super().__init__(protocol=p, tab="    ")
@@ -77,7 +76,7 @@ class SwiftWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"dataWriter.Write{self.get_native_list_size()}({self.get_native_list_size()}({accessor}{var.name}.count))")
+            self.write_line(f"dataWriter.Write({self.get_native_list_size().lower()}: {self.get_native_list_size()}({accessor}{var.name}.count))")
             self.write_line(f"for el in {accessor}{var.name} {{")
             self.indent_level += 1
             inner = Variable(self.protocol, "el", var.vartype)
@@ -85,10 +84,10 @@ class SwiftWriter(Writer):
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype in NUMERIC_TYPE_SIZES or var.vartype == "string":
-            self.write_line(f"dataWriter.Write{self.type_mapping[var.vartype]}({accessor}{var.name})")
+            self.write_line(f"dataWriter.Write({self.type_mapping[var.vartype].lower()}: {accessor}{var.name})")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"dataWriter.Write{self.type_mapping[e.encoding]}({accessor}{var.name}.rawValue)")
+            self.write_line(f"dataWriter.Write({self.type_mapping[e.encoding].lower()}: {accessor}{var.name}.rawValue)")
         else:
             self.write_line(f"{accessor}{var.name}.WriteBytes(dataWriter)")
 
@@ -144,10 +143,7 @@ class SwiftWriter(Writer):
 
     def gen_struct(self, sname: str, sdata: Struct):
         if sdata.is_message:
-            if self.protocol.namespace != None:
-                self.write_line(f"public struct {sname} : {self.protocol.namespace}_Message {{")
-            else:
-                self.write_line(f"public struct {sname} : Message {{")
+            self.write_line(f"public class {sname}: Message {{")
         else:
             self.write_line(f"public struct {sname} {{")
         self.indent_level += 1
@@ -166,18 +162,21 @@ class SwiftWriter(Writer):
                 self.write_line(f"public var {var.name}: {self.type_mapping[var.vartype]}{f' = {default_value}' if default_value else ''}")
         self.write_line()
 
-        self.write_line("public init() {}")
+        if sdata.is_message:
+            self.write_line("public required override init() {}")
+        else:
+            self.write_line("public init() {}")
         self.write_line()
 
         if sdata.is_message:
-            self.write_line("public func GetMessageType() -> MessageType {")
+            self.write_line("public override func GetMessageType() -> MessageType {")
             self.indent_level += 1
             self.write_line(f"return MessageType.{sname}Type")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
 
-            self.write_line("public func GetSizeInBytes() -> UInt32 {")
+            self.write_line("public override func GetSizeInBytes() -> UInt32 {")
             self.indent_level += 1
             measure_lines, accumulator = self.gen_measurement(sdata, "self.")
             [self.write_line(s) for s in measure_lines]
@@ -189,22 +188,22 @@ class SwiftWriter(Writer):
             self.write_line("}")
             self.write_line()
 
-            self.write_line(f"public static func FromBytes(_ fromData: Data) throws -> {sname} {{")
+            self.write_line(f"public override class func FromBytes(_ fromData: Data) throws -> Self {{")
             self.indent_level += 1
             self.write_line("let dr = DataReader(fromData: fromData)")
             self.write_line("return try FromBytes(dataReader: dr)")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line()
-            self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {sname} {{")
+            self.write_line(f"override class func FromBytes(dataReader: DataReader) throws -> Self {{")
             self.indent_level += 1
         else:
-            self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> {sname} {{")
+            self.write_line(f"static func FromBytes(dataReader: DataReader) throws -> Self {{")
             self.indent_level += 1
         decl = "var"
-        if len(sdata.members) == 0:
+        if len(sdata.members) == 0 or sdata.is_message:
             decl = "let"
-        self.write_line(f"{decl} n{sname} = {self.type_mapping[sname]}()")
+        self.write_line(f"{decl} n{sname} = Self.init()")
         [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
         self.write_line(f"return n{sname}")
         self.indent_level -= 1
@@ -212,21 +211,18 @@ class SwiftWriter(Writer):
         self.write_line()
 
         if sdata.is_message:
-            self.write_line("public func WriteBytes(data: inout Data, tag: Bool) -> Void {")
+            self.write_line("public override func WriteBytes(data: NSMutableData, tag: Bool) -> Void {")
             self.indent_level += 1
-            self.write_line("let dataWriter = DataWriter(withData: &data)")
+            self.write_line("let dataWriter = DataWriter(withData: data)")
             self.write_line("if (tag) {")
             self.indent_level += 1
-            self.write_line(f"dataWriter.WriteUInt8(MessageType.{sname}Type.rawValue)")
+            self.write_line(f"dataWriter.Write(uint8: MessageType.{sname}Type.rawValue)")
             self.indent_level -= 1
             self.write_line("}")
         else:
             self.write_line("func WriteBytes(_ dataWriter: DataWriter) -> Void {")
             self.indent_level += 1
         [self.serializer(mem, "self.") for mem in sdata.members]
-        if sdata.is_message:
-            self.write_line()
-            self.write_line("data = dataWriter.data")
         self.indent_level -= 1
         self.write_line("}")
 
@@ -256,26 +252,13 @@ class SwiftWriter(Writer):
             self.write_line()
 
         if self.protocol.namespace != None:
-            self.write_line(f"public protocol {self.protocol.namespace}_Message {{")
-            self.indent_level += 1
-            self.write_line(f"func GetMessageType() -> {self.protocol.namespace}.MessageType")
-        else:
-            self.write_line("public protocol Message {")
-            self.indent_level += 1
-            self.write_line(f"func GetMessageType() -> MessageType")
-        self.write_line("func WriteBytes(data: inout Data, tag: Bool) -> Void")
-        self.write_line("func GetSizeInBytes() -> UInt32")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line()
-
-        if self.protocol.namespace != None:
             self.write_line(f"public /* namespace */ enum {self.protocol.namespace} {{")
             self.indent_level += 1
 
-        self.add_boilerplate(substitutions=[
-            ("{# STRING_SIZE_TYPE #}", self.get_native_string_size())
-        ])
+        self.add_boilerplate([
+            ("{# STRING_SIZE_TYPE #}", self.get_native_string_size()),
+            ("{# STRING_SIZE_TYPE_LOWER #}", self.get_native_string_size().lower()),
+        ], 0)
 
         self.write_line("public enum MessageType: UInt8 {")
         self.indent_level += 1
@@ -287,15 +270,20 @@ class SwiftWriter(Writer):
         self.write_line()
 
         if self.protocol.namespace != None:
-            self.write_line(f"public static func ProcessRawBytes(_ data: Data) throws -> [{self.protocol.namespace}_Message] {{")
+            self.write_line(f"public static func ProcessRawBytes(_ data: Data, max: Int) throws -> [Message] {{")
             self.indent_level += 1
-            self.write_line(f"var msgList: [{self.protocol.namespace}_Message] = []")
+            self.write_line(f"var msgList: [Message] = []")
         else:
-            self.write_line(f"public func ProcessRawBytes(_ data: Data) throws -> [Message] {{")
+            self.write_line(f"public func ProcessRawBytes(_ data: Data, max: Int) throws -> [Message] {{")
             self.indent_level += 1
             self.write_line("var msgList: [Message] = []")
+        self.write_line("if max == 0 {")
+        self.indent_level += 1
+        self.write_line("return msgList")
+        self.indent_level -= 1
+        self.write_line("}")
         self.write_line("let dr = DataReader(fromData: data)")
-        self.write_line("while !dr.IsFinished() {")
+        self.write_line("while !dr.IsFinished() && (max < 0 || msgList.count < max) {")
         self.indent_level += 1
         accessor = ""
         if self.protocol.namespace != None:
@@ -345,6 +333,11 @@ class SwiftWriter(Writer):
         if self.protocol.namespace != None:
             self.indent_level -= 1
             self.write_line("}")
+
+        self.write_line()
+        self.add_boilerplate([
+            ("{# NAMESPACE_PREFIX_DOT #}", f"{self.protocol.namespace}." if self.protocol.namespace != None else ""),
+        ], 1)
 
         self.write_line()
         assert self.indent_level == 0
