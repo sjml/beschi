@@ -1,3 +1,5 @@
+#![allow(dead_code)] // some generated functions chains may not be fully exploited
+
 use std::fmt;
 use std::error::Error;
 
@@ -20,28 +22,29 @@ impl fmt::Display for BeschiError {
     }
 }
 
-pub struct BufferReader {
-    buffer: Vec<u8>,
-    current_position: usize,
+pub struct BufferReader<'a> {
+    buffer: &'a [u8],
+    pub current_position: usize,
 }
 
-impl BufferReader {
-    pub fn new(buffer: Vec<u8>) -> Self {
+impl<'a> BufferReader<'a> {
+    pub fn new(buffer: &'a [u8]) -> Self {
         BufferReader { buffer, current_position: 0 }
     }
 
-    pub fn is_finished(&self) -> bool {
-        if self.current_position >= self.buffer.len() {
-            return true
+    pub fn from_vec(buffer: Vec<u8>) -> BufferReader<'static> {
+        BufferReader {
+            buffer: buffer.leak(),
+            current_position: 0
         }
-        false
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.current_position >= self.buffer.len()
     }
 
     pub fn has_remaining(&self, size: usize) -> bool {
-        if self.current_position + size > self.buffer.len() {
-            return false
-        }
-        true
+        self.current_position + size <= self.buffer.len()
     }
 
     pub fn take_byte(&mut self) -> Result<u8, BeschiError> {
@@ -117,7 +120,22 @@ impl BufferReader {
     }
 }
 
+impl <'a> Drop for BufferReader<'a> {
+    fn drop(&mut self) {
+        if std::mem::needs_drop::<Vec<u8>>() {
+            unsafe {
+                let _ = Vec::from_raw_parts(
+                    self.buffer.as_ptr() as *mut u8,
+                    self.buffer.len(),
+                    self.buffer.len()
+                );
+            }
+        }
+    }
+}
+
 pub trait MessageCodec {
+    fn get_message_type(&self) -> MessageType;
     fn get_size_in_bytes(&self) -> usize;
     fn from_bytes(reader: &mut BufferReader) -> Result<Self, BeschiError>
         where Self: Sized;

@@ -1,9 +1,10 @@
 This file is a rough todo list for the tool itself.
 
 ## dustoff notes
+- Rust: make a BufferedWriter that takes either a `[u8]` or a `Vec<u8>`
 - update documentation before publishing 0.3.*
     - if you call from_bytes on a generic message, it has to be tagged
-    - Swift the PackMessages and stuff hangs off the array because of Reasons™
+    - Swift: the PackMessages and stuff hangs off the array because of Reasons™
 - UnpackMessages should check for EOF on reads and throw/return errors as appropriate
     - make sure we're consuming the terminator, too
 

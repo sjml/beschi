@@ -43,7 +43,7 @@ fn main() {
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
-        let mut reader = BufferReader::new(buffer);
+        let mut reader = BufferReader::from_vec(buffer);
         match broken_messages::process_raw_bytes(&mut reader, -1) {
             Err(_) => checker.soft_assert(true, "read broken stream length"),
             Ok(_) => checker.soft_assert(false, "read broken stream length"),

@@ -130,7 +130,7 @@ fn main() {
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
-        let mut reader = BufferReader::new(buffer);
+        let mut reader = BufferReader::from_vec(buffer);
         let input = TestingMessage::from_bytes(&mut reader).unwrap();
         checker.soft_assert(input.b == example.b, "byte");
         checker.soft_assert(input.tf == example.tf, "bool");

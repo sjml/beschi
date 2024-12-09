@@ -200,9 +200,16 @@ class RustWriter(Writer):
 
         if sdata.is_message:
             self.write_line(f"impl MessageCodec for {sname} {{")
+            self.indent_level += 1
+            self.write_line("fn get_message_type(&self) -> MessageType {")
+            self.indent_level += 1
+            self.write_line(f"MessageType::{sname}")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
         else:
             self.write_line(f"impl {sname} {{")
-        self.indent_level += 1
+            self.indent_level += 1
 
         self.write_line("fn get_size_in_bytes(&self) -> usize {")
         self.indent_level += 1
@@ -269,6 +276,15 @@ class RustWriter(Writer):
             subs.append(("Beschi", self.protocol.namespace))
             self.prefix = self.protocol.namespace
         self.add_boilerplate(substitutions=subs)
+        self.write_line()
+
+        self.write_line("pub enum MessageType {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+           self.write_line(f"{mname},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
 
         self.write_line("pub enum Message {")
         self.indent_level += 1
@@ -280,6 +296,17 @@ class RustWriter(Writer):
 
         self.write_line("impl MessageCodec for Message {")
         self.indent_level += 1
+        self.write_line("fn get_message_type(&self) -> MessageType {")
+        self.indent_level += 1
+        self.write_line("match self {")
+        self.indent_level += 1
+        for mname in self.protocol.messages:
+            self.write_line(f"Message::{mname}(_) => MessageType::{mname},")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.indent_level -= 1
+        self.write_line("}")
+        self.write_line()
         self.write_line("fn get_size_in_bytes(&self) -> usize {")
         self.indent_level += 1
         self.write_line("match self {")

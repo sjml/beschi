@@ -37,7 +37,7 @@ fn main() {
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
-        let mut reader = BufferReader::new(buffer);
+        let mut reader = BufferReader::from_vec(buffer);
         let msg_list = unpack_messages(&mut reader).unwrap();
         checker.soft_assert(msg_list.len() == 10, "packed count");
 

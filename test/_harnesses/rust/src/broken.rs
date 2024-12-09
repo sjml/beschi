@@ -25,7 +25,7 @@ fn main() {
     else if args.contains_key("read") {
         let filename = args.get("read").unwrap();
         let buffer = fs::read(&filename).unwrap();
-        let mut reader = BufferReader::new(buffer);
+        let mut reader = BufferReader::from_vec(buffer);
         let read_res = FullMessage::from_bytes(&mut reader);
         match read_res {
             Ok(_) => checker.soft_assert(false, "reading broken message"),
