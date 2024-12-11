@@ -33,9 +33,10 @@ impl<'a> BufferReader<'a> {
     }
 
     pub fn from_vec(buffer: Vec<u8>) -> BufferReader<'static> {
+        let buffer = Box::new(buffer);
         BufferReader {
-            buffer: buffer.leak(),
-            current_position: 0
+            buffer: Box::leak(buffer),
+            current_position: 0,
         }
     }
 
@@ -117,20 +118,6 @@ impl<'a> BufferReader<'a> {
     pub fn read_f64(&mut self) -> Result<f64, BeschiError> {
         let bytes = self.take(8)?;
         Ok(f64::from_le_bytes(bytes.try_into().unwrap()))
-    }
-}
-
-impl <'a> Drop for BufferReader<'a> {
-    fn drop(&mut self) {
-        if std::mem::needs_drop::<Vec<u8>>() {
-            unsafe {
-                let _ = Vec::from_raw_parts(
-                    self.buffer.as_ptr() as *mut u8,
-                    self.buffer.len(),
-                    self.buffer.len()
-                );
-            }
-        }
     }
 }
 
