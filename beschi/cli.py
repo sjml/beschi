@@ -17,6 +17,7 @@ def main():
     argparser.add_argument("--lang", "-l", type=str, help=f"language to generate ({' '.join(sorted(writers))})")
     argparser.add_argument("--output", "-o", type=str, default=None, help="path to output file; if omitted, will output to stdout")
     argparser.add_argument("--protocol", "-p", type=str, help="path to the protocol TOML file")
+    argparser.add_argument("--namespace", "-n", type=str, help="override the namespace in the protocol file")
     argparser.add_argument("--indent", type=str, help="override the default indentation for the language")
 
     additional_arguments = []
@@ -59,6 +60,9 @@ def main():
         sys.stderr.write(f"ERROR: Invalid protocol file '{args.protocol}'.\n")
         sys.stderr.write(f"\t{e}\n")
         sys.exit(1)
+
+    if args.namespace and len(args.namespace) > 0:
+        protocol.namespace = args.namespace
 
     if args.lang not in writers and args.lang not in exp_writers:
         sys.stderr.write("\n".join([
