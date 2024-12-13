@@ -103,8 +103,7 @@ class TypeScriptWriter(Writer):
             if self.language_name != "AssemblyScript":
                 self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
             else:
-                e = self.protocol.enums[var.vartype]
-                self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length as {self.type_mapping[e.encoding]});")
+                self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length as {self.type_mapping[self.protocol.list_size_type]});")
             self.write_line(f"for (let i = 0; i < {accessor}{var.name}.length; i++) {{")
             self.indent_level += 1
             self.write_line(f"let el = {accessor}{var.name}[i];")

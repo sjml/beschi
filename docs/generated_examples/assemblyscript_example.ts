@@ -3,28 +3,20 @@
 // Do not edit directly.
 
 
-const _textDec = new TextDecoder('utf-8');
-const _textEnc = new TextEncoder();
-
 export class DataAccess {
   data: DataView;
-  currentOffset: number;
+  currentOffset: u32;
 
-  constructor(buffer: ArrayBuffer|DataView) {
+  constructor(buffer: DataView) {
     this.currentOffset = 0;
-    if (buffer instanceof ArrayBuffer) {
-      this.data = new DataView(buffer);
-    }
-    else {
-      this.data = buffer;
-    }
+    this.data = buffer;
   }
 
   isFinished(): boolean {
     return this.currentOffset >= this.data.byteLength;
   }
 
-  getByte(): number {
+  getByte(): u8 {
     const ret = this.data.getUint8(this.currentOffset);
     this.currentOffset += 1;
     return ret;
@@ -34,49 +26,49 @@ export class DataAccess {
     return this.getByte() > 0;
   }
 
-  getInt16(): number {
+  getInt16(): i16 {
     const ret = this.data.getInt16(this.currentOffset, true);
     this.currentOffset += 2;
     return ret;
   }
 
-  getUint16(): number {
+  getUint16(): u16 {
     const ret = this.data.getUint16(this.currentOffset, true);
     this.currentOffset += 2;
     return ret;
   }
 
-  getInt32(): number {
+  getInt32(): i32 {
     const ret = this.data.getInt32(this.currentOffset, true);
     this.currentOffset += 4;
     return ret;
   }
 
-  getUint32(): number {
+  getUint32(): u32 {
     const ret = this.data.getUint32(this.currentOffset, true);
     this.currentOffset += 4;
     return ret;
   }
 
-  getInt64(): bigint {
+  getInt64(): i64 {
     const ret = this.data.getBigInt64(this.currentOffset, true);
     this.currentOffset += 8;
     return ret;
   }
 
-  getUint64(): bigint {
+  getUint64(): u64 {
     const ret = this.data.getBigUint64(this.currentOffset, true);
     this.currentOffset += 8;
     return ret;
   }
 
-  getFloat32(): number {
+  getFloat32(): f32 {
     const ret = this.data.getFloat32(this.currentOffset, true);
     this.currentOffset += 4;
     return Math.fround(ret);
   }
 
-  getFloat64(): number {
+  getFloat64(): f64 {
     const ret = this.data.getFloat64(this.currentOffset, true);
     this.currentOffset += 8;
     return ret;
@@ -86,11 +78,11 @@ export class DataAccess {
     const len = this.getByte();
     const strBuffer = new Uint8Array(this.data.buffer, this.currentOffset, len);
     this.currentOffset += len;
-    return _textDec.decode(strBuffer);
+    return String.UTF8.decode(strBuffer, false);
   }
 
 
-  setByte(val: number) {
+  setByte(val: u8): void {
     this.data.setUint8(this.currentOffset, val);
     this.currentOffset += 1;
   }
@@ -99,66 +91,67 @@ export class DataAccess {
     this.setByte(val ? 1 : 0);
   }
 
-  setInt16(val: number): void {
+  setInt16(val: i16): void {
     this.data.setInt16(this.currentOffset, val, true);
     this.currentOffset += 2;
   }
 
-  setUint16(val: number): void {
+  setUint16(val: u16): void {
     this.data.setUint16(this.currentOffset, val, true);
     this.currentOffset += 2;
   }
 
-  setInt32(val: number): void {
+  setInt32(val: i32): void {
     this.data.setInt32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setUint32(val: number): void {
+  setUint32(val: u32): void {
     this.data.setUint32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setInt64(val: bigint): void {
+  setInt64(val: i64): void {
     this.data.setBigInt64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
-  setUint64(val: bigint): void {
+  setUint64(val: u64): void {
     this.data.setBigUint64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
-  setFloat32(val: number): void {
+  setFloat32(val: f32): void {
     this.data.setFloat32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setFloat64(val: number): void {
+  setFloat64(val: f64): void {
     this.data.setFloat64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
   setString(val: string): void {
-    const strBuffer = _textEnc.encode(val);
-    this.setByte(strBuffer.byteLength);
-    const arr = new Uint8Array(this.data.buffer);
-    arr.set(strBuffer, this.currentOffset);
-    this.currentOffset += strBuffer.byteLength;
+    const strBuffer = String.UTF8.encode(val, false);
+    const bufferArray = Uint8Array.wrap(strBuffer);
+    this.setByte(strBuffer.byteLength as u8);
+    for (let i = 0; i < bufferArray.byteLength; i++) {
+      this.setByte(bufferArray[i] as u8);
+    }
   }
 }
 
 export abstract class Message {
   abstract getMessageType(): MessageType;
-  abstract writeBytes(dv: DataView|DataAccess, tag: boolean): void;
+  abstract writeBytes(dv: DataView, tag: boolean): void;
   abstract getSizeInBytes(): number;
 
-  static fromBytes(data: DataView|DataAccess|ArrayBuffer): Message | null {
+  static fromBytes(data: DataView): Message | null {
     throw new Error("Cannot read abstract Message from bytes.");
   };
 }
 
-export function GetPackedSize(msgList: Message[]): number {
+export function GetPackedSize(msgList: Message[]): usize {
   let size = 0;
   for (const msg of msgList) {
     size += msg.getSizeInBytes();
@@ -168,14 +161,8 @@ export function GetPackedSize(msgList: Message[]): number {
   return size;
 }
 
-export function PackMessages(msgList: Message[], data: DataView|DataAccess): void {
-  let da: DataAccess;
-  if (data instanceof DataView) {
-    da = new DataAccess(data);
-  }
-  else {
-    da = data;
-  }
+export function PackMessages(msgList: Message[], data: DataView): void {
+  const da = new DataAccess(data);
   const headerBytes = _textEnc.encode("BSCI");
   const arr = new Uint8Array(da.data.buffer);
   arr.set(headerBytes, da.currentOffset);
@@ -187,14 +174,8 @@ export function PackMessages(msgList: Message[], data: DataView|DataAccess): voi
   da.setByte(0);
 }
 
-export function UnpackMessages(data: DataView|DataAccess): Message[] {
-  let da: DataAccess;
-  if (data instanceof DataView) {
-    da = new DataAccess(data);
-  }
-  else {
-    da = data;
-  }
+export function UnpackMessages(data: DataView): Message[] {
+  const da = new DataAccess(data);
   const headerBuffer = new Uint8Array(da.data.buffer, da.currentOffset, 4);
   da.currentOffset += 4;
   const headerLabel = _textDec.decode(headerBuffer);
@@ -219,19 +200,14 @@ export enum MessageType {
   Vector3MessageType = 1,
   NewCharacterMessageType = 2,
   CharacterJoinedTeamType = 3,
+  _Unknown,
 }
 
-export function ProcessRawBytes(data: DataView|DataAccess, max: number): Message[] {
+export function ProcessRawBytes(data: DataView, max: number): Message[] {
   if (max === undefined) {
     max = -1;
   }
-  let da: DataAccess;
-  if (data instanceof DataView) {
-    da = new DataAccess(data);
-  }
-  else {
-    da = data;
-  }
+  const da = new DataAccess(data);
   const msgList: Message[] = [];
   if (max == 0) {
     return msgList;
@@ -262,6 +238,7 @@ export enum CharacterClass {
   Wizard = 1,
   Rogue = 2,
   Cleric = 3,
+  _Unknown,
 }
 
 export enum TeamRole {
@@ -269,13 +246,14 @@ export enum TeamRole {
   Ally = 512,
   Leader = 1024,
   Traitor = -1,
+  _Unknown,
 }
 
 export class Color {
-  red: number = 0;
-  green: number = 0;
-  blue: number = 0;
-  alpha: number = 0;
+  red: f32 = 0;
+  green: f32 = 0;
+  blue: f32 = 0;
+  alpha: f32 = 0;
 
   static fromBytes(da: DataAccess): Color {
     const nColor = new Color();
@@ -304,7 +282,7 @@ export class Spectrum {
     nSpectrum.defaultColor = Color.fromBytes(da);
     const colors_Length = da.getUint16();
     nSpectrum.colors = new Array<Color>(colors_Length);
-    for (let i2: number = 0; i2 < colors_Length; i2++) {
+    for (let i2: u16 = 0; i2 < colors_Length; i2++) {
       nSpectrum.colors[i2] = Color.fromBytes(da);
     }
     return nSpectrum;
@@ -312,7 +290,7 @@ export class Spectrum {
 
   writeBytes(da: DataAccess): void {
     this.defaultColor.writeBytes(da);
-    da.setUint16(this.colors.length);
+    da.setUint16(this.colors.length as u16);
     for (let i = 0; i < this.colors.length; i++) {
       let el = this.colors[i];
       el.writeBytes(da);
@@ -322,9 +300,9 @@ export class Spectrum {
 }
 
 export class Vector3Message extends Message {
-  x: number = 0;
-  y: number = 0;
-  z: number = 0;
+  x: f32 = 0;
+  y: f32 = 0;
+  z: f32 = 0;
 
   getMessageType() : MessageType { return MessageType.Vector3MessageType; }
 
@@ -332,43 +310,19 @@ export class Vector3Message extends Message {
     return 12;
   }
 
-  static override fromBytes(data: DataView|DataAccess|ArrayBuffer): Vector3Message {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
-    }
-    else if (data instanceof ArrayBuffer) {
-      da = new DataAccess(new DataView(data));
-    }
-    else {
-      da = data;
-    }
-    try {
-      const nVector3Message = new Vector3Message();
-      nVector3Message.x = da.getFloat32();
-      nVector3Message.y = da.getFloat32();
-      nVector3Message.z = da.getFloat32();
-      return nVector3Message;
-    }
-    catch (err) {
-      let errMsg = "[Unknown error]";
-      if (err instanceof Error) {
-        errMsg = `${err.name} -- ${err.message}`;
-      }
-      throw new Error(`Could not read Vector3Message from offset ${da.currentOffset} (${errMsg})`);
-    }
+  static override fromBytes(data: DataView): Vector3Message {
+    const da = new DataAccess(data);
+    const nVector3Message = new Vector3Message();
+    nVector3Message.x = da.getFloat32();
+    nVector3Message.y = da.getFloat32();
+    nVector3Message.z = da.getFloat32();
+    return nVector3Message;
   }
 
-  writeBytes(data: DataView|DataAccess, tag: boolean): void {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
-    }
-    else {
-      da = data;
-    }
+  writeBytes(data: DataView, tag: boolean): void {
+    const da = new DataAccess(data);
     if (tag) {
-      da.setByte(MessageType.Vector3MessageType);
+      da.setByte(MessageType.Vector3MessageType as u8);
     }
     da.setFloat32(this.x);
     da.setFloat32(this.y);
@@ -378,14 +332,14 @@ export class Vector3Message extends Message {
 }
 
 export class NewCharacterMessage extends Message {
-  id: bigint = 0n;
+  id: u64 = 0;
   characterName: string = "";
   job: CharacterClass = CharacterClass.Fighter;
-  strength: number = 0;
-  intelligence: number = 0;
-  dexterity: number = 0;
-  wisdom: number = 0;
-  goldInWallet: number = 0;
+  strength: u16 = 0;
+  intelligence: u16 = 0;
+  dexterity: u16 = 0;
+  wisdom: u16 = 0;
+  goldInWallet: u32 = 0;
   nicknames: string[] = [];
 
   getMessageType() : MessageType { return MessageType.NewCharacterMessageType; }
@@ -400,67 +354,43 @@ export class NewCharacterMessage extends Message {
     return size;
   }
 
-  static override fromBytes(data: DataView|DataAccess|ArrayBuffer): NewCharacterMessage {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
+  static override fromBytes(data: DataView): NewCharacterMessage {
+    const da = new DataAccess(data);
+    const nNewCharacterMessage = new NewCharacterMessage();
+    nNewCharacterMessage.id = da.getUint64();
+    nNewCharacterMessage.characterName = da.getString();
+    const _job = da.getByte();
+    if (_job < 0 || _job >= (CharacterClass._Unknown as u8)) {
+      throw new Error(`Enum (${_job}) out of range for CharacterClass`);
     }
-    else if (data instanceof ArrayBuffer) {
-      da = new DataAccess(new DataView(data));
+    nNewCharacterMessage.job = _job;
+    nNewCharacterMessage.strength = da.getUint16();
+    nNewCharacterMessage.intelligence = da.getUint16();
+    nNewCharacterMessage.dexterity = da.getUint16();
+    nNewCharacterMessage.wisdom = da.getUint16();
+    nNewCharacterMessage.goldInWallet = da.getUint32();
+    const nicknames_Length = da.getUint16();
+    nNewCharacterMessage.nicknames = new Array<string>(nicknames_Length);
+    for (let i2: u16 = 0; i2 < nicknames_Length; i2++) {
+      nNewCharacterMessage.nicknames[i2] = da.getString();
     }
-    else {
-      da = data;
-    }
-    try {
-      const nNewCharacterMessage = new NewCharacterMessage();
-      nNewCharacterMessage.id = da.getUint64();
-      nNewCharacterMessage.characterName = da.getString();
-      const _job = da.getByte();
-      if (CharacterClass[_job] === undefined) {
-        throw new Error(`Enum (${_job}) out of range for CharacterClass`);
-      }
-      nNewCharacterMessage.job = _job;
-      nNewCharacterMessage.strength = da.getUint16();
-      nNewCharacterMessage.intelligence = da.getUint16();
-      nNewCharacterMessage.dexterity = da.getUint16();
-      nNewCharacterMessage.wisdom = da.getUint16();
-      nNewCharacterMessage.goldInWallet = da.getUint32();
-      const nicknames_Length = da.getUint16();
-      nNewCharacterMessage.nicknames = new Array<string>(nicknames_Length);
-      for (let i3: number = 0; i3 < nicknames_Length; i3++) {
-        nNewCharacterMessage.nicknames[i3] = da.getString();
-      }
-      return nNewCharacterMessage;
-    }
-    catch (err) {
-      let errMsg = "[Unknown error]";
-      if (err instanceof Error) {
-        errMsg = `${err.name} -- ${err.message}`;
-      }
-      throw new Error(`Could not read NewCharacterMessage from offset ${da.currentOffset} (${errMsg})`);
-    }
+    return nNewCharacterMessage;
   }
 
-  writeBytes(data: DataView|DataAccess, tag: boolean): void {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
-    }
-    else {
-      da = data;
-    }
+  writeBytes(data: DataView, tag: boolean): void {
+    const da = new DataAccess(data);
     if (tag) {
-      da.setByte(MessageType.NewCharacterMessageType);
+      da.setByte(MessageType.NewCharacterMessageType as u8);
     }
     da.setUint64(this.id);
     da.setString(this.characterName);
-    da.setByte(this.job);
+    da.setByte(this.job as u8);
     da.setUint16(this.strength);
     da.setUint16(this.intelligence);
     da.setUint16(this.dexterity);
     da.setUint16(this.wisdom);
     da.setUint32(this.goldInWallet);
-    da.setUint16(this.nicknames.length);
+    da.setUint16(this.nicknames.length as u16);
     for (let i = 0; i < this.nicknames.length; i++) {
       let el = this.nicknames[i];
       da.setString(el);
@@ -470,7 +400,7 @@ export class NewCharacterMessage extends Message {
 }
 
 export class CharacterJoinedTeam extends Message {
-  characterID: bigint = 0n;
+  characterID: u64 = 0;
   teamName: string = "";
   teamColors: Color[] = [];
   role: TeamRole = TeamRole.Minion;
@@ -485,68 +415,38 @@ export class CharacterJoinedTeam extends Message {
     return size;
   }
 
-  static override fromBytes(data: DataView|DataAccess|ArrayBuffer): CharacterJoinedTeam {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
+  static override fromBytes(data: DataView): CharacterJoinedTeam {
+    const da = new DataAccess(data);
+    const nCharacterJoinedTeam = new CharacterJoinedTeam();
+    nCharacterJoinedTeam.characterID = da.getUint64();
+    nCharacterJoinedTeam.teamName = da.getString();
+    const teamColors_Length = da.getUint16();
+    nCharacterJoinedTeam.teamColors = new Array<Color>(teamColors_Length);
+    for (let i2: u16 = 0; i2 < teamColors_Length; i2++) {
+      nCharacterJoinedTeam.teamColors[i2] = Color.fromBytes(da);
     }
-    else if (data instanceof ArrayBuffer) {
-      da = new DataAccess(new DataView(data));
+    const _role = da.getInt16();
+    if (_role < -1 || _role >= (TeamRole._Unknown as i16)) {
+      throw new Error(`Enum (${_role}) out of range for TeamRole`);
     }
-    else {
-      da = data;
-    }
-    try {
-      const nCharacterJoinedTeam = new CharacterJoinedTeam();
-      nCharacterJoinedTeam.characterID = da.getUint64();
-      nCharacterJoinedTeam.teamName = da.getString();
-      const teamColors_Length = da.getUint16();
-      nCharacterJoinedTeam.teamColors = new Array<Color>(teamColors_Length);
-      for (let i3: number = 0; i3 < teamColors_Length; i3++) {
-        nCharacterJoinedTeam.teamColors[i3] = Color.fromBytes(da);
-      }
-      const _role = da.getInt16();
-      if (TeamRole[_role] === undefined) {
-        throw new Error(`Enum (${_role}) out of range for TeamRole`);
-      }
-      nCharacterJoinedTeam.role = _role;
-      return nCharacterJoinedTeam;
-    }
-    catch (err) {
-      let errMsg = "[Unknown error]";
-      if (err instanceof Error) {
-        errMsg = `${err.name} -- ${err.message}`;
-      }
-      throw new Error(`Could not read CharacterJoinedTeam from offset ${da.currentOffset} (${errMsg})`);
-    }
+    nCharacterJoinedTeam.role = _role;
+    return nCharacterJoinedTeam;
   }
 
-  writeBytes(data: DataView|DataAccess, tag: boolean): void {
-    let da: DataAccess;
-    if (data instanceof DataView) {
-      da = new DataAccess(data);
-    }
-    else {
-      da = data;
-    }
+  writeBytes(data: DataView, tag: boolean): void {
+    const da = new DataAccess(data);
     if (tag) {
-      da.setByte(MessageType.CharacterJoinedTeamType);
+      da.setByte(MessageType.CharacterJoinedTeamType as u8);
     }
     da.setUint64(this.characterID);
     da.setString(this.teamName);
-    da.setUint16(this.teamColors.length);
+    da.setUint16(this.teamColors.length as u16);
     for (let i = 0; i < this.teamColors.length; i++) {
       let el = this.teamColors[i];
       el.writeBytes(da);
     }
-    da.setInt16(this.role);
+    da.setInt16(this.role as i16);
   }
 
 }
-
-export const MessageTypeMap = new Map<MessageType, { new(): Message }>([
-  [MessageType.Vector3MessageType, Vector3Message],
-  [MessageType.NewCharacterMessageType, NewCharacterMessage],
-  [MessageType.CharacterJoinedTeamType, CharacterJoinedTeam],
-]);
 

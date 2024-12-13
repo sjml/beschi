@@ -2,6 +2,8 @@
 // <https://github.com/sjml/beschi>
 // Do not edit directly.
 
+#![allow(dead_code)] // some generated functions chains may not be fully exploited
+
 use std::fmt;
 use std::error::Error;
 
@@ -24,28 +26,30 @@ impl fmt::Display for AppMessagesError {
     }
 }
 
-pub struct BufferReader {
-    buffer: Vec<u8>,
-    current_position: usize,
+pub struct BufferReader<'a> {
+    buffer: &'a [u8],
+    pub current_position: usize,
 }
 
-impl BufferReader {
-    pub fn new(buffer: Vec<u8>) -> Self {
+impl<'a> BufferReader<'a> {
+    pub fn new(buffer: &'a [u8]) -> Self {
         BufferReader { buffer, current_position: 0 }
     }
 
-    pub fn is_finished(&self) -> bool {
-        if self.current_position >= self.buffer.len() {
-            return true
+    pub fn from_vec(buffer: Vec<u8>) -> BufferReader<'static> {
+        let buffer = Box::new(buffer);
+        BufferReader {
+            buffer: Box::leak(buffer),
+            current_position: 0,
         }
-        false
+    }
+
+    pub fn is_finished(&self) -> bool {
+        self.current_position >= self.buffer.len()
     }
 
     pub fn has_remaining(&self, size: usize) -> bool {
-        if self.current_position + size > self.buffer.len() {
-            return false
-        }
-        true
+        self.current_position + size <= self.buffer.len()
     }
 
     pub fn take_byte(&mut self) -> Result<u8, AppMessagesError> {
@@ -122,6 +126,7 @@ impl BufferReader {
 }
 
 pub trait MessageCodec {
+    fn get_message_type(&self) -> MessageType;
     fn get_size_in_bytes(&self) -> usize;
     fn from_bytes(reader: &mut BufferReader) -> Result<Self, AppMessagesError>
         where Self: Sized;
@@ -175,6 +180,13 @@ pub fn unpack_messages(reader: &mut BufferReader) -> Result<Vec<Message>, AppMes
 
     Ok(msg_list)
 }
+
+pub enum MessageType {
+    Vector3Message,
+    NewCharacterMessage,
+    CharacterJoinedTeam,
+}
+
 pub enum Message {
     Vector3Message(Vector3Message),
     NewCharacterMessage(NewCharacterMessage),
@@ -182,6 +194,14 @@ pub enum Message {
 }
 
 impl MessageCodec for Message {
+    fn get_message_type(&self) -> MessageType {
+        match self {
+            Message::Vector3Message(_) => MessageType::Vector3Message,
+            Message::NewCharacterMessage(_) => MessageType::NewCharacterMessage,
+            Message::CharacterJoinedTeam(_) => MessageType::CharacterJoinedTeam,
+        }
+    }
+
     fn get_size_in_bytes(&self) -> usize {
         match self {
             Message::Vector3Message(msg) => msg.get_size_in_bytes(),
@@ -353,6 +373,10 @@ pub struct Vector3Message {
 }
 
 impl MessageCodec for Vector3Message {
+    fn get_message_type(&self) -> MessageType {
+        MessageType::Vector3Message
+    }
+
     fn get_size_in_bytes(&self) -> usize {
         12
     }
@@ -388,6 +412,10 @@ pub struct NewCharacterMessage {
 }
 
 impl MessageCodec for NewCharacterMessage {
+    fn get_message_type(&self) -> MessageType {
+        MessageType::NewCharacterMessage
+    }
+
     fn get_size_in_bytes(&self) -> usize {
         let mut size: usize = 0;
         size += self.character_name.len();
@@ -447,6 +475,10 @@ pub struct CharacterJoinedTeam {
 }
 
 impl MessageCodec for CharacterJoinedTeam {
+    fn get_message_type(&self) -> MessageType {
+        MessageType::CharacterJoinedTeam
+    }
+
     fn get_size_in_bytes(&self) -> usize {
         let mut size: usize = 0;
         size += self.team_name.len();
