@@ -314,10 +314,14 @@ jobs:
       run: |
         rm -rf dist
         python -m build
+    - name: Calculate Short SHA
+      id: vars
+      run: |
+        echo "SHA_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
     - name: Upload Distribution Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: beschi-${{ github.ref_name }}
+        name: beschi-${{ github.ref_name }}-${{ steps.vars.outputs.SHA_SHORT }}
         path: dist/
 
   publish-pypi:
