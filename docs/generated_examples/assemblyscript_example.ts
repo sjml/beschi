@@ -12,7 +12,7 @@ export class DataAccess {
     this.data = buffer;
   }
 
-  isFinished(): boolean {
+  isFinished(): bool {
     return this.currentOffset >= this.data.byteLength;
   }
 
@@ -22,7 +22,7 @@ export class DataAccess {
     return ret;
   }
 
-  getBool(): boolean {
+  getBool(): bool {
     return this.getByte() > 0;
   }
 
@@ -51,13 +51,13 @@ export class DataAccess {
   }
 
   getInt64(): i64 {
-    const ret = this.data.getBigInt64(this.currentOffset, true);
+    const ret = this.data.getInt64(this.currentOffset, true);
     this.currentOffset += 8;
     return ret;
   }
 
   getUint64(): u64 {
-    const ret = this.data.getBigUint64(this.currentOffset, true);
+    const ret = this.data.getUint64(this.currentOffset, true);
     this.currentOffset += 8;
     return ret;
   }
@@ -65,7 +65,7 @@ export class DataAccess {
   getFloat32(): f32 {
     const ret = this.data.getFloat32(this.currentOffset, true);
     this.currentOffset += 4;
-    return Math.fround(ret);
+    return ret;
   }
 
   getFloat64(): f64 {
@@ -76,9 +76,11 @@ export class DataAccess {
 
   getString(): string {
     const len = this.getByte();
-    const strBuffer = new Uint8Array(this.data.buffer, this.currentOffset, len);
-    this.currentOffset += len;
-    return String.UTF8.decode(strBuffer, false);
+    const strBuffer = new Uint8Array(len);
+    for (let i = 0; i < strBuffer.byteLength; i++) {
+        strBuffer[i] = this.getByte();
+    }
+    return String.UTF8.decode(strBuffer.buffer, false);
   }
 
 
@@ -87,7 +89,7 @@ export class DataAccess {
     this.currentOffset += 1;
   }
 
-  setBool(val: boolean): void {
+  setBool(val: bool): void {
     this.setByte(val ? 1 : 0);
   }
 
@@ -112,12 +114,12 @@ export class DataAccess {
   }
 
   setInt64(val: i64): void {
-    this.data.setBigInt64(this.currentOffset, val, true);
+    this.data.setInt64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
   setUint64(val: u64): void {
-    this.data.setBigUint64(this.currentOffset, val, true);
+    this.data.setUint64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
@@ -143,8 +145,8 @@ export class DataAccess {
 
 export abstract class Message {
   abstract getMessageType(): MessageType;
-  abstract writeBytes(dv: DataView, tag: boolean): void;
-  abstract getSizeInBytes(): number;
+  abstract writeBytes(dv: DataView, tag: bool): void;
+  abstract getSizeInBytes(): usize;
 
   static fromBytes(data: DataView): Message | null {
     throw new Error("Cannot read abstract Message from bytes.");
@@ -163,7 +165,7 @@ export function GetPackedSize(msgList: Message[]): usize {
 
 export function PackMessages(msgList: Message[], data: DataView): void {
   const da = new DataAccess(data);
-  const headerBytes = _textEnc.encode("BSCI");
+  const headerBytes = String.UTF8.encode("BSCI", false);
   const arr = new Uint8Array(da.data.buffer);
   arr.set(headerBytes, da.currentOffset);
   da.currentOffset += headerBytes.byteLength;
@@ -178,7 +180,7 @@ export function UnpackMessages(data: DataView): Message[] {
   const da = new DataAccess(data);
   const headerBuffer = new Uint8Array(da.data.buffer, da.currentOffset, 4);
   da.currentOffset += 4;
-  const headerLabel = _textDec.decode(headerBuffer);
+  const headerLabel = String.UTF8.decode(headerBuffer, false);
   if (headerLabel !== "BSCI") {
     throw new Error("Packed message buffer has invalid header.");
   }
@@ -306,7 +308,7 @@ export class Vector3Message extends Message {
 
   getMessageType() : MessageType { return MessageType.Vector3MessageType; }
 
-  getSizeInBytes(): number {
+  getSizeInBytes(): usize {
     return 12;
   }
 
@@ -344,11 +346,11 @@ export class NewCharacterMessage extends Message {
 
   getMessageType() : MessageType { return MessageType.NewCharacterMessageType; }
 
-  getSizeInBytes(): number {
-    let size: number = 0;
-    size += _textEnc.encode(this.characterName).byteLength;
+  getSizeInBytes(): usize {
+    let size: usize = 0;
+    size += String.UTF8.encode(this.characterName, false).byteLength;
     for (let nicknames_i=0; nicknames_i < this.nicknames.length; nicknames_i++) {
-      size += 1 + _textEnc.encode(this.nicknames[nicknames_i]).byteLength;
+      size += 1 + String.UTF8.encode(this.nicknames[nicknames_i], false).byteLength;
     }
     size += 24;
     return size;
@@ -407,9 +409,9 @@ export class CharacterJoinedTeam extends Message {
 
   getMessageType() : MessageType { return MessageType.CharacterJoinedTeamType; }
 
-  getSizeInBytes(): number {
-    let size: number = 0;
-    size += _textEnc.encode(this.teamName).byteLength;
+  getSizeInBytes(): usize {
+    let size: usize = 0;
+    size += String.UTF8.encode(this.teamName, false).byteLength;
     size += this.teamColors.length * 16;
     size += 13;
     return size;

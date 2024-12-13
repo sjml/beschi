@@ -131,7 +131,10 @@ class TypeScriptWriter(Writer):
         if st.is_simple():
             lines.append(f"return {self.protocol.get_size_of(st.name)};")
         else:
-            size_init = "let size: number = 0;"
+            if self.language_name != "AssemblyScript":
+                size_init = "let size: number = 0;"
+            else:
+                size_init = "let size: usize = 0;"
             lines.append(size_init)
 
             for var in st.members:
@@ -141,7 +144,10 @@ class TypeScriptWriter(Writer):
                         lines.append(f"size += {accessor}{var.name}.length * {self.protocol.get_size_of(var.vartype)};")
                     elif var.vartype == "string":
                         lines.append(f"for (let {var.name}_i=0; {var.name}_i < {accessor}{var.name}.length; {var.name}_i++) {{")
-                        lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + _textEnc.encode({accessor}{var.name}[{var.name}_i]).byteLength;")
+                        if self.language_name != "AssemblyScript":
+                            lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + _textEnc.encode({accessor}{var.name}[{var.name}_i]).byteLength;")
+                        else:
+                            lines.append(f"{self.tab}size += {NUMERIC_TYPE_SIZES[self.protocol.string_size_type]} + String.UTF8.encode({accessor}{var.name}[{var.name}_i], false).byteLength;")
                         lines.append("}")
                     else:
                         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
@@ -157,7 +163,10 @@ class TypeScriptWriter(Writer):
                         accum += self.protocol.get_size_of(var.vartype)
                     elif var.vartype == "string":
                         accum += NUMERIC_TYPE_SIZES[self.protocol.string_size_type]
-                        lines.append(f"size += _textEnc.encode({accessor}{var.name}).byteLength;")
+                        if self.language_name != "AssemblyScript":
+                            lines.append(f"size += _textEnc.encode({accessor}{var.name}).byteLength;")
+                        else:
+                            lines.append(f"size += String.UTF8.encode({accessor}{var.name}, false).byteLength;")
                     else:
                         clines, caccum = self.gen_measurement(self.protocol.structs[var.vartype], f"{accessor}{var.name}.")
                         if clines[0] == size_init:
@@ -207,7 +216,10 @@ class TypeScriptWriter(Writer):
             self.write_line(f"getMessageType() : MessageType {{ return MessageType.{sname}Type; }}")
             self.write_line()
 
-            self.write_line("getSizeInBytes(): number {")
+            if self.language_name != "AssemblyScript":
+                self.write_line("getSizeInBytes(): number {")
+            else:
+                self.write_line("getSizeInBytes(): usize {")
             self.indent_level += 1
             measure_lines, accumulator = self.gen_measurement(sdata, "this.")
             [self.write_line(s) for s in measure_lines]

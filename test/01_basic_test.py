@@ -12,7 +12,7 @@ def test_list_writers(generator_label):
         writer = beschi.writers.all_writers[generator_label]
     except KeyError:
         writer = beschi.writers.experimental_writers[generator_label]
-    assert(beschi.writer.Writer in writer.__bases__)
+    assert(issubclass(writer, beschi.writer.Writer))
 
 # see if the executable version works
 def test_cli_exists():
