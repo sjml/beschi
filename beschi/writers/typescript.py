@@ -50,18 +50,25 @@ class TypeScriptWriter(Writer):
         var_clean = TextUtil.replace(var.name, [("[", "_"), ("]", "_")])
         if var.is_list:
             self.write_line(f"const {var_clean}_Length = da.get{self.base_serializers[self.protocol.list_size_type]}();")
-            self.write_line(f"{accessor}{var.name} = Array<{self.type_mapping[var.vartype]}>({var_clean}_Length);")
+            self.write_line(f"{accessor}{var.name} = new Array<{self.type_mapping[var.vartype]}>({var_clean}_Length);")
             idx = self.indent_level
-            self.write_line(f"for (let i{idx} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
+            self.write_line(f"for (let i{idx}: {self.type_mapping[self.protocol.list_size_type]} = 0; i{idx} < {var_clean}_Length; i{idx}++) {{")
             self.indent_level += 1
             if var.vartype in self.protocol.enums:
                 e = self.protocol.enums[var.vartype]
                 self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.encoding]}();")
-                self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
-                self.indent_level += 1
-                self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
-                self.indent_level -= 1
-                self.write_line("}")
+                if self.language_name != "AssemblyScript":
+                    self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
+                    self.indent_level += 1
+                    self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+                    self.indent_level -= 1
+                    self.write_line("}")
+                else:
+                    self.write_line(f"if (_{var.name} < {e.get_minimum_pair()[1]} || _{var.name} >= ({var.vartype}._Unknown as {self.type_mapping[e.encoding]})) {{")
+                    self.indent_level += 1
+                    self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+                    self.indent_level -= 1
+                    self.write_line("}")
                 self.write_line(f"{accessor}{var.name}[i{idx}] = _{var.name};")
             else:
                 inner = Variable(self.protocol, f"{var.name}[i{idx}]", var.vartype)
@@ -73,11 +80,18 @@ class TypeScriptWriter(Writer):
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
             self.write_line(f"const _{var.name} = da.get{self.base_serializers[e.encoding]}();")
-            self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
-            self.indent_level += 1
-            self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
-            self.indent_level -= 1
-            self.write_line("}")
+            if self.language_name != "AssemblyScript":
+                self.write_line(f"if ({var.vartype}[_{var.name}] === undefined) {{")
+                self.indent_level += 1
+                self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+                self.indent_level -= 1
+                self.write_line("}")
+            else:
+                self.write_line(f"if (_{var.name} < {e.get_minimum_pair()[1]} || _{var.name} >= ({var.vartype}._Unknown as {self.type_mapping[e.encoding]})) {{")
+                self.indent_level += 1
+                self.write_line(f"throw new Error(`Enum (${{_{var.name}}}) out of range for {var.vartype}`);")
+                self.indent_level -= 1
+                self.write_line("}")
             self.write_line(f"{accessor}{var.name} = _{var.name};")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"{accessor}{var.name} = da.get{self.base_serializers[var.vartype]}();")
@@ -86,7 +100,11 @@ class TypeScriptWriter(Writer):
 
     def serializer(self, var: Variable, accessor: str):
         if var.is_list:
-            self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
+            if self.language_name != "AssemblyScript":
+                self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length);")
+            else:
+                e = self.protocol.enums[var.vartype]
+                self.write_line(f"da.set{self.base_serializers[self.protocol.list_size_type]}({accessor}{var.name}.length as {self.type_mapping[e.encoding]});")
             self.write_line(f"for (let i = 0; i < {accessor}{var.name}.length; i++) {{")
             self.indent_level += 1
             self.write_line(f"let el = {accessor}{var.name}[i];")
@@ -98,7 +116,10 @@ class TypeScriptWriter(Writer):
             self.write_line(f"da.setString({accessor}{var.name});")
         elif var.vartype in self.protocol.enums:
             e = self.protocol.enums[var.vartype]
-            self.write_line(f"da.set{self.base_serializers[e.encoding]}({accessor}{var.name});")
+            if self.language_name != "AssemblyScript":
+                self.write_line(f"da.set{self.base_serializers[e.encoding]}({accessor}{var.name});")
+            else:
+                self.write_line(f"da.set{self.base_serializers[e.encoding]}({accessor}{var.name} as {self.type_mapping[e.encoding]});")
         elif var.vartype in NUMERIC_TYPE_SIZES:
             self.write_line(f"da.set{self.base_serializers[var.vartype]}({accessor}{var.name});")
         else:
@@ -151,6 +172,8 @@ class TypeScriptWriter(Writer):
         self.indent_level += 1
         for v, vi in edata.values.items():
             self.write_line(f"{v} = {vi},")
+        if self.language_name == "AssemblyScript":
+            self.write_line("_Unknown,")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
@@ -198,34 +221,39 @@ class TypeScriptWriter(Writer):
             self.write_line()
 
         if sdata.is_message:
-            self.write_line(f"static override fromBytes(data: DataView|DataAccess|ArrayBuffer): {sname} {{")
-            self.indent_level += 1
-            self.write_line("let da: DataAccess;")
-            self.write_line("if (data instanceof DataView) {")
-            self.indent_level += 1
-            self.write_line("da = new DataAccess(data);")
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line("else if (data instanceof ArrayBuffer) {")
-            self.indent_level += 1
-            self.write_line("da = new DataAccess(new DataView(data));")
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line("else {")
-            self.indent_level += 1
-            self.write_line("da = data;")
-            self.indent_level -= 1
-            self.write_line("}")
+            if self.language_name != "AssemblyScript":
+                self.write_line(f"static override fromBytes(data: DataView|DataAccess|ArrayBuffer): {sname} {{")
+                self.indent_level += 1
+                self.write_line("let da: DataAccess;")
+                self.write_line("if (data instanceof DataView) {")
+                self.indent_level += 1
+                self.write_line("da = new DataAccess(data);")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line("else if (data instanceof ArrayBuffer) {")
+                self.indent_level += 1
+                self.write_line("da = new DataAccess(new DataView(data));")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line("else {")
+                self.indent_level += 1
+                self.write_line("da = data;")
+                self.indent_level -= 1
+                self.write_line("}")
+            else:
+                self.write_line(f"static override fromBytes(data: DataView): {sname} {{")
+                self.indent_level += 1
+                self.write_line("const da = new DataAccess(data);")
         else:
             self.write_line(f"static fromBytes(da: DataAccess): {sname} {{")
             self.indent_level += 1
-        if sdata.is_message:
+        if sdata.is_message and self.language_name != "AssemblyScript":
             self.write_line("try {")
             self.indent_level += 1
         self.write_line(f"const n{sname} = new {self.type_mapping[sname]}();")
         [self.deserializer(mem, f"n{sname}.") for mem in sdata.members]
         self.write_line(f"return n{sname};")
-        if sdata.is_message:
+        if sdata.is_message and self.language_name != "AssemblyScript":
             self.indent_level -= 1
             self.write_line("}")
             self.write_line("catch (err) {")
@@ -244,26 +272,36 @@ class TypeScriptWriter(Writer):
         self.write_line()
 
         if sdata.is_message:
-            self.write_line("writeBytes(data: DataView|DataAccess, tag: boolean): void {")
-            self.indent_level += 1
-            self.write_line("let da: DataAccess;")
-            self.write_line("if (data instanceof DataView) {")
-            self.indent_level += 1
-            self.write_line("da = new DataAccess(data);")
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line("else {")
-            self.indent_level += 1
-            self.write_line("da = data;")
-            self.indent_level -= 1
-            self.write_line("}")
-            self.write_line("if (tag) {")
-            self.indent_level += 1
-            self.write_line(f"da.setByte(MessageType.{sname}Type);")
-            self.indent_level -= 1
-            self.write_line("}")
+            if self.language_name != "AssemblyScript":
+                self.write_line("writeBytes(data: DataView|DataAccess, tag: boolean): void {")
+                self.indent_level += 1
+                self.write_line("let da: DataAccess;")
+                self.write_line("if (data instanceof DataView) {")
+                self.indent_level += 1
+                self.write_line("da = new DataAccess(data);")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line("else {")
+                self.indent_level += 1
+                self.write_line("da = data;")
+                self.indent_level -= 1
+                self.write_line("}")
+                self.write_line("if (tag) {")
+                self.indent_level += 1
+                self.write_line(f"da.setByte(MessageType.{sname}Type);")
+                self.indent_level -= 1
+                self.write_line("}")
+            else:
+                self.write_line("writeBytes(data: DataView, tag: boolean): void {")
+                self.indent_level += 1
+                self.write_line("const da = new DataAccess(data);")
+                self.write_line("if (tag) {")
+                self.indent_level += 1
+                self.write_line(f"da.setByte(MessageType.{sname}Type as u8);")
+                self.indent_level -= 1
+                self.write_line("}")
         else:
-            self.write_line("writeBytes(da: DataAccess) {")
+            self.write_line("writeBytes(da: DataAccess): void {")
             self.indent_level += 1
         [self.serializer(mem, "this.") for mem in sdata.members]
         self.indent_level -= 1
@@ -298,34 +336,43 @@ class TypeScriptWriter(Writer):
             self.indent_level += 1
 
         self.add_boilerplate(substitutions=[
-            ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type])
+            ("{# STRING_SIZE_TYPE #}", self.base_serializers[self.protocol.string_size_type]),
+            ("{# NATIVE_STRING_SIZE_TYPE #}", self.type_mapping[self.protocol.string_size_type]),
         ])
 
         self.write_line("export enum MessageType {")
         self.indent_level += 1
         [self.write_line(f"{k}Type = {i+1},") for i, k in enumerate(self.protocol.messages)]
+        if self.language_name == "AssemblyScript":
+            self.write_line("_Unknown,")
         self.indent_level -= 1
         self.write_line("}")
         self.write_line()
 
-        self.write_line("export function ProcessRawBytes(data: DataView|DataAccess, max: number): Message[] {")
+        if self.language_name != "AssemblyScript":
+            self.write_line("export function ProcessRawBytes(data: DataView|DataAccess, max: number): Message[] {")
+        else:
+            self.write_line("export function ProcessRawBytes(data: DataView, max: number): Message[] {")
         self.indent_level += 1
         self.write_line("if (max === undefined) {")
         self.indent_level += 1
         self.write_line("max = -1;")
         self.indent_level -= 1
         self.write_line("}")
-        self.write_line("let da: DataAccess;")
-        self.write_line("if (data instanceof DataView) {")
-        self.indent_level += 1
-        self.write_line("da = new DataAccess(data);")
-        self.indent_level -= 1
-        self.write_line("}")
-        self.write_line("else {")
-        self.indent_level += 1
-        self.write_line("da = data;")
-        self.indent_level -= 1
-        self.write_line("}")
+        if self.language_name != "AssemblyScript":
+            self.write_line("let da: DataAccess;")
+            self.write_line("if (data instanceof DataView) {")
+            self.indent_level += 1
+            self.write_line("da = new DataAccess(data);")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line("else {")
+            self.indent_level += 1
+            self.write_line("da = data;")
+            self.indent_level -= 1
+            self.write_line("}")
+        else:
+            self.write_line("const da = new DataAccess(data);")
         self.write_line("const msgList: Message[] = [];")
         self.write_line("if (max == 0) {")
         self.indent_level += 1
@@ -369,13 +416,14 @@ class TypeScriptWriter(Writer):
         for mname, mdata in self.protocol.messages.items():
             self.gen_struct(mname, mdata)
 
-        self.write_line("export const MessageTypeMap = new Map<MessageType, { new(): Message }>([");
-        self.indent_level += 1
-        for mname in self.protocol.messages:
-            self.write_line(f"[MessageType.{mname}Type, {mname}],")
-        self.indent_level -= 1
-        self.write_line("]);")
-        self.write_line()
+        if self.language_name != "AssemblyScript":
+            self.write_line("export const MessageTypeMap = new Map<MessageType, { new(): Message }>([");
+            self.indent_level += 1
+            for mname in self.protocol.messages:
+                self.write_line(f"[MessageType.{mname}Type, {mname}],")
+            self.indent_level -= 1
+            self.write_line("]);")
+            self.write_line()
 
         if self.use_namespace:
             self.indent_level -= 1

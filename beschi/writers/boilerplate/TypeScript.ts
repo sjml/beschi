@@ -91,51 +91,51 @@ export class DataAccess {
     this.currentOffset += 1;
   }
 
-  setBool(val: boolean) {
+  setBool(val: boolean): void {
     this.setByte(val ? 1 : 0);
   }
 
-  setInt16(val: number) {
+  setInt16(val: number): void {
     this.data.setInt16(this.currentOffset, val, true);
     this.currentOffset += 2;
   }
 
-  setUint16(val: number) {
+  setUint16(val: number): void {
     this.data.setUint16(this.currentOffset, val, true);
     this.currentOffset += 2;
   }
 
-  setInt32(val: number) {
+  setInt32(val: number): void {
     this.data.setInt32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setUint32(val: number) {
+  setUint32(val: number): void {
     this.data.setUint32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setInt64(val: bigint) {
+  setInt64(val: bigint): void {
     this.data.setBigInt64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
-  setUint64(val: bigint) {
+  setUint64(val: bigint): void {
     this.data.setBigUint64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
-  setFloat32(val: number) {
+  setFloat32(val: number): void {
     this.data.setFloat32(this.currentOffset, val, true);
     this.currentOffset += 4;
   }
 
-  setFloat64(val: number) {
+  setFloat64(val: number): void {
     this.data.setFloat64(this.currentOffset, val, true);
     this.currentOffset += 8;
   }
 
-  setString(val: string) {
+  setString(val: string): void {
     const strBuffer = _textEnc.encode(val);
     this.set{# STRING_SIZE_TYPE #}(strBuffer.byteLength);
     const arr = new Uint8Array(this.data.buffer);
@@ -155,13 +155,13 @@ export abstract class Message {
 }
 
 export function GetPackedSize(msgList: Message[]): number {
-    let size = 0;
-    for (const msg of msgList) {
-        size += msg.getSizeInBytes();
-    }
-    size += msgList.length;
-    size += 9;
-    return size;
+  let size = 0;
+  for (const msg of msgList) {
+    size += msg.getSizeInBytes();
+  }
+  size += msgList.length;
+  size += 9;
+  return size;
 }
 
 export function PackMessages(msgList: Message[], data: DataView|DataAccess): void {

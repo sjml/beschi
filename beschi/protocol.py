@@ -102,6 +102,10 @@ class Enum():
     def get_default_pair(self) -> tuple[str,int]:
         return next(iter(self.values.items()))
 
+    def get_minimum_pair(self) -> tuple[str,int]:
+        k = min(self.values, key=self.values.get)
+        return (k, self.values[k])
+
 class Struct():
     def __init__(self, name: str):
         self.name = name
