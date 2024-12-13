@@ -44,6 +44,7 @@ jobs:
     strategy:
       matrix:
         node-version: ['18', '20', '22']
+        typescript-version: ['4', '5']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
@@ -58,13 +59,18 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Run Tests (Node v${{ matrix.node-version }})
+    - name: Configure TypeScript Version
+      run: |
+        jq ".devDependencies.typescript = \"${{ matrix.typescript-version }}\"" test/_harnesses/typescript/package.json > tmp.json
+        mv tmp.json test/_harnesses/typescript/package.json
+        cat test/_harnesses/typescript/package.json
+    - name: Run Tests (Node v${{ matrix.node-version }} / TypeScript v${{ matrix.typescript-version }})
       run: |
         pytest --only typescript
     - name: Upload Generated Messages
       uses: actions/upload-artifact@v4
       with:
-        name: typescript-node${{ matrix.node-version }}-generated-messages
+        name: typescript-node${{ matrix.node-version }}-typescript${{ matrix.typescript-version }}-generated-messages
         path: out/data
 
   go-builds:

@@ -2,10 +2,10 @@
   "name": "typescript-harness",
   "private": true,
   "devDependencies": {
-    "@types/minimist": "^1.2.5",
-    "@types/node": "^22.8.2",
-    "minimist": "^1.2.8",
-    "tsx": "^4.19.2",
-    "typescript": "^5.6.3"
+    "@types/minimist": "*",
+    "@types/node": "*",
+    "minimist": "*",
+    "tsx": "*",
+    "typescript": "*"
   }
 }
