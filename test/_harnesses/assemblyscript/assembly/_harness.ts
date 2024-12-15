@@ -2,6 +2,11 @@
 @external("env", "softAssert")
 export declare function softAssert(condition: boolean, label: string): void;
 
+// @ts-ignore: decorator
+@external("env", "log")
+export declare function log(msg: string): void;
+
+
 let data: Uint8Array|null = null;
 
 export function allocate(size: usize): usize {

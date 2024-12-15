@@ -48,6 +48,8 @@ Structs help you organize your data. You specify them in the `[[structs]]` table
 
 Each struct needs to have a `_name` value that will be used to make native structures in the generated code. Every other entry in the table is a piece of data that is part of the struct. 
 
+(Note that the term "struct" here is only in the context of Beschi; in generated code these may end up being classes or structs, as appropriate to that language's conventions.)
+
 
 ### Base Types
 

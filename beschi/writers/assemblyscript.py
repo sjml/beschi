@@ -43,3 +43,5 @@ class AssemblyScriptWriter(TypeScriptWriter):
             "float": "Float32",
             "double": "Float64",
         }
+
+        self.is_assembly_script = True

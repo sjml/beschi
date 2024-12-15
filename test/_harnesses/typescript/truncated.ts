@@ -6,7 +6,7 @@ const lmsg = new BrokenMessages.ListMessage();
 lmsg.ints = [1, 2, 32767, 4, 5];
 
 function generate(filePath: string, softAssert: (condition: boolean, label: string) => void) {
-    const msgLen = 16;
+    const msgLen = 14;
     const data = new ArrayBuffer(msgLen);
     const da = new BrokenMessages.DataAccess(data);
     lmsg.writeBytes(da, false);

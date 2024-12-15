@@ -1,6 +1,7 @@
-import * as ComprehensiveMessage from '../../../../out/generated/assemblyscript/ComprehensiveMessage';
 import * as harness from "./_harness";
 export * from "./_harness";
+
+import * as ComprehensiveMessage from '../../../../out/generated/assemblyscript/ComprehensiveMessage';
 
 const example = new ComprehensiveMessage.TestingMessage();
 example.b = 250;
