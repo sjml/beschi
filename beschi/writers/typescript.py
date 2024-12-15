@@ -445,7 +445,7 @@ class TypeScriptWriter(Writer):
         self.write_line("}")
         self.write_line("while (!da.isFinished() && (max < 0 || msgList.length < max)) {")
         self.indent_level += 1
-        self.write_line(f"const msgType: {self.type_mapping["byte"]} = da.getByte();")
+        self.write_line(f"const msgType: {self.type_mapping['byte']} = da.getByte();")
         self.write_line(f"let newMsg: Message | null;")
         self.write_line("switch (msgType) {")
         self.indent_level += 1

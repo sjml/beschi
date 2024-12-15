@@ -11,7 +11,6 @@ LANGUAGE_NAME = "AssemblyScript"
 class AssemblyScriptWriter(TypeScriptWriter):
     language_name = LANGUAGE_NAME
     default_extension = ".ts"
-    in_progress = True
 
     def __init__(self, p: Protocol, extra_args: dict[str,any] = {}):
         Writer.__init__(self, p, tab="  ") # skip over TypeScriptWriter init

@@ -140,7 +140,7 @@ export function generate(): usize {
 
 export function read(): void {
     const dv = harness.getDataView();
-    const input = ComprehensiveMessage.TestingMessage.fromBytes(dv);
+    const input = ComprehensiveMessage.TestingMessage.fromBytes(dv)!;
 
     harness.softAssert(input.b == example.b, "byte");
     harness.softAssert(input.tf == example.tf, "bool");
