@@ -3,11 +3,9 @@
 
 [![PyPI](https://img.shields.io/pypi/v/beschi)](https://pypi.org/project/beschi/) [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/sjml/beschi/ci.yml)](https://github.com/sjml/beschi/actions/workflows/ci.yml)
 
-This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, TypeScript, and Zig.[^1] You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
+This is a custom bit-packing and unpacking code generator for C, C#, Go, Rust, Swift, TypeScript, AssemblyScript, and Zig. You feed it a data description and it generates source files for writing/reading buffers of that data, along the lines of [FlatBuffers](https://google.github.io/flatbuffers/) or [Cap'n Proto](https://capnproto.org), but with much less functionality for much simpler use cases. It was initially written for a larger project that was passing data back and forth between a Unity game, a Go server, and a web client, but I extracted it into its own thing. If all you need is a simple way to pack a data structure into a compact, portable binary form, this might be useful for you.
 
 I go into more explanation for why this exists [in the documentation](https://github.com/sjml/beschi/tree/main/docs/), but I'll be honest, too: it **was** kind of fun to write a code generator. 😝 
-
-[^1]: There is also experimental support for AssemblyScript, but it's not run through the test suite so THERE BE DRAGONS. 🐉
 
 ## Documentation
 
@@ -16,8 +14,8 @@ I go into more explanation for why this exists [in the documentation](https://gi
 
 Language-Specific Documentation: 
 
-| [C](https://github.com/sjml/beschi/tree/main/docs/languages/c.md) | [C#](https://github.com/sjml/beschi/tree/main/docs/languages/csharp.md) | [Go](https://github.com/sjml/beschi/tree/main/docs/languages/go.md) | [Rust](https://github.com/sjml/beschi/tree/main/docs/languages/rust.md) | [Swift](https://github.com/sjml/beschi/tree/main/docs/languages/swift.md) | [TypeScript](https://github.com/sjml/beschi/tree/main/docs/languages/typescript.md) | [Zig](https://github.com/sjml/beschi/tree/main/docs/languages/zig.md)
-|-|-|-|-|-|-|-|
+| [C](https://github.com/sjml/beschi/tree/main/docs/languages/c.md) | [C#](https://github.com/sjml/beschi/tree/main/docs/languages/csharp.md) | [Go](https://github.com/sjml/beschi/tree/main/docs/languages/go.md) | [Rust](https://github.com/sjml/beschi/tree/main/docs/languages/rust.md) | [Swift](https://github.com/sjml/beschi/tree/main/docs/languages/swift.md) | [TypeScript](https://github.com/sjml/beschi/tree/main/docs/languages/typescript.md) | [AssemblyScript](https://github.com/sjml/beschi/tree/main/docs/languages/assemblyscript.md) | [Zig](https://github.com/sjml/beschi/tree/main/docs/languages/zig.md)
+|-|-|-|-|-|-|-|-|
 
 * [Dev Notes](https://github.com/sjml/beschi/tree/main/docs/dev)
 
@@ -150,19 +148,19 @@ Note that while [the TOML spec](https://toml.io/en/v1.0.0) does not guarantee th
 
 These are the base types from which you can build up whatever structures and messages you need to, along with what they correspond to in the various languages. 
 
-| Protocol Type | C          | C#       | Go        | Rust     | Swift     | TypeScript | Zig           |
-|---------------|------------|----------|-----------|----------|-----------|------------|---------------|
-| **`byte`**    | `uint8_t`  | `byte`   | `byte`    | `u8`     | `UInt8`   | `number`   | `u8`          |
-| **`bool`**    | `bool`     | `bool`   | `bool`    | `bool`   | `Bool`    | `boolean`  | `bool`        |
-| **`int16`**   | `uint16_t` | `short`  | `int16`   | `i16`    | `Int16`   | `number`   | `i16`         |
-| **`uint16`**  | `int16_t`  | `ushort` | `uint16`  | `u16`    | `UInt16`  | `number`   | `u16`         |
-| **`int32`**   | `uint32_t` | `int`    | `int32`   | `i32`    | `Int32`   | `number`   | `i32`         |
-| **`uint32`**  | `int32_t`  | `uint`   | `uint32`  | `u32`    | `UInt32`  | `number`   | `u32`         |
-| **`int64`**   | `uint64_t` | `long`   | `int64`   | `i64`    | `Int64`   | `bigint`   | `i64`         |
-| **`uint64`**  | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   | `u64`         |
-| **`float`**   | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   | `f32`         |
-| **`double`**  | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   | `f64`         |
-| **`string`**  | `char*`    | `string` | `string`  | `String` | `String`  | `string`   | `[]const u8`  |
+| Protocol Type | C          | C#       | Go        | Rust     | Swift     | TypeScript | AssemblyScript | Zig           |
+|---------------|------------|----------|-----------|----------|-----------|------------|----------------|---------------|
+| **`byte`**    | `uint8_t`  | `byte`   | `byte`    | `u8`     | `UInt8`   | `number`   | `u8`           | `u8`         |
+| **`bool`**    | `bool`     | `bool`   | `bool`    | `bool`   | `Bool`    | `boolean`  | `bool`         | `bool`       |
+| **`int16`**   | `uint16_t` | `short`  | `int16`   | `i16`    | `Int16`   | `number`   | `i16`          | `i16`        |
+| **`uint16`**  | `int16_t`  | `ushort` | `uint16`  | `u16`    | `UInt16`  | `number`   | `u16`          | `u16`        |
+| **`int32`**   | `uint32_t` | `int`    | `int32`   | `i32`    | `Int32`   | `number`   | `i32`          | `i32`        |
+| **`uint32`**  | `int32_t`  | `uint`   | `uint32`  | `u32`    | `UInt32`  | `number`   | `u32`          | `u32`        |
+| **`int64`**   | `uint64_t` | `long`   | `int64`   | `i64`    | `Int64`   | `bigint`   | `i64`          | `i64`        |
+| **`uint64`**  | `int64_t`  | `ulong`  | `uint64`  | `u64`    | `UInt64`  | `bigint`   | `u64`          | `u64`        |
+| **`float`**   | `float`    | `float`  | `float32` | `f32`    | `Float32` | `number`   | `f32`          | `f32`        |
+| **`double`**  | `double`   | `double` | `float64` | `f64`    | `Float64` | `number`   | `f64`          | `f64`        |
+| **`string`**  | `char*`    | `string` | `string`  | `String` | `String`  | `string`   | `string`       | `[]const u8` |
 
 All the numbers are stored as little-endian in the buffer, if that matters for you. 
 

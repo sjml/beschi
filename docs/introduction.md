@@ -2,7 +2,7 @@
 
 This is a general introduction to Beschi as a whole. Once you're done reading this, you'll probably want to check out the [more specific documentation](./languages/) for your desired language(s). 
 
-| [C](./languages/c.md) | [C#](./languages/csharp.md) | [Go](./languages/go.md) | [Rust](./languages/rust.md) | [Swift](./languages/swift.md) | [TypeScript](./languages/typescript.md) | [Zig](./languages/zig.md)
+| [C](./languages/c.md) | [C#](./languages/csharp.md) | [Go](./languages/go.md) | [Rust](./languages/rust.md) | [Swift](./languages/swift.md) | [TypeScript](./languages/typescript.md) | [AssemblyScript](./languages/assemblyscript.md) | [Zig](./languages/zig.md)
 |-|-|-|-|-|-|-|
 
 

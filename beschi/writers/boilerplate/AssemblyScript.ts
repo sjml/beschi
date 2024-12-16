@@ -273,7 +273,6 @@ export function UnpackMessages(data: DataView): Message[] {
   const da = new DataAccess(data);
   if (da.data.byteLength < 12) {
     throw new Error("Packed message buffer is too short.");
-    return [];
   }
   const headerBuffer = new Uint8Array(4);
   for (let i = 0; i < 4; i++) {
@@ -282,7 +281,6 @@ export function UnpackMessages(data: DataView): Message[] {
   const headerLabel = String.UTF8.decode(headerBuffer.buffer, false);
   if (headerLabel !== "BSCI") {
     throw new Error("Packed message buffer has invalid header: " + headerLabel);
-    return [];
   }
   const msgCount = da.getUint32();
   if (msgCount == 0) {
@@ -292,7 +290,6 @@ export function UnpackMessages(data: DataView): Message[] {
   const msgList = ProcessRawBytes(dv, msgCount);
   if (msgList.length == 0) {
     throw new Error("No messages in buffer.");
-    return [];
   }
   if (msgList.length != msgCount) {
     throw new Error("Unexpected number of messages in buffer.");

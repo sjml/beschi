@@ -25,7 +25,7 @@ class AssemblyScriptBuilder(builder_util.Builder):
                 "npm", "install"
             ])
 
-        if builder_util.needs_build(self.intermediate_path, ["harness.mjs", "assembly/_harness.ts", f"assembly/{self.srcfile}"]):
+        if builder_util.needs_build(self.intermediate_path, ["harness.mjs", "assembly/_harness.ts", f"assembly/{self.srcfile}", *self.gen_files]):
             subprocess.check_call([
                 "npx", "asc", "--outFile", self.intermediate_path, f"assembly/{self.srcfile}"
             ])

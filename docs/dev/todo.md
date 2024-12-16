@@ -5,8 +5,12 @@ This file is a rough todo list for the tool itself.
 - update documentation before publishing 0.3.*
     - if you call from_bytes on a generic message, it has to be tagged
     - Swift: the PackMessages and stuff hangs off the array because of Reasons™
+- AssemblyScript documentation
+    - fix to use generics 
+    - make the base class fromBytes a generated delegator thing like Rust's
 - UnpackMessages should check for EOF on reads and throw/return errors as appropriate
     - make sure we're consuming the terminator, too
+    - update test suite with packed_broken (sigh)
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now

@@ -31,6 +31,8 @@ function liftString(pointer, mem) {
     return string + String.fromCharCode(...memoryU16.subarray(start, end));
 }
 
+let abortMessageExpectation = null;
+let receivedAbortMessage = null;
 try {
     const instance = await WebAssembly.instantiate(wasmModule, {
         env: {
@@ -38,6 +40,7 @@ try {
                 msg = liftString(msg, instance.exports.memory);
                 file = liftString(file, instance.exports.memory);
                 console.error(`ASSEMBLYSCRIPT FATAL ERROR: ${file}:${line}:${col}\n${msg}`);
+                receivedAbortMessage = msg;
             },
             log: (msg) => {
                 console.log(liftString(msg, instance.exports.memory));
@@ -50,7 +53,10 @@ try {
                     console.error(`FAILED! AssemblyScript: ${label}`);
                     ok = false;
                 }
-            }
+            },
+            expectAbort: (message) => {
+                abortMessageExpectation = message;
+            },
         }
     });
 
@@ -70,9 +76,15 @@ try {
         instance.exports.read();
     }
 
-} catch(e) {
-    console.error(`WebAssembly Error: ${programName}`, e);
-    process.exit(2);
+}
+catch(e) {
+    if (abortMessageExpectation !== null && abortMessageExpectation === receivedAbortMessage) {
+        // it failed like we expected
+    }
+    else {
+        console.error(`WebAssembly Error: ${programName}`, e);
+        process.exit(2);
+    }
 }
 
 if (!ok) {
