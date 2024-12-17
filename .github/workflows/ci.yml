@@ -356,7 +356,7 @@ jobs:
     - name: Upload Distribution Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: beschi-${{ github.ref_name }}-${{ steps.vars.outputs.SHA_SHORT }}
+        name: beschi-${{ github.ref_name }}
         path: dist/
 
   publish-pypi:
