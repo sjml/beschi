@@ -39,7 +39,8 @@ setup(
         ],
         'publish': [
             'build',
-            'twine'
+            'twine',
+            'setuptools',
         ]
     },
     entry_points={
