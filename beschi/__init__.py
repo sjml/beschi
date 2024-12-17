@@ -1,2 +1,2 @@
 LIB_NAME = "Beschi"
-LIB_VERSION = "0.3.0"
+LIB_VERSION = "0.3.1"
