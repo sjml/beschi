@@ -2,11 +2,10 @@ package main
 
 import (
 	"flag"
-	"io"
 	"os"
 	"path/filepath"
 
-	"messages/broken_messages"
+	"messages/small_messages"
 )
 
 var ok bool = true
@@ -19,9 +18,18 @@ func softAssert(condition bool, label string) {
 }
 
 func main() {
-	var broken broken_messages.TruncatedMessage
-	broken.X = 1.0
-	broken.Y = 2.0
+	var msgList = []small_messages.Message{
+		small_messages.IntMessage{},
+		small_messages.FloatMessage{},
+		small_messages.FloatMessage{},
+		small_messages.FloatMessage{},
+		small_messages.IntMessage{},
+		small_messages.EmptyMessage{},
+		small_messages.LongMessage{},
+		small_messages.LongMessage{},
+		small_messages.LongMessage{},
+		small_messages.IntMessage{},
+	}
 
 	generatePathPtr := flag.String("generate", "", "")
 	readPathPtr := flag.String("read", "", "")
@@ -35,10 +43,11 @@ func main() {
 		}
 		defer dat.Close()
 
-		broken.WriteBytes(dat, false)
-
-		seek, _ := dat.Seek(0, io.SeekCurrent)
-		softAssert(broken.GetSizeInBytes() == (int)(seek), "written bytes check")
+		small_messages.PackMessages(msgList, dat)
+		_, err = dat.WriteAt([]byte{15}, 4)
+		if err != nil {
+			panic(err)
+		}
 	} else if len(*readPathPtr) > 0 {
 		dat, err := os.Open(*readPathPtr)
 		if err != nil {
@@ -46,10 +55,9 @@ func main() {
 		}
 		defer dat.Close()
 
-		_, err = broken_messages.FullMessageFromBytes(dat)
-
-		softAssert(err != nil, "reading broken message")
-		softAssert(err.Error() == "could not read msg.Z at offset 8 (EOF)", "broken error message")
+		_, err = small_messages.UnpackMessages(dat)
+		softAssert(err != nil, "broken unpack")
+		softAssert(err.Error() == "unexpected number of messages in buffer", "broken unpack message")
 	}
 
 	if !ok {

@@ -58,24 +58,24 @@ func UnpackMessages(data io.Reader) ([]Message, error) {
 		panic(err)
 	}
 	if string(sbytes) != "BSCI" {
-		return nil, fmt.Errorf("Packed message buffer has invalid header.")
+		return nil, fmt.Errorf("packed message buffer has invalid header")
 	}
 	var msgCount int32
 	if err := binary.Read(data, binary.LittleEndian, &msgCount); err != nil {
-		return nil, fmt.Errorf("Could not read message count (%w)", err)
+		return nil, fmt.Errorf("could not read message count (%w)", err)
 	}
 	if msgCount == 0 {
 		return []Message{}, nil
 	}
 	msgList, err := ProcessRawBytes(data, int(msgCount))
 	if err != nil {
-		return nil, fmt.Errorf("Could not raw packed bytes (%w)", err)
+		return nil, fmt.Errorf("could not raw packed bytes (%w)", err)
 	}
 	if len(msgList) == 0 {
-		return nil, fmt.Errorf("No messages in buffer.")
+		return nil, fmt.Errorf("no messages in buffer")
 	}
 	if len(msgList) != int(msgCount) {
-		return nil, fmt.Errorf("Unexpected number of messages in buffer.")
+		return nil, fmt.Errorf("unexpected number of messages in buffer")
 	}
 	return msgList, nil;
 }

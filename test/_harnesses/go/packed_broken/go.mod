@@ -1,4 +1,4 @@
-module packed
+module packed_broken
 
 go 1.19
 

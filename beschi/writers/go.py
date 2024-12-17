@@ -61,7 +61,7 @@ class GoWriter(Writer):
             self.write_line(f"var {var.name}_Len {self.get_native_list_size()}")
             self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &{var.name}_Len); err != nil {{")
             self.indent_level += 1
-            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {var.name}_Len at offset %d (%w)\", getDataOffset(data), err)")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"could not read {var.name}_Len at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line(f"{accessor}.{var.name} = make([]{self.type_mapping[var.vartype]}, {var.name}_Len)")
@@ -72,12 +72,12 @@ class GoWriter(Writer):
                 self.write_line(f"var _{var.name} {var.vartype}")
                 self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &_{var.name}); err != nil {{")
                 self.indent_level += 1
-                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
+                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
                 self.indent_level -= 1
                 self.write_line("}")
                 self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
                 self.indent_level += 1
-                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+                self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"enum %d out of range for {var.vartype}\", _{var.name})")
                 self.indent_level -= 1
                 self.write_line("}")
                 self.write_line(f"{accessor}.{var.name}[i{idx}] = _{var.name}")
@@ -89,26 +89,26 @@ class GoWriter(Writer):
         elif var.vartype == "string":
             self.write_line(f"if err {':' if declare_err else ''}= readString(data, &{accessor}.{var.name}); err != nil {{")
             self.indent_level += 1
-            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read string at offset %d (%w)\", getDataOffset(data), err)")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"could not read string at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
         elif var.vartype in self.protocol.enums:
             self.write_line(f"var _{var.name} {var.vartype}")
             self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &_{var.name}); err != nil {{")
             self.indent_level += 1
-            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line(f"if !isValid{var.vartype}(_{var.name}) {{")
             self.indent_level += 1
-            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Enum %d out of range for {var.vartype}\", _{var.name})")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"enum %d out of range for {var.vartype}\", _{var.name})")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line(f"{accessor}.{var.name} = _{var.name}")
         elif var.is_simple():
             self.write_line(f"if err {':' if declare_err else ''}= binary.Read(data, binary.LittleEndian, &{accessor}.{var.name}); err != nil {{")
             self.indent_level += 1
-            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"Could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
+            self.write_line(f"return {'' if by_ref else 'nil, '}fmt.Errorf(\"could not read {accessor}.{var.name} at offset %d (%w)\", getDataOffset(data), err)")
             self.indent_level -= 1
             self.write_line("}")
         else:
@@ -372,14 +372,14 @@ class GoWriter(Writer):
             self.write_line(f"msg, err := {msg_type}FromBytes(data)")
             self.write_line("if err != nil {")
             self.indent_level += 1
-            self.write_line(f"return nil, fmt.Errorf(\"{msg_type} read (%w)\", err)")
+            self.write_line(f"return nil, fmt.Errorf(\"err in {msg_type} read (%w)\", err)")
             self.indent_level -= 1
             self.write_line("}")
             self.write_line(f"msgList = append(msgList, msg)")
             self.indent_level -= 1
         self.write_line("default:")
         self.indent_level += 1
-        self.write_line(f"return nil, fmt.Errorf(\"Unknown message type: %d\", msgType)")
+        self.write_line(f"return nil, fmt.Errorf(\"unknown message type: %d\", msgType)")
         self.indent_level -= 1
         self.write_line("}")
         self.indent_level -= 1

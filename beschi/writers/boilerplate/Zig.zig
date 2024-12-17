@@ -274,6 +274,8 @@ pub fn unpackMessages(allocator: std.mem.Allocator, buffer: []u8) ![]Message {
         return allocator.alloc(Message, 0);
     }
     const msg_list = try processRawBytes(allocator, buffer[offset..], @intCast(msg_count));
+    errdefer allocator.free(msg_list);
+
     if (msg_list.len == 0) {
         return DataReaderError.InvalidData;
     }

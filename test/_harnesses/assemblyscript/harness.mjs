@@ -55,7 +55,7 @@ try {
                 }
             },
             expectAbort: (message) => {
-                abortMessageExpectation = message;
+                abortMessageExpectation = liftString(message, instance.exports.memory);
             },
         }
     });

@@ -57,7 +57,7 @@ func main() {
 		_, err = broken_messages.ListMessageFromBytes(dat)
 
 		softAssert(err != nil, "reading truncated message")
-		softAssert(err.Error() == "Could not read msg.Ints[i1] at offset 14 (EOF)", "truncated error message")
+		softAssert(err.Error() == "could not read msg.Ints[i1] at offset 14 (EOF)", "truncated error message")
 	}
 
 	if !ok {

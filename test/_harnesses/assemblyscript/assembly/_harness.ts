@@ -3,6 +3,10 @@
 export declare function softAssert(condition: boolean, label: string): void;
 
 // @ts-ignore: decorator
+@external("env", "expectAbort")
+export declare function expectAbort(errMsg: string): void;
+
+// @ts-ignore: decorator
 @external("env", "log")
 export declare function log(msg: string): void;
 

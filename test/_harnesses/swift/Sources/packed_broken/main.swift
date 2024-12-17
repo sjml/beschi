@@ -49,27 +49,23 @@ if parsed["generate"] != nil {
     let data = NSMutableData()
     msgList.PackMessages(data)
 
-    try data.write(to: outPath)
+    var fakeLength: UInt8 = 15
+    data.replaceBytes(in: NSMakeRange(4,1), withBytes: &fakeLength)
 
-    softAssert(data.count == 67, "written bytes check")
+    try data.write(to: outPath)
 }
 else if parsed["read"] != nil {
     let data = try Data(contentsOf: URL(fileURLWithPath: parsed["read"]!))
 
-    let msgList = try SmallMessages.Message.UnpackMessages(data)
+    var caught: SmallMessages.DataReaderError? = nil
+    do {
+        let _ = try SmallMessages.Message.UnpackMessages(data)
+        softAssert(false, "broken unpack")
+    } catch SmallMessages.DataReaderError.InvalidData {
+        caught = SmallMessages.DataReaderError.InvalidData
+    }
 
-    softAssert(msgList.count == 10, "packed count")
-
-    softAssert(msgList[0].GetMessageType() == SmallMessages.MessageType.IntMessageType, "packed[0]")
-    softAssert(msgList[1].GetMessageType() == SmallMessages.MessageType.FloatMessageType, "packed[1]")
-    softAssert(msgList[2].GetMessageType() == SmallMessages.MessageType.FloatMessageType, "packed[2]")
-    softAssert(msgList[3].GetMessageType() == SmallMessages.MessageType.FloatMessageType, "packed[3]")
-    softAssert(msgList[4].GetMessageType() == SmallMessages.MessageType.IntMessageType, "packed[4]")
-    softAssert(msgList[5].GetMessageType() == SmallMessages.MessageType.EmptyMessageType, "packed[5]")
-    softAssert(msgList[6].GetMessageType() == SmallMessages.MessageType.LongMessageType, "packed[6]")
-    softAssert(msgList[7].GetMessageType() == SmallMessages.MessageType.LongMessageType, "packed[7]")
-    softAssert(msgList[8].GetMessageType() == SmallMessages.MessageType.LongMessageType, "packed[8]")
-    softAssert(msgList[9].GetMessageType() == SmallMessages.MessageType.IntMessageType, "packed[9]")
+    softAssert(caught == SmallMessages.DataReaderError.InvalidData, "broken unpack error")
 }
 
 

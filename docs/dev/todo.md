@@ -1,7 +1,7 @@
 This file is a rough todo list for the tool itself.
 
 ## "immediate" todo
-- update test suite with packed_broken (sigh)
+
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now

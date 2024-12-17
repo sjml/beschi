@@ -69,7 +69,7 @@ func main() {
 
 		_, err = broken_messages.ProcessRawBytes(dat, -1)
 		softAssert(err != nil, "read broken stream")
-		softAssert(err.Error() == "Unknown message type: 63", "broken stream error message")
+		softAssert(err.Error() == "unknown message type: 63", "broken stream error message")
 	}
 
 	if !ok {
