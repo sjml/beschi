@@ -437,6 +437,12 @@ class TypeScriptWriter(Writer):
             self.write_line("export function ProcessRawBytes(data: DataView, max: number): Message[] {")
             self.indent_level += 1
             self.write_line("const da = new DataAccess(data);")
+            self.write_line("return ProcessRawBytesDA(da, max);")
+            self.indent_level -= 1
+            self.write_line("}")
+            self.write_line()
+            self.write_line("export function ProcessRawBytesDA(da: DataAccess, max: number): Message[] {")
+            self.indent_level += 1
         self.write_line("const msgList: Message[] = [];")
         self.write_line("if (max == 0) {")
         self.indent_level += 1

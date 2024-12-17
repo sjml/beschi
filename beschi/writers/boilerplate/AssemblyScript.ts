@@ -234,11 +234,16 @@ export abstract class Message {
   abstract getSizeInBytes(): usize;
 
   static fromBytes(data: DataView): Message | null {
-    throw new Error("Cannot read abstract Message from bytes.");
-};
+    const da = new DataAccess(data);
+    return this.fromBytesDA(da);
+  };
 
   static fromBytesDA(data: DataAccess): Message | null {
-    throw new Error("Cannot read abstract Message from bytes.");
+    const msgList = ProcessRawBytes(data, 1);
+    if (msgList.length == 0) {
+      return null;
+    }
+    return msgList[0];
   }
 }
 

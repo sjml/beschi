@@ -1,16 +1,7 @@
 This file is a rough todo list for the tool itself.
 
-## dustoff notes
-- Rust: make a BufferedWriter that takes either a `[u8]` or a `Vec<u8>`
-- update documentation before publishing 0.3.*
-    - if you call from_bytes on a generic message, it has to be tagged
-    - Swift: the PackMessages and stuff hangs off the array because of Reasons™
-- AssemblyScript documentation
-    - fix to use generics 
-    - make the base class fromBytes a generated delegator thing like Rust's
-- UnpackMessages should check for EOF on reads and throw/return errors as appropriate
-    - make sure we're consuming the terminator, too
-    - update test suite with packed_broken (sigh)
+## "immediate" todo
+- update test suite with packed_broken (sigh)
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now
@@ -30,8 +21,9 @@ This file is a rough todo list for the tool itself.
         ```
     - I still like this idea in the larger sense; feels like a very pragmatic thing to have. In current projects though I'm not quibbling over a few bytes, and the effort of implementing and testing this across all generated languages would be high.
 
-## "immediate" todo
-- add endian handling to C writer for the sake of completion
+## horizon
+- should Rust have a BufferedWriter that takes either a `[u8]` or a `Vec<u8>`?
+- add endian handling to C writer for the sake of completeness
 - add zig cc / zig c++ as compiler for c tests
   - musl build on linux?
   - also check on windows

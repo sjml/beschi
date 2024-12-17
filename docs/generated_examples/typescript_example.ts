@@ -238,17 +238,21 @@ export function ProcessRawBytes(data: DataView|DataAccess, max: number): Message
   }
   while (!da.isFinished() && (max < 0 || msgList.length < max)) {
     const msgType: number = da.getByte();
+    let newMsg: Message | null;
     switch (msgType) {
       case 0:
         return msgList;
       case MessageType.Vector3MessageType:
-        msgList.push(Vector3Message.fromBytes(da));
+        newMsg = Vector3Message.fromBytes(da);
+        msgList.push(newMsg);
         break;
       case MessageType.NewCharacterMessageType:
-        msgList.push(NewCharacterMessage.fromBytes(da));
+        newMsg = NewCharacterMessage.fromBytes(da);
+        msgList.push(newMsg);
         break;
       case MessageType.CharacterJoinedTeamType:
-        msgList.push(CharacterJoinedTeam.fromBytes(da));
+        newMsg = CharacterJoinedTeam.fromBytes(da);
+        msgList.push(newMsg);
         break;
       default:
         throw new Error(`Unknown message type: ${msgType}`);
@@ -292,7 +296,6 @@ export class Color {
     da.setFloat32(this.blue);
     da.setFloat32(this.alpha);
   }
-
 }
 
 export class Spectrum {
@@ -318,7 +321,6 @@ export class Spectrum {
       el.writeBytes(da);
     }
   }
-
 }
 
 export class Vector3Message extends Message {
@@ -374,7 +376,6 @@ export class Vector3Message extends Message {
     da.setFloat32(this.y);
     da.setFloat32(this.z);
   }
-
 }
 
 export class NewCharacterMessage extends Message {
@@ -466,7 +467,6 @@ export class NewCharacterMessage extends Message {
       da.setString(el);
     }
   }
-
 }
 
 export class CharacterJoinedTeam extends Message {
@@ -541,7 +541,6 @@ export class CharacterJoinedTeam extends Message {
     }
     da.setInt16(this.role);
   }
-
 }
 
 export const MessageTypeMap = new Map<MessageType, { new(): Message }>([
