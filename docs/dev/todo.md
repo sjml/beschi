@@ -1,7 +1,7 @@
 This file is a rough todo list for the tool itself.
 
 ## "immediate" todo
-
+* TypeScript -- code for converting to and from POJO
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now
