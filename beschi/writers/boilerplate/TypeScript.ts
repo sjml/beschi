@@ -138,7 +138,7 @@ export class DataAccess {
   setString(val: string): void {
     const strBuffer = _textEnc.encode(val);
     this.set{# STRING_SIZE_TYPE #}(strBuffer.byteLength);
-    const arr = new Uint8Array(this.data.buffer);
+    const arr = new Uint8Array(this.data.buffer, this.data.byteOffset, this.data.byteLength);
     arr.set(strBuffer, this.currentOffset);
     this.currentOffset += strBuffer.byteLength;
   }
