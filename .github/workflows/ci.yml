@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        dotnet-version: ['6', '7', '8', '9']
+        dotnet-version: ['6', '7', '8', '9', '10']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
@@ -43,7 +43,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        node-version: ['18', '20', '22']
+        node-version: ['18', '20', '22', '24']
         typescript-version: ['4', '5']
     steps:
     - uses: actions/checkout@v4
@@ -105,7 +105,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        go-version: ['1.19', '1.20', '1.21', '1.22', '1.23']
+        go-version: ['1.19', '1.20', '1.21', '1.22', '1.23', '1.24', '1.25']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        swift-version: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10', '6.0']
+        swift-version: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10', '6.0', '6.1', '6.2']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
@@ -146,7 +146,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install '.[dev]'
     - name: Install Swift v${{ matrix.swift-version }}
-      uses: swift-actions/setup-swift@v2
+      uses: swift-actions/setup-swift@v3
       with:
         swift-version: ${{ matrix.swift-version }}
     - name: Run Tests (Swift v${{ matrix.swift-version }})
@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        gcc-version: ['9', '10', '11', '12', '13', '14']
+        gcc-version: ['9', '10', '11', '12', '13', '14', '15']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
