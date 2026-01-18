@@ -1,7 +1,6 @@
 This file is a rough todo list for the tool itself.
 
 ## "immediate" todo
-* Swift -- figure out why CI broke; fix and re-enable (pytest locally works w/6.2)
 * TypeScript -- code for converting to and from POJO
 * Zig -- update to latest Zig
 

@@ -130,34 +130,33 @@ jobs:
         name: go-${{ matrix.go-version }}-generated-messages
         path: out/data
 
-  # swift-builds:
-  #   runs-on: ubuntu-24.04
-  #   strategy:
-  #     matrix:
-  #       swift-version: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10', '6.0', '6.1', '6.2']
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Setup Python
-  #     uses: actions/setup-python@v5
-  #     with:
-  #       python-version: ${{ env.PYTHON_VERSION }}
-  #   - name: Install Beschi and Python Prerequisites
-  #     run: |
-  #       python -m pip install --upgrade pip
-  #       pip install '.[dev]'
-  #   - name: Install Swift v${{ matrix.swift-version }}
-  #     uses: swift-actions/setup-swift@v3
-  #     with:
-  #       skip-verify-signature: true
-  #       swift-version: ${{ matrix.swift-version }}
-  #   - name: Run Tests (Swift v${{ matrix.swift-version }})
-  #     run: |
-  #       pytest --only swift
-  #   - name: Upload Generated Messages
-  #     uses: actions/upload-artifact@v4
-  #     with:
-  #       name: swift-${{ matrix.swift-version }}-generated-messages
-  #       path: out/data
+  swift-builds:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        swift-version: ['5.5', '5.6', '5.7', '5.8', '5.9', '5.10', '6.0', '6.1', '6.2']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Beschi and Python Prerequisites
+      run: |
+        python -m pip install --upgrade pip
+        pip install '.[dev]'
+    - name: Install Swift v${{ matrix.swift-version }}
+      uses: SwiftyLab/setup-swift@latest
+      with:
+        swift-version: ${{ matrix.swift-version }}
+    - name: Run Tests (Swift v${{ matrix.swift-version }})
+      run: |
+        pytest --only swift
+    - name: Upload Generated Messages
+      uses: actions/upload-artifact@v4
+      with:
+        name: swift-${{ matrix.swift-version }}-generated-messages
+        path: out/data
 
   rust-builds:
     runs-on: ubuntu-24.04
