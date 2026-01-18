@@ -453,7 +453,7 @@ class TypeScriptWriter(Writer):
         self.indent_level += 1
         self.write_line(f"const msgType: {self.type_mapping['byte']} = da.getByte();")
         self.write_line(f"let newMsg: Message | null;")
-        self.write_line("switch (msgType) {")
+        self.write_line(f"switch (msgType{' as i32' if self.is_assembly_script else ''}) {{")
         self.indent_level += 1
         self.write_line("case 0:")
         self.indent_level +=1
