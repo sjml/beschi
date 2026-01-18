@@ -31,7 +31,7 @@ bool beschi_IsFinished(const beschi_DataAccess *r) {
     return r->position >= r->bufferSize;
 }
 
-beschi_err_t beschi__ReadUInt8(beschi_DataAccess *r, uint8_t *ui8) {
+beschi_err_t beschi_ReadUInt8(beschi_DataAccess *r, uint8_t *ui8) {
     if (r->bufferSize < r->position + 1) {
         return BESCHI_ERR_EOF;
     }
@@ -40,9 +40,9 @@ beschi_err_t beschi__ReadUInt8(beschi_DataAccess *r, uint8_t *ui8) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadBool(beschi_DataAccess *r, bool *b) {
+beschi_err_t beschi_ReadBool(beschi_DataAccess *r, bool *b) {
     uint8_t byteVal;
-    beschi_err_t err = beschi__ReadUInt8(r, &byteVal);
+    beschi_err_t err = beschi_ReadUInt8(r, &byteVal);
     if (err != BESCHI_ERR_OK) {
         return err;
     }
@@ -50,7 +50,7 @@ beschi_err_t beschi__ReadBool(beschi_DataAccess *r, bool *b) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadInt16(beschi_DataAccess *r, int16_t *i16) {
+beschi_err_t beschi_ReadInt16(beschi_DataAccess *r, int16_t *i16) {
     if (r->bufferSize < r->position + 2) {
         return BESCHI_ERR_EOF;
     }
@@ -59,7 +59,7 @@ beschi_err_t beschi__ReadInt16(beschi_DataAccess *r, int16_t *i16) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadUInt16(beschi_DataAccess *r, uint16_t *ui16) {
+beschi_err_t beschi_ReadUInt16(beschi_DataAccess *r, uint16_t *ui16) {
     if (r->bufferSize < r->position + 2) {
         return BESCHI_ERR_EOF;
     }
@@ -68,7 +68,7 @@ beschi_err_t beschi__ReadUInt16(beschi_DataAccess *r, uint16_t *ui16) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadInt32(beschi_DataAccess *r, int32_t *i32) {
+beschi_err_t beschi_ReadInt32(beschi_DataAccess *r, int32_t *i32) {
     if (r->bufferSize < r->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -77,7 +77,7 @@ beschi_err_t beschi__ReadInt32(beschi_DataAccess *r, int32_t *i32) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadUInt32(beschi_DataAccess *r, uint32_t *ui32) {
+beschi_err_t beschi_ReadUInt32(beschi_DataAccess *r, uint32_t *ui32) {
     if (r->bufferSize < r->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -86,7 +86,7 @@ beschi_err_t beschi__ReadUInt32(beschi_DataAccess *r, uint32_t *ui32) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadInt64(beschi_DataAccess *r, int64_t *i64) {
+beschi_err_t beschi_ReadInt64(beschi_DataAccess *r, int64_t *i64) {
     if (r->bufferSize < r->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -95,7 +95,7 @@ beschi_err_t beschi__ReadInt64(beschi_DataAccess *r, int64_t *i64) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadUInt64(beschi_DataAccess *r, uint64_t *ui64) {
+beschi_err_t beschi_ReadUInt64(beschi_DataAccess *r, uint64_t *ui64) {
     if (r->bufferSize < r->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -104,7 +104,7 @@ beschi_err_t beschi__ReadUInt64(beschi_DataAccess *r, uint64_t *ui64) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadFloat(beschi_DataAccess *r, float *f) {
+beschi_err_t beschi_ReadFloat(beschi_DataAccess *r, float *f) {
     if (r->bufferSize < r->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -113,7 +113,7 @@ beschi_err_t beschi__ReadFloat(beschi_DataAccess *r, float *f) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadDouble(beschi_DataAccess *r, double *d) {
+beschi_err_t beschi_ReadDouble(beschi_DataAccess *r, double *d) {
     if (r->bufferSize < r->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -122,9 +122,9 @@ beschi_err_t beschi__ReadDouble(beschi_DataAccess *r, double *d) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_TYPE_LOWER #}_t *len) {
+beschi_err_t beschi_ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_TYPE_LOWER #}_t *len) {
     beschi_err_t err;
-    err = beschi__Read{# STRING_SIZE_TYPE #}(r, len);
+    err = beschi_Read{# STRING_SIZE_TYPE #}(r, len);
     if (err != BESCHI_ERR_OK) {
         return err;
     }
@@ -141,7 +141,7 @@ beschi_err_t beschi__ReadString(beschi_DataAccess *r, char **s, {# STRING_SIZE_T
 
 
 
-beschi_err_t beschi__WriteUInt8(beschi_DataAccess *w, const uint8_t ui8) {
+beschi_err_t beschi_WriteUInt8(beschi_DataAccess *w, const uint8_t ui8) {
     if (w->bufferSize < w->position + 1) {
         return BESCHI_ERR_EOF;
     }
@@ -150,16 +150,16 @@ beschi_err_t beschi__WriteUInt8(beschi_DataAccess *w, const uint8_t ui8) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteBool(beschi_DataAccess *w, const bool b) {
+beschi_err_t beschi_WriteBool(beschi_DataAccess *w, const bool b) {
     beschi_err_t err;
-    err = beschi__WriteUInt8(w, (uint8_t)(b ? 1 : 0));
+    err = beschi_WriteUInt8(w, (uint8_t)(b ? 1 : 0));
     if (err != BESCHI_ERR_OK) {
         return err;
     }
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt16(beschi_DataAccess *w, const int16_t i16) {
+beschi_err_t beschi_WriteInt16(beschi_DataAccess *w, const int16_t i16) {
     if (w->bufferSize < w->position + 2) {
         return BESCHI_ERR_EOF;
     }
@@ -168,7 +168,7 @@ beschi_err_t beschi__WriteInt16(beschi_DataAccess *w, const int16_t i16) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt16(beschi_DataAccess *w, const uint16_t ui16) {
+beschi_err_t beschi_WriteUInt16(beschi_DataAccess *w, const uint16_t ui16) {
     if (w->bufferSize < w->position + 2) {
         return BESCHI_ERR_EOF;
     }
@@ -177,7 +177,7 @@ beschi_err_t beschi__WriteUInt16(beschi_DataAccess *w, const uint16_t ui16) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt32(beschi_DataAccess *w, const int32_t i32) {
+beschi_err_t beschi_WriteInt32(beschi_DataAccess *w, const int32_t i32) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -186,7 +186,7 @@ beschi_err_t beschi__WriteInt32(beschi_DataAccess *w, const int32_t i32) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt32(beschi_DataAccess *w, const uint32_t ui32) {
+beschi_err_t beschi_WriteUInt32(beschi_DataAccess *w, const uint32_t ui32) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -195,7 +195,7 @@ beschi_err_t beschi__WriteUInt32(beschi_DataAccess *w, const uint32_t ui32) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteInt64(beschi_DataAccess *w, const int64_t i64) {
+beschi_err_t beschi_WriteInt64(beschi_DataAccess *w, const int64_t i64) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -204,7 +204,7 @@ beschi_err_t beschi__WriteInt64(beschi_DataAccess *w, const int64_t i64) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteUInt64(beschi_DataAccess *w, const uint64_t ui64) {
+beschi_err_t beschi_WriteUInt64(beschi_DataAccess *w, const uint64_t ui64) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -213,7 +213,7 @@ beschi_err_t beschi__WriteUInt64(beschi_DataAccess *w, const uint64_t ui64) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteFloat(beschi_DataAccess *w, const float f) {
+beschi_err_t beschi_WriteFloat(beschi_DataAccess *w, const float f) {
     if (w->bufferSize < w->position + 4) {
         return BESCHI_ERR_EOF;
     }
@@ -222,7 +222,7 @@ beschi_err_t beschi__WriteFloat(beschi_DataAccess *w, const float f) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double d) {
+beschi_err_t beschi_WriteDouble(beschi_DataAccess *w, const double d) {
     if (w->bufferSize < w->position + 8) {
         return BESCHI_ERR_EOF;
     }
@@ -231,9 +231,9 @@ beschi_err_t beschi__WriteDouble(beschi_DataAccess *w, const double d) {
     return BESCHI_ERR_OK;
 }
 
-beschi_err_t beschi__WriteString(beschi_DataAccess *w, char* const *s, const {# STRING_SIZE_TYPE_LOWER #}_t len) {
+beschi_err_t beschi_WriteString(beschi_DataAccess *w, char* const *s, const {# STRING_SIZE_TYPE_LOWER #}_t len) {
     beschi_err_t err;
-    err = beschi__Write{# STRING_SIZE_TYPE #}(w, len);
+    err = beschi_Write{# STRING_SIZE_TYPE #}(w, len);
     if (err != BESCHI_ERR_OK) {
         return err;
     }
