@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        gcc-version: ['9', '10', '11', '12', '13', '14', '15']
+        gcc-version: ['9', '10', '11', '12', '13', '14']
     steps:
     - uses: actions/checkout@v4
     - name: Setup Python
