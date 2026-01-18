@@ -39,8 +39,8 @@ Note that this requires the `stdint.h` and `stdbool.h` header files, which are s
 * The code generated is an [STB-style](https://github.com/nothings/stb/) single-file header library. If you've never used one before, it's actually pretty simple. You `#include "MyGeneratedFile.h"` wherever you need to use the structures and functions, like you normally would with a library. But instead of having a separate file to compile, all the implementation is in the same file, just behind a definition guard. So to actually link the implementation code, in **exactly** one file, `#define {NAMESPACE}_IMPLEMENTATION` **before** you include it. 
 * The layout of the structs (mostly) mirrors the way they are declared in the protocol file, which may raise warnings about padding if you compile with warnings all the way up. If memory alignment is important to you, you may want to play with the declaration order. 
     - Exceptions are: 
-        - Every message struct has an additional byte (`_mt`) at the start, used to identify it if its in a `void**` array. 
-        - Every string and list have an associated `{varname}_len` variable storing their length, right before them in the array. 
+        - Every message struct has an additional byte (`_mt`) at the start, used to identify it if it's in a `void**` array. 
+        - Every string and list has an associated `{varname}_len` variable storing its length, right before them in the array. 
         - Lists of strings have a second variable of `{varname}_els_len` recording the lengths of each element in the array. 
         - You probably shouldn't declare members in the protocol that would shadow these variables, but I'm not the boss of you. 
 * With the various length variables: they will be set properly when reading a message out of a buffer, but ***you are responsible*** for making sure they are correct before they go into a buffer. C has no way to track the length of arrays (without introducing another dependency), so it's up to you. 
