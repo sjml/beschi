@@ -146,7 +146,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install '.[dev]'
     - name: Install Swift v${{ matrix.swift-version }}
-      uses: swift-actions/setup-swift@v3
+      uses: swift-actions/setup-swift@v2
       with:
         skip-verify-signature: true
         swift-version: ${{ matrix.swift-version }}
