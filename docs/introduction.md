@@ -3,7 +3,7 @@
 This is a general introduction to Beschi as a whole. Once you're done reading this, you'll probably want to check out the [more specific documentation](./languages/) for your desired language(s). 
 
 | [C](./languages/c.md) | [C#](./languages/csharp.md) | [Go](./languages/go.md) | [Rust](./languages/rust.md) | [Swift](./languages/swift.md) | [TypeScript](./languages/typescript.md) | [AssemblyScript](./languages/assemblyscript.md) | [Zig](./languages/zig.md)
-|-|-|-|-|-|-|-|
+|-|-|-|-|-|-|-|-|
 
 
 ## Do you even want to?
@@ -52,9 +52,7 @@ You can create more complicated data types and messages, too; this was a very si
 
 You can see [examples of the generated code in each target language](./generated_examples/), made from [this data protocol](../test/_protocols/annotated.toml). 
 
-For the most part, Beschi does its best to keep behavior and data structures consistent across the languages, with a few exceptions, such as ensuring data members start with uppercase characters when it generates Go code, since that makes them publicly accessible. 
-
-That desire, though, is balanced with wanting the code to feel at home in each language, so it adapts to specific language conventions and best practices as best it can. For example, generated Rust code defines messages as an enum so they can properly slot into Rust's usual pattern-matching system, and thus there is no equivalent to other language's `GetMessageType` method.
+For the most part, Beschi does its best to keep behavior and data structures consistent across the languages That desire for consistency, though, is balanced with wanting the code to feel at home in each language, so it adapts to specific language conventions and best practices as best it can. You can read about the particular exceptions made for each language in the caveats sections of its documentation page.
 
 You should think of the generated code files as effectively "compiled;" that is, you shouldn't edit them directly, but rather make changes to your protocol file and re-generate them. While the generated code is not intentionally obfuscated, it's also not meant to be read by humans _per se_, so take that into account. That said, the generated code **should** be a good citizen in each host language, making best use of available idioms, etc. If you think Beschi is generating sub-optimal code for a given language, please file an issue. 
 

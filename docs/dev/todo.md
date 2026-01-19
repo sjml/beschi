@@ -3,6 +3,8 @@ This file is a rough todo list for the tool itself.
 ## "immediate" todo
 * TypeScript -- code for converting to and from POJO
 * Zig -- update to latest Zig
+  * https://ziglang.org/download/0.14.0/release-notes.html
+  * https://ziglang.org/download/0.15.1/release-notes.html
 
 ## possible future protocol features:
 - ?? inline string and array length types so they don't have to be protocol-wide like they are now

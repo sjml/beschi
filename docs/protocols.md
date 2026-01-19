@@ -66,7 +66,7 @@ The following are the base data types that everything else is built from:
 | `uint64`           | An unsigned 64-bit integer (0 - 18,446,744,073,709,551,615). Stored in eight bytes. |
 | `int64`            | A signed 64-bit integer (-9,223,372,036,854,775,808 - 9,223,372,036,854,775,807). Stored in eight bytes. |
 | `float`            | A single precision [IEEE-754 floating point number](https://en.wikipedia.org/wiki/IEEE_754). Stored in four bytes. |
-| `double`           | A double precision [IEEE-754 floating point number](https://en.wikipedia.org/wiki/IEEE_754). Stored in eight bytes.
+| `double`           | A double precision [IEEE-754 floating point number](https://en.wikipedia.org/wiki/IEEE_754). Stored in eight bytes. |
 | `string`           | A variable-length set of bytes representing [UTF-8 encoded](https://en.wikipedia.org/wiki/UTF-8) text. Stored as an integer (by default, a `uint32`) representing the length, and then the bytes themselves. |
 
 
@@ -74,7 +74,7 @@ The following are the base data types that everything else is built from:
 
 You can specify that a data member is a list of values by enclosing the type in brackets like so: `[uint64]`. This will get translated to whatever list or array functionality the target language has. You can also have lists of structs like `[Color]` so there is a lot of room to express many different kinds of data. 
 
-(Note that a `[bool]` does not do any packing and still uses a single byte per element. Use an integer and bitwise operations like your programming forebears.)
+(Note that a `[bool]` does not do any packing and still uses a single byte per element. If you really need that level of data efficiency, use an integer and bitwise operations like your programming forebears.)
 
 
 ## Enums
